@@ -39,8 +39,6 @@ import static extension eu.ascens.unimore.robots.Utils.*
   * parce qu'ils vont que dans la direction inverse du plus...
   * 
   * prez:
-  * 
-  * plans actuels :
 
 milestones (fonctionalités : explorer, trouver, appeler les autres, retrouver maison et ramener)
 et pour chaque problèmes (non-fonctionnel : explorer en se séparant, trouver et ne pas s'aglutiner, retrouver maison de façon efficace, etc)
@@ -225,13 +223,6 @@ class ExplorablesRepresentations {
 			if (candid.empty) null
 			else {
 				candid.maximum(strictExplorableCriticalityOrd)
-//				val f = candid.fold(0.0 -> 0.0, [a,b|
-//					criticalityOrd.max(a.key, b.criticality) -> Math.max(a.value, b.coord.value.length)
-//				])
-////				val crit = if (lastChoice != null && lastChoice.value.dot(p.value) < 0) {
-////							f.key/2
-////						} else f.key
-//				new Explorable(p.multiply(f.value), f.key)
 			}
 		].filter[it != null]
 		
@@ -266,18 +257,18 @@ class Decisions {
 				//.correctChoiceInCaseOfMisPerceptions
 	}
 	
-	var count = 0
-	private def correctChoiceInCaseOfMisPerceptions(RelativeCoordinates choice) {
-		// vectors going in opposite directions: stay on the course for 3 turns
-		if (actions.lastChoice != null && choice != null && choice.value.dot(actions.lastChoice.value) < 0 && count < 6) {
-			count = count +1
-			logger.info("going back, in case it is an error, staying on course (count={})", count)
-			actions.lastChoice
-		} else {
-			count = 0
-			choice
-		}
-	}
+//	var count = 0
+//	private def correctChoiceInCaseOfMisPerceptions(RelativeCoordinates choice) {
+//		// vectors going in opposite directions: stay on the course for 3 turns
+//		if (actions.lastChoice != null && choice != null && choice.value.dot(actions.lastChoice.value) < 0 && count < 6) {
+//			count = count +1
+//			logger.info("going back, in case it is an error, staying on course (count={})", count)
+//			actions.lastChoice
+//		} else {
+//			count = 0
+//			choice
+//		}
+//	}
 	
 	private def keepEquivalentDirections(List<Explorable> in) {
 		
@@ -313,11 +304,11 @@ class Decisions {
 		val withNbBotsBehind = toUse.map[
 			val e = key
 			val dot = value
-			e -> dot -> perceptions.visibleRobots.filter[b|
+			e -> dot -> perceptions.visibleRobots.count[b|
 								// keep robots in the opposite direction:
 								// we want to go away from them
 								b.coord.value.dot(e.coord.value) < 0
-							].length
+							]
 		]
 		
 		withNbBotsBehind.maximum(Ord.ord(Function.curry(
@@ -438,22 +429,7 @@ class Perceptions {
 	}
 	
 	static val VISION_RANGE_SQUARED = Constants.VISION_RANGE*Constants.VISION_RANGE
-	
-	@StepCached
-	def conesCoveredByOthersMessages() {
-		// problem is that information there is outdated...
-		// maybe use the conesCoveredByVisibleRobots info?
-		explorationMessages
-			.toMap[key.id]
-//			.mapValues[
-//				var c = conesCoveredByVisibleRobots.get(key.id)
-//				if (c == null) {
-//					key.coord.value.computeConeCoveredByBot(VISION_RANGE_SQUARED)
-//				} else c
-//			]
-			.mapValues[key.coord.value.computeConeCoveredByBot(VISION_RANGE_SQUARED)]
-	}
-	
+		
 	@StepCached
 	def conesCoveredByVisibleRobots() {
 		// consider all visible bots

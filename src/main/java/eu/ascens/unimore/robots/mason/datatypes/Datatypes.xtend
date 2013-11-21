@@ -51,15 +51,16 @@ import fj.data.List
 //	}
 	
 	static def buildCones(int nbDirections) {
-		var r = List.nil
+		// this is mutable, careful
+		var r = List.Buffer.empty
 		var Radiangle prev = sliceStart(nbDirections,0)
 		for(i: 1..<nbDirections) {
 			val current = sliceStart(nbDirections,i)
-			r = r.cons(prev -> current)
+			r.snoc(prev -> current)
 			prev = current
 		}
-		r = r.cons(prev -> sliceStart(nbDirections,0))
-		r
+		r.snoc(prev -> sliceStart(nbDirections,0))
+		r.toList
 	}
 	
 //	static def buildDirectionsWithCones(int nbDirections) {

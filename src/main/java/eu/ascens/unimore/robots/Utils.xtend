@@ -4,8 +4,10 @@ import com.vividsolutions.jts.algorithm.Angle
 import eu.ascens.unimore.robots.beh.Explorable
 import eu.ascens.unimore.robots.mason.datatypes.RelativeCoordinates
 import eu.ascens.unimore.robots.mason.datatypes.SlopeComparator
+import fj.F
 import fj.Ord
 import fj.Ordering
+import fj.data.List
 import java.util.Map
 import org.eclipse.xtext.xbase.lib.Pair
 import sim.util.Double2D
@@ -13,25 +15,18 @@ import sim.util.MutableDouble2D
 
 class Utils {
 	
+	public static val strictCriticalityOrd = Ord.ord([ double a|[ double b|
+		Ord.doubleOrd.compare(a, b);
+	]])
+	
 	public static val criticalityOrd = Ord.ord([ double a|[ double b|
 		if (Math.abs(a - b) <= 0.01) Ordering.EQ
 		else strictCriticalityOrd.compare(a, b);
 	]])
 	
 	public static val explorableCriticalityOrd = criticalityOrd.comap[Explorable e|e.criticality]
-//	Ord.ord([ Explorable a|[ Explorable b|
-//		criticalityOrd.compare(a.criticality, b.criticality)
-//	]])
-	
-	public static val strictCriticalityOrd = Ord.ord([ double a|[ double b|
-		Ord.doubleOrd.compare(a, b);
-	]])
-	
 	public static val strictExplorableCriticalityOrd = strictCriticalityOrd.comap[Explorable e|e.criticality]	
-//	Ord.ord([ Explorable a|[ Explorable b|
-//		strictCriticalityOrd.compare(a.criticality, b.criticality)
-//	]])
-
+	
 	static def toShortString(double d) {
 		(((d*100) as int as double)/100).toString
 	}
@@ -42,6 +37,19 @@ class Utils {
 			result.put(p.key, p.value)
 		}
 		result
+	}
+	
+	static def <A> count(List<A> l, F<A, Boolean> f) {
+		var xs = l
+		var i = 0
+		while (xs.notEmpty) {
+			val h = xs.head
+			if (f.f(h)) {
+				i = i+1
+			}
+			xs = xs.tail
+		}
+		i
 	}
 	
 	// TODO check if order is problematic

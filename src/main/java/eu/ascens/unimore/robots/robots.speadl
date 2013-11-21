@@ -15,6 +15,7 @@ namespace eu.ascens.unimore.robots {
 	component Behaviour {
 		
 		provides step: Do
+	
 		provides visu: RobotVisu
 		
 		requires see: RobotPerceptions

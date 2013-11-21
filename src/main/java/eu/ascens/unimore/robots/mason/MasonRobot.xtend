@@ -20,8 +20,6 @@ import sim.util.Int2D
 import sim.util.MutableDouble2D
 
 import static extension eu.ascens.unimore.robots.Utils.*
-import static fj.Function.*
-import fj.Ord
 
 abstract class MasonRobot<Bot extends MasonRobot<Bot>> implements Steppable {
 
@@ -146,36 +144,37 @@ class Surroundings<Bot extends MasonRobot<Bot>> implements ILosBoard {
 	}
 	
 	// this will gather pairs of Vectors that 
-	// satisfies f and that is next to each other in terms of angle
+	// satisfies f and that are next to each other in terms of angle
 	// in the counter-clockwise direction
 	// in particular it handles the special case of the last and the first
 	// when they are around the 0 angle
 	// for the special of one element, consider the cone around it (of arc ~= 1)
 	def <B,C> gathers(List<Pair<Double2D, B>> in, (Pair<Double2D, B>,Pair<Double2D, B>) => Boolean pred, (Pair<Double2D, B>,Pair<Double2D, B>) => C tr) {
 		
-		if (in.length == 0) {
+		if (in.empty) {
 			return List.nil
 		}
 		
-		if (in.length == 1) {
+		// length == 1
+		if (in.tail.empty) {
 			val h = in.head
 			return List.single(tr.apply(h,h))
 		}
 		
-		val sorted = in.sort(Ord.ord(curry([Pair<Double2D, B>e1, Pair<Double2D, B> e2|
-			SlopeComparator.ORD_D2D.compare(e1.key, e2.key)
-		])))
+		val sorted = in.sort(SlopeComparator.ORD_D2D.comap([Pair<Double2D, B> p| p.key]))
 		
-		var res = List.nil
-		
+		// this is mutable, careful!
+		var res = List.Buffer.empty
 		var Pair<Double2D, B> prev = null
 		
-		if (sorted.length == 2) {
-			prev = sorted.last
+		// length == 2
+		val length2 = sorted.tail.tail.empty
+		if (length2) {
+			prev = sorted.tail.head
 		} else {
 			for (wc: sorted) {
 				if (prev != null && pred.apply(prev,wc)) {
-					res = res.cons(tr.apply(prev,wc))
+					res.snoc(tr.apply(prev,wc))
 				}
 				prev = wc
 			}
@@ -188,14 +187,14 @@ class Surroundings<Bot extends MasonRobot<Bot>> implements ILosBoard {
 				val pa = prev.key.angle
 				val ca = h.key.angle
 				if (pa < 0 && pa > -Angle.PI_OVER_2 && ca >= 0 && ca < Angle.PI_OVER_2) {
-					res = res.cons(tr.apply(prev,h))
-				} else if (sorted.length == 2) {
-					res = res.cons(tr.apply(h,prev))
+					res.snoc(tr.apply(prev,h))
+				} else if (length2) {
+					res.snoc(tr.apply(h,prev))
 				}
 			}
 		}
 		
-		res
+		res.toList
 	}
 	
 	private def relativeDiscretizedPosition(Int2D p) {
