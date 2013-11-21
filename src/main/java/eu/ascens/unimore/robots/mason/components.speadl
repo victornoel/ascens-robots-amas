@@ -1,0 +1,36 @@
+import eu.ascens.unimore.robots.mason.datatypes.Message
+import eu.ascens.unimore.robots.mason.datatypes.RBMessage
+import eu.ascens.unimore.robots.mason.interfaces.RobotMovements
+import eu.ascens.unimore.robots.mason.interfaces.RobotPerceptions
+import eu.ascens.unimore.robots.mason.interfaces.RobotVisu
+import fr.irit.smac.may.lib.interfaces.Do
+import fr.irit.smac.may.lib.interfaces.Pull
+import fr.irit.smac.may.lib.interfaces.Push
+
+namespace eu.ascens.unimore.robots.mason {
+
+	ecosystem AscensMason {
+		// Mason is responsible of populating the world
+		// because the UI start and restart the simulation...
+		requires populateWorld: Do
+
+		species Robot {
+
+			provides id: Pull[String]
+
+			provides move: RobotMovements
+
+			provides see: RobotPerceptions
+
+			requires step: Do
+
+			requires pushRBMessage: Push[RBMessage]
+			provides rbBroadcast: Push[Message]
+			requires pushRadioMessage: Push[Message]
+			provides radioBroadcast: Push[Message]
+
+			requires visu: RobotVisu
+		}
+	}
+
+}

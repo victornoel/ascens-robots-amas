@@ -1,0 +1,425 @@
+
+def getFromPlace(Pair<BetweenPlaces, Boolean> e) {
+	if (e.value) exploredWorld.getEdgeSource(e.key) else exploredWorld.getEdgeTarget(e.key)
+}
+
+def getToCoordinates(Pair<BetweenPlaces, Boolean> e) {
+	if (e.value) PolarCoordinates.of(new Double2D(0,0)) else e.key.source
+}
+
+val DirectedMultigraph<Place, BetweenPlaces> exploredWorld = new DirectedMultigraph(BetweenPlaces)
+	
+var Place currentPlace
+var PolarCoordinates currentPlaceStart
+
+var PolarCoordinates goingTo
+var Place goingToPlace
+var BetweenPlaces goingToEdge
+
+@Data class Place {
+	
+}
+
+@Data class BetweenPlaces {
+	
+	// starting point of the place this is the source
+	PolarCoordinates source
+}
+
+if (goingToPlace == null) {
+	// arriving to a new place
+	// record the place
+	val newPlace = new Place
+	exploredWorld.addVertex(newPlace)
+	
+	val e = new BetweenPlaces(PolarCoordinates.of(currentPlaceStart.toVector.negate))
+	exploredWorld.addEdge(currentPlace, newPlace, e)
+	
+	currentPlace = newPlace
+	currentPlaceStart = PolarCoordinates.of(new Double2D(0,0))
+} else {
+	// entering an already visited place
+	currentPlace = goingToPlace
+	currentPlaceStart = takenEdge.toCoordinates
+	goingToPlace = null
+}
+
+// TODO use odometric/lol/perception instead
+// TODO use a vector based implem?
+if (goingTo != null) {
+	goingTo = PolarCoordinates.of(goingTo.toVector.subtract(lastMove.toVector))
+}
+	
+if (currentPlaceStart != null) {
+	currentPlaceStart = PolarCoordinates.of(currentPlaceStart.toVector.subtract(lastMove.toVector))
+}
+
+
+if (timeToCheckForDirectionChange) {
+	// update relative position of place where I'm going
+	
+	// check if I'm where I wanted to go
+	val amIArrived = goingTo == null || goingTo.distance < 0.1
+	
+	// TODO this check should be done if we have changed place only
+	if (amIArrived) {
+		
+		
+		// find a new place
+	} else {
+		// check if I should continue
+		
+		
+	}
+} else {
+	// continue as before
+	nextChoice = lastChoice
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package eu.ascens.unimore.robots.beh
+
+import eu.ascens.unimore.robots.Behaviour
+import eu.ascens.unimore.robots.Constants
+import eu.ascens.unimore.robots.mason.datatypes.Message
+import eu.ascens.unimore.robots.mason.datatypes.RBMessage
+import eu.ascens.unimore.robots.mason.datatypes.RelativeCoordinates
+import eu.ascens.unimore.robots.mason.datatypes.SlopeComparator
+import eu.ascens.unimore.robots.mason.interfaces.RobotVisu
+import java.util.List
+import java.util.Map
+import org.eclipse.xtext.xbase.lib.Pair
+import org.slf4j.LoggerFactory
+import sim.util.Double2D
+
+import static extension eu.ascens.unimore.robots.Utils.*
+import eu.ascens.unimore.xtendmacro.StepCached
+import eu.ascens.unimore.xtendmacro.Step
+
+/*
+ * Note
+ * 
+ * 1) si la finalité est de faire des chaines, il ne feront pas mieux que ça, et certainement pire
+ *  -> pas de finalité (où finalité très qualitative) et émergence : des chaines emergent, mais peuvent faire mieux dans situations extremes
+ * 2) difficile à faire car
+ *  a) émergence doit faire quelque chose de bien ! commet ? cooperation principalement...
+ *  b) le concepteur ne pourra jamais se débarasser d'une finalité ou d'un désir de voir apparaitre des trucs prévus
+ * 3) les capacités d'interaction de base (i.e. la définition du pb) aura un impact extremement important sur comment approcher le problème
+ *  -> si agent peut voir chemins et reconnaitre salle, l'approche sera de choisir le bon chemin entre des salles, alors que si voit que mur ou pas mur, l'approche sera plus bas niveau
+ *  -> lorsque l'on experimente en tant que chercheur, ça pose problème !!!
+ * 
+ */
+class BehaviourImpl extends Behaviour implements RobotVisu {
+	
+	val logger = LoggerFactory.getLogger("agent");
+	
+	override protected make_visu() {
+		this
+	}
+
+	override getLastChoice() {
+		lastChoice
+	}
+	
+	override getLastMove() {
+		lastMove
+	}
+	
+	override consideredExplorable() {
+		explorableFromMe
+	}
+	
+	override consideredExplorableFromMeAndOthers() {
+		explorable
+	}
+	
+	private def myId() {
+		requires.id.pull
+	}
+	
+	var List<RelativeCoordinates> _explorableFromOthers
+	def explorableFromOthers() {
+		if (_explorableFromOthers == null) {
+			_explorableFromOthers = rbMessages.map[m|
+				// I should have only one message from each robot TODO check
+				val mess = m.message
+				val hisPosFromMe = m.emitter
+				switch mess {
+					ExplorableMessage case mess.others.containsKey(myId): {
+						val myPosFromHim = mess.others.get(myId)
+						mess.explorable
+							// note that this of() is possibly wrong...
+							.map[RelativeCoordinates.of(it.value, hisPosFromMe.value, myPosFromHim.value)]
+							// let's remove those for which we actually see a wall
+							// and replace it with the position of the bot?
+							// this would be an approximation of the best way to go to that place
+							// best would be to use the closest bot pointing in the same direction?!!
+							// but then we would need to use the bots positions themselves I guess
+							.filter[c|wallsFromMe.forall[!c.value.between(it.cone)]]
+							//.filter[w|visibleWalls.forall[!w.between2(it)]]
+					}
+					ExplorableMessage2 case mess.explorable: {
+						if (hisPosFromMe.value.lengthSq > 0) #[hisPosFromMe] else #[]
+					}
+					default: #[]
+				}
+			].flatten.toList
+			logger.info("explorableFromOthers: {}", _explorableFromOthers)
+		}
+		_explorableFromOthers
+	}
+	
+	static val VISION_RANGE_SQUARED = Constants.VISION_RANGE*Constants.VISION_RANGE
+	static val TWO_VISION_RANGE_SQUARED = VISION_RANGE_SQUARED*4
+	
+	private def computeConeCoveredByBot(RelativeCoordinates c) {
+		val half = c.value.multiply(1.0/2.0)
+		val l = Math.sqrt(VISION_RANGE_SQUARED - half.lengthSq)
+		val rotRight = new Double2D(c.value.y, -c.value.x).resize(l)
+		val rotLeft = new Double2D(-c.value.y, c.value.x).resize(l)
+		val start = half.add(rotRight) // compute start of its covered area for us
+		val end = half.add(rotLeft) // compute start of its covered area for us
+		start -> end
+	}
+	
+	var List<Pair<Double2D, Double2D>> _directionNotCoveredByOthers
+	private def directionNotCoveredByOthers() {
+		if (_directionNotCoveredByOthers == null) {
+			_directionNotCoveredByOthers = visibleRobots.values.filter[
+				val l = value.lengthSq
+				0 < l && l < TWO_VISION_RANGE_SQUARED
+			].map[e|
+				val cone = computeConeCoveredByBot(e)
+				val ws = wallsFromMe.filter[value.between(cone)].sort(SlopeComparator.INSTANCE_RC)
+				
+				if (ws.empty) {
+					#[cone]
+				} else {
+					#[cone.key -> ws.head.value, ws.last.value -> cone.value]
+				}
+			].flatten.toList
+		}
+		_directionNotCoveredByOthers
+	}
+	
+	var List<RelativeCoordinates> _explorableFromMe
+	private def explorableFromMe() {
+		if (_explorableFromMe == null) {
+			_explorableFromMe = sensorReadings.filter[r|
+				r.value == null && !directionNotCoveredByOthers.exists[p|
+					r.key.value.between(p)
+				]
+			].map[key as RelativeCoordinates].toList
+			logger.info("explorableOnlyFromMe: {}", _explorableFromMe)
+		}
+		_explorableFromMe
+	}
+	/* 
+	private def explorableFromMe() {
+		if (_explorableFromMe == null) {
+			_explorableFromMe = sensorReadings.filter[value == null].map[key].toList
+			logger.info("explorableFromMe: {}", _explorableFromMe)
+		}
+		_explorableFromMe
+	}
+	*/
+	
+	var List<RelativeCoordinates> _wallsFromMe
+	private def wallsFromMe() {
+		if (_wallsFromMe == null) {
+			_wallsFromMe = sensorReadings.filter[value != null].map[
+				RelativeCoordinates.of(key.value.resize(value), key.cone)
+			].toList
+		}
+		_wallsFromMe
+	}
+
+	// all of these are initialised at the start of a step
+	var Iterable<RBMessage> _rbMessages
+	private def rbMessages() {
+		if (_rbMessages == null) {
+			_rbMessages = requires.RBMessages.pull
+			logger.debug("rbMessages: {}", _rbMessages)
+		}
+		_rbMessages
+	}
+	
+	var Iterable<Pair<RelativeCoordinates, Double>> _sensorReadings
+	private def sensorReadings() {
+		if (_sensorReadings == null) {
+			_sensorReadings = requires.see.sensorReadings
+			logger.info("sensorReadings: {}", _sensorReadings)
+		}
+		_sensorReadings
+	}
+	
+	var Map<String, RelativeCoordinates> _visibleRobots
+	private def visibleRobots() {
+		if (_visibleRobots == null) {
+			_visibleRobots = requires.see.visibleRobots
+			logger.info("visibleRobots: {}", _visibleRobots)
+		}
+		_visibleRobots
+	}
+	
+	var List<RelativeCoordinates> _explorable
+	private def explorable() {
+		if (_explorable == null) {
+			// normalize put all of it in 24 directions
+			_explorable = (explorableFromMe + explorableFromOthers).normalize(RelativeCoordinates._24_DIRECTIONS_CONES)
+			logger.info("explorable: {}", _explorable)
+		}
+		_explorable
+	}
+	
+	// this is kept between steps
+	var RelativeCoordinates lastMove
+	var RelativeCoordinates lastChoice
+	var count = 0
+	
+	private def avoidCrowdedAreas(List<Pair<RelativeCoordinates, Pair<RelativeCoordinates, RelativeCoordinates>>> explorable) {
+		
+		// remove those with too much robots
+		// (this is not so much the nb of bot that count, but the number of explorable places there...)
+		val withoutExcessBots = explorable.filter[p|
+			val cone = p.value
+			// we take the number of bots NOT in the direction
+			// and we keep this direction if it is more than 
+			visibleRobots.filter[k, v|
+				v.between(cone.value, cone.key)
+				//v.value.dot(p.key.value) < 0
+			].size > visibleRobots.size / explorable.size
+		].toList
+		
+		logger.info("withoutExcessBots: {}", withoutExcessBots.map[key])
+		
+		if(withoutExcessBots.empty) explorable else withoutExcessBots
+	}
+	
+	private def explore() {
+		
+		// prefer directions that change less from last time
+		val possibilities = explorable.sortBy[c|
+			// dot gives us -1 when the vectors are opposite
+			// and 1 when they are colinear
+			// this thus favour choices closer to lastmove
+			// TODO use lastChoice corrected by lastMove!
+			if (lastMove != null) -lastMove.value.dot(c.value)
+			else 0.0
+		].toList
+		
+		logger.info("possibilities: {}", possibilities)
+		
+		var choice = if (possibilities.empty) {
+			logger.warn("nowhere to go, continuing as before") // that's not really normal that this happens...
+			if (lastChoice != null) lastChoice
+			else RelativeCoordinates._24_DIRECTIONS_CONES.get(0)
+		} else {
+			possibilities.head
+		}
+		
+		// vectors going in opposite directions: stay on the course for 3 turns
+		if (lastChoice != null && choice.value.dot(lastChoice.value) < 0 && count < 3) {
+			choice = lastChoice
+			count = count +1
+			logger.info("going back, in case it is an error, staying on course (count={})", count)
+		} else {
+			count = 0
+		}
+		
+		requires.rbBroadcast.push(new ExplorableMessage(possibilities, requires.see.visibleRobots))
+		
+		choice
+	}
+	
+	private def goTo(RelativeCoordinates to) {
+		
+		val move = to.computeDirectionWithAvoidance(wallsFromMe)
+		
+		logger.info("going to {} targetting {}.", move, to)
+		lastMove = move
+		requires.move.setNextMove(move)
+	}
+	
+	@Step
+	def step() {
+		logger.info("\n\n-----------------------")
+		logger.info("lastMove: {}", lastMove)
+		logger.info("lastChoice: {}", lastChoice)
+		
+		// perceive
+		
+		_rbMessages = null
+		_sensorReadings = null
+		_visibleRobots = null
+		_wallsFromMe = null
+		_explorableFromOthers = null
+		_explorableFromMe = null
+		_explorable = null
+		_directionNotCoveredByOthers = null
+		
+		// decide
+		
+		// choisir une direction où aller
+		// il faut savoir où se trouve
+		// - des victimes
+		// - des endroits à explorer
+		// - la maison 
+		
+		val choice = explore
+		
+		// act
+		
+		goTo(choice)
+		
+		lastChoice = choice
+		
+//		requires.rbBroadcast.push(new ExplorableMessage(possibilities, requires.see.visibleRobots))
+		
+		// post-act
+	}
+	
+	override protected make_step() {[|step]}
+	
+}
+
+@Data class ExplorableMessage extends Message {
+	
+	Iterable<RelativeCoordinates> explorable
+	Map<String, RelativeCoordinates> others
+	
+}
+
+@Data class ExplorableMessage2 extends Message {
+	
+	// TODO add a measure of what is available there
+	boolean explorable
+	
+}
+
+@Data class GoingMessage extends Message {
+	
+	RelativeCoordinates goingToward
+	Map<String, RelativeCoordinates> others
+	
+}
