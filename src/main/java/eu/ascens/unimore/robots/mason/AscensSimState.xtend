@@ -148,7 +148,7 @@ class AscensGUIState extends GUIState {
 
 		// set up the maze portrayal
 		//mazePortrayal.setPortrayalForAll(new MazeCellPortrayal(state.maze));
-		mazePortrayal.setMap(new SimpleColorMap(0,2,Color.black,Color.white))
+		mazePortrayal.setMap(new SimpleColorMap(0,3,Color.black,Color.white))
 		mazePortrayal.setField(state.maze);
 
 		//robotsPortrayal.setPortrayalForClass(ObstacleObject, new GeomPortrayal(Color.YELLOW,1.0,true))
@@ -212,7 +212,7 @@ class BotPortrayal2D extends OvalPortrayal2D {
 	val AscensSimState<?> state
 	
 	new(FieldPortrayal2D fieldPortrayal, AscensSimState<?> state) {
-		super(Color.LIGHT_GRAY, 1.0, true)
+		super(Color.DARK_GRAY, 1.0, true)
 		this.fieldPortrayal = fieldPortrayal
 		this.state = state
 	}
@@ -226,9 +226,9 @@ class BotPortrayal2D extends OvalPortrayal2D {
 				val rPos = new Double2D(object.position)
 				
 				if (info.selected) {
-					this.paint = Color.DARK_GRAY
+					this.paint = Color.MAGENTA
 				} else {
-					this.paint = Color.LIGHT_GRAY
+					this.paint = Color.DARK_GRAY
 				}
 				
 				if (state.showWallsForAlls || (info.selected && state.showWalls)) {
@@ -288,7 +288,7 @@ class BotPortrayal2D extends OvalPortrayal2D {
 						// get absolute position
 						val sloc = p.key.value.add(rPos)
 						if (!p.value) {
-							graphics.setPaint(Color.CYAN)
+							graphics.setPaint(Color.MAGENTA)
 						} else {
 							graphics.setPaint(Color.PINK)
 						}

@@ -2,17 +2,18 @@ package eu.ascens.unimore.robots.beh
 
 import eu.ascens.unimore.robots.Constants
 import eu.ascens.unimore.robots.mason.datatypes.Message
+import eu.ascens.unimore.robots.mason.datatypes.RBEmitter
 import eu.ascens.unimore.robots.mason.datatypes.RelativeCoordinates
+import fj.data.List
 import java.util.Map
 
 import static extension eu.ascens.unimore.robots.Utils.*
-import fj.data.List
 
 abstract class Explorable {
 	
 	@Property val RelativeCoordinates coord
 	@Property val double criticality
-	var boolean isVia = false
+	var String via = null
 	var List<Explorable> replaces = List.nil
 	
 	new(RelativeCoordinates coord, double criticality) {
@@ -21,7 +22,7 @@ abstract class Explorable {
 	}
 	
 	override def toString() {
-		type + (if (isVia) "(via)" else "") + "["+criticality.toShortString+","+coord+"]"
+		type + (if (via != null) "("+via+")" else "") + "["+criticality.toShortString+","+coord+"]"
 	}
 	
 	abstract protected def String type()
@@ -41,9 +42,9 @@ abstract class Explorable {
 	/**
 	 * 
 	 */
-	def aggregates(RelativeCoordinates coord, List<Explorable> replaces) {
-		buildNew(coord,criticality) => [n|
-			n.isVia = true
+	def aggregates(RBEmitter emitter, List<Explorable> replaces) {
+		buildNew(emitter.coord,criticality) => [n|
+			n.via = emitter.id
 			n.replaces = replaces
 		]
 	}

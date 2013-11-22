@@ -6,8 +6,7 @@ class Constants {
 	
 	
 	// use mtpaint to draw it: 0 for walls, 1 for victims, 2 for starting area, rest for nothing
-	public static val MAZE = "/maze1.png"
-	
+	public static val MAZE = "/maze3.png"
 	
 	public static val RADIO_RANGE = 30
 	public static val RB_RANGE = 30
@@ -16,6 +15,7 @@ class Constants {
 	
 	public static val OBSTACLE_AVOID_TARGET_DISTANCE = 2
 	public static val OBSTACLE_AVOID_RANGE_SQUARED = OBSTACLE_AVOID_TARGET_DISTANCE*OBSTACLE_AVOID_TARGET_DISTANCE
+	
 	public static val NB_WALL_SENSORS = 24
 	
 	

@@ -21,6 +21,8 @@ import sim.util.MutableDouble2D
 
 import static extension eu.ascens.unimore.robots.Utils.*
 
+import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
+
 abstract class MasonRobot<Bot extends MasonRobot<Bot>> implements Steppable {
 
 	val logger = LoggerFactory.getLogger("agent");
@@ -132,14 +134,14 @@ class Surroundings<Bot extends MasonRobot<Bot>> implements ILosBoard {
 		}
 		if (!ob && dist < me.state.visionRange) {
 			if (me.state.isVictim(x,y)) {
-				victims = victims.cons(pos)
+				victims = pos + victims
 			}
 		}
 		if (!ob && dist < me.state.visionRange) {
-			noWallCoords = noWallCoords.cons(pos)
+			noWallCoords = pos + noWallCoords
 		}
 		if (ob && dist < me.state.visionRange) {
-			wallCoords = wallCoords.cons(pos)
+			wallCoords = pos + wallCoords
 		}
 	}
 	
@@ -174,7 +176,7 @@ class Surroundings<Bot extends MasonRobot<Bot>> implements ILosBoard {
 		} else {
 			for (wc: sorted) {
 				if (prev != null && pred.apply(prev,wc)) {
-					res.snoc(tr.apply(prev,wc))
+					res += tr.apply(prev,wc)
 				}
 				prev = wc
 			}
@@ -187,9 +189,9 @@ class Surroundings<Bot extends MasonRobot<Bot>> implements ILosBoard {
 				val pa = prev.key.angle
 				val ca = h.key.angle
 				if (pa < 0 && pa > -Angle.PI_OVER_2 && ca >= 0 && ca < Angle.PI_OVER_2) {
-					res.snoc(tr.apply(prev,h))
+					res += tr.apply(prev,h)
 				} else if (length2) {
-					res.snoc(tr.apply(h,prev))
+					res += tr.apply(h,prev)
 				}
 			}
 		}

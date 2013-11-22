@@ -12,6 +12,8 @@ import sim.util.Double2D
 import static extension eu.ascens.unimore.robots.Utils.*
 import fj.data.List
 
+import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
+
 @Data class Radiangle implements Comparable<Radiangle> {
 	
 	public static val PI_OVER_8 = Angle.PI_OVER_4 / 2.0
@@ -56,10 +58,10 @@ import fj.data.List
 		var Radiangle prev = sliceStart(nbDirections,0)
 		for(i: 1..<nbDirections) {
 			val current = sliceStart(nbDirections,i)
-			r.snoc(prev -> current)
+			r += (prev -> current)
 			prev = current
 		}
-		r.snoc(prev -> sliceStart(nbDirections,0))
+		r += (prev -> sliceStart(nbDirections,0))
 		r.toList
 	}
 	

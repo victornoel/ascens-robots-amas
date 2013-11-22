@@ -13,6 +13,8 @@ import org.eclipse.xtext.xbase.lib.Pair
 import sim.util.Double2D
 import sim.util.MutableDouble2D
 
+
+
 class Utils {
 	
 	public static val strictCriticalityOrd = Ord.ord([ double a|[ double b|
@@ -27,10 +29,12 @@ class Utils {
 	public static val explorableCriticalityOrd = criticalityOrd.comap[Explorable e|e.criticality]
 	public static val strictExplorableCriticalityOrd = strictCriticalityOrd.comap[Explorable e|e.criticality]	
 	
+	@Pure
 	static def toShortString(double d) {
 		(((d*100) as int as double)/100).toString
 	}
 	
+	@Pure
 	static def <K, V> Map<K, V> toMap(Iterable<? extends Pair<? extends K, ? extends V>> pairs) {
 		val result = newLinkedHashMap()
 		for (p : pairs) {
@@ -39,6 +43,7 @@ class Utils {
 		result
 	}
 	
+	@Pure
 	static def <A> count(List<A> l, F<A, Boolean> f) {
 		var xs = l
 		var i = 0
@@ -69,6 +74,7 @@ class Utils {
 //	}
 	
 	// return a normalised vector
+	@Pure
 	static def Double2D getMiddleAngledVector(Pair<Double2D, Double2D> p) {
 		val from = p.key
 		val to = p.value
@@ -90,6 +96,7 @@ class Utils {
 	}
 	
 	// inspired from http://buildnewgames.com/vector-field-collision-avoidance/
+	@Pure
 	static def computeDirectionWithAvoidance(RelativeCoordinates target, Iterable<RelativeCoordinates> obstacles) {
 		val v = new MutableDouble2D(target.value.resize(Constants.OBSTACLE_AVOID_TARGET_DISTANCE))
 		for(o: obstacles) {
@@ -104,6 +111,7 @@ class Utils {
 	// take the perpendicular in the middle of the vector
 	// and return the start and the end of the arc of desired radius
 	// intersecting with this perpendicular and of center 0,0
+	@Pure
 	static def computeConeCoveredByBot(Double2D c, double radiusSq) {
 		val half = c.multiply(1.0/2.0)
 		val hlSq = half.lengthSq
@@ -126,30 +134,37 @@ class Utils {
 	// TODO it's missing something about the fact that we may not have the same
 	// plane of reference…
 	// translateFromHimToMe is not correct if the basis for both bot was different...
-	static def translateFromAToB(Double2D whatFromA, Double2D AFromB, Double2D BFromA) {
-		whatFromA.subtract(BFromA)
-	}
+//	@Pure
+//	static def translateFromAToB(Double2D whatFromA, Double2D AFromB, Double2D BFromA) {
+//		whatFromA.subtract(BFromA)
+//	}
 	
+	@Pure
 	static def beforeIncluding(Double2D what, Double2D from) {
 		SlopeComparator.INSTANCE_D2D.compare(what, from) <= 0
 	}
 	
+	@Pure
 	static def beforeStrict(Double2D what, Double2D from) {
 		SlopeComparator.INSTANCE_D2D.compare(what, from) < 0
 	}
 	
+	@Pure
 	static def afterStrict(Double2D what, Double2D to) {
 		!beforeIncluding(what, to)
 	}
 	
+	@Pure
 	static def afterIncluding(Double2D what, Double2D to) {
 		!beforeStrict(what, to)
 	}
 	
+	@Pure
 	static def between(Double2D what, Pair<Double2D, Double2D> p) {
 		between(what, p.key, p.value)
 	}
 	
+	@Pure
 	static def between(Double2D what, Double2D from, Double2D to) {
 		// two cases:
 		// 1) from is before to in counter clockwise and 2) to is before from

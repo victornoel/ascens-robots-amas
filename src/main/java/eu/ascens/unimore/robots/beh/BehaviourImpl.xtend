@@ -15,6 +15,8 @@ import org.slf4j.LoggerFactory
 
 import static extension eu.ascens.unimore.robots.Utils.*
 
+import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
+
 /*
  * Note
  * 
@@ -37,6 +39,9 @@ import static extension eu.ascens.unimore.robots.Utils.*
   * 
   * 2) quand ils se séparent, si ya 2 stream d'agents un peu opposé, ils se renforcent
   * parce qu'ils vont que dans la direction inverse du plus...
+  * 
+  * 3) les agents ne font pas vraiment la diff entre là d'où ils viennent et là où ils vont
+  * il faudrait plus de mémoire pour qu'ils se déplacent en groupe plus vite
   * 
   * prez:
 
@@ -156,10 +161,9 @@ class ExplorablesRepresentations {
 	@StepCached
 	def List<Explorable> explorableFromOthers() {
 		val res = perceptions.explorationMessages.map[p|
-			// note: all of these vectors are consistent with the position
-			// of the emitter when he sent them
-			val hisPosFromMe = p.key.coord
 			val mess = p.value
+			// note: this vector is consistent with the position
+			// of the emitter when he sent them
 			// also contains the cone covered
 			val myConeFromHim = mess.others.get(myId)
 			/*
@@ -201,7 +205,7 @@ class ExplorablesRepresentations {
 				} else {
 					// here we just take the maximum, because criticality is not about the
 					// number of people needed but just the importance of the direction
-					e.maximum(strictExplorableCriticalityOrd).aggregates(hisPosFromMe, e)
+					e.maximum(strictExplorableCriticalityOrd).aggregates(p.key, e)
 				}
 		].filter([it != null])
 		logger.info("explorableFromOthers: {}", res)
@@ -213,8 +217,8 @@ class ExplorablesRepresentations {
 		
 		val explo = (
 			explorableOnlyFromMe
-			.append(explorableFromOthers)
-			.append(explorableVictims)
+			+ explorableFromOthers
+			+ explorableVictims
 		)
 		
 		// normalize put all of it in 24 directions
@@ -440,9 +444,9 @@ class Perceptions {
 	def explorationMessages() {
 		// I should have only one message from each robot TODO check
 		val res = rbMessages.filter[
-			val m = it.message
+			val m = message
 			switch m {
-				ExplorableMessage: true
+				ExplorableMessage case emitter.coord.value.lengthSq > 0: true
 				default: false
 			}
 		].map[
