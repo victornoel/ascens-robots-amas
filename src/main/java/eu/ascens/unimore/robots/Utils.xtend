@@ -1,7 +1,7 @@
 package eu.ascens.unimore.robots
 
 import com.vividsolutions.jts.algorithm.Angle
-import eu.ascens.unimore.robots.beh.Explorable
+import eu.ascens.unimore.robots.beh.datatypes.Explorable
 import eu.ascens.unimore.robots.mason.datatypes.RelativeCoordinates
 import eu.ascens.unimore.robots.mason.datatypes.SlopeComparator
 import fj.F
@@ -10,10 +10,9 @@ import fj.Ordering
 import fj.data.List
 import java.util.Map
 import org.eclipse.xtext.xbase.lib.Pair
+import org.eclipse.xtext.xbase.lib.Pure
 import sim.util.Double2D
 import sim.util.MutableDouble2D
-
-
 
 class Utils {
 	

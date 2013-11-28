@@ -15,18 +15,13 @@ namespace eu.ascens.unimore.robots {
 	component Behaviour {
 		
 		provides step: Do
-	
 		provides visu: RobotVisu
 		
 		requires see: RobotPerceptions
-			
 		requires move: RobotMovements
-		
 		requires id: Pull[String]
-		
 		requires rbBroadcast: Push[Message]
 		requires radioBroadcast: Push[Message]
-		
 		requires getRadioMessages: Pull[Collection[Message]]
 		requires getRBMessages: Pull[Collection[RBMessage]]
 	}

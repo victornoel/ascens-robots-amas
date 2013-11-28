@@ -1,4 +1,4 @@
-package eu.ascens.unimore.robots.beh
+package eu.ascens.unimore.robots.beh.datatypes
 
 import eu.ascens.unimore.robots.Constants
 import eu.ascens.unimore.robots.mason.datatypes.Message

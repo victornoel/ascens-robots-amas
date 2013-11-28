@@ -7,13 +7,12 @@ import fr.irit.smac.may.lib.components.collections.ConcurrentQueueImpl
 class AscensRobotsImpl extends AscensRobots {
 	
 	def static void main(String[] args) {
-		val c = new AscensRobotsImpl().newComponent
-		c.start
+		new AscensRobotsImpl().newComponent
 	}
 	
 	override protected make_populate() {[|
 		for(i: 1..100) {
-			newRobotAgent().start
+			newRobotAgent()
 		}
 	]}
 	

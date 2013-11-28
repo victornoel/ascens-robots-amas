@@ -1,6 +1,6 @@
 package eu.ascens.unimore.robots.mason.interfaces
 
-import eu.ascens.unimore.robots.beh.Explorable
+import eu.ascens.unimore.robots.beh.datatypes.Explorable
 import eu.ascens.unimore.robots.mason.datatypes.RBEmitter
 import eu.ascens.unimore.robots.mason.datatypes.RelativeCoordinates
 import fj.data.List
