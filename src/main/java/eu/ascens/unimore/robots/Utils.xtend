@@ -4,6 +4,7 @@ import com.vividsolutions.jts.algorithm.Angle
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
 import eu.ascens.unimore.robots.mason.datatypes.RelativeCoordinates
 import eu.ascens.unimore.robots.mason.datatypes.SlopeComparator
+import fj.Equal
 import fj.F
 import fj.Ord
 import fj.Ordering
@@ -27,6 +28,18 @@ class Utils {
 	
 	public static val explorableCriticalityOrd = criticalityOrd.comap[Explorable e|e.criticality]
 	public static val strictExplorableCriticalityOrd = strictCriticalityOrd.comap[Explorable e|e.criticality]	
+	
+	@Pure
+	static def <A> inverse(Ord<A> ord) {
+		Ord.ord([ A a |[ A b | ord.compare(b,a) ]])
+	}
+	
+	@Pure
+	static def <A> keepEquivalentFirsts(List<A> in, Equal<A> eq, Ord<A> ord) {
+		val sorted = in.sort(ord)
+		val h = sorted.head
+		sorted.takeWhile[eq.eq(h,it)]
+	}
 	
 	@Pure
 	static def toShortString(double d) {

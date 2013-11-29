@@ -11,7 +11,7 @@ class AscensRobotsImpl extends AscensRobots {
 	}
 	
 	override protected make_populate() {[|
-		for(i: 1..100) {
+		for(i: 1..Constants.NB_BOTS) {
 			newRobotAgent()
 		}
 	]}

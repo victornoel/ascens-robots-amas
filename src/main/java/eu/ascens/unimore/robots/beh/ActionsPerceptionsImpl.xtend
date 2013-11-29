@@ -1,9 +1,10 @@
 package eu.ascens.unimore.robots.beh
 
 import eu.ascens.unimore.robots.Constants
+import eu.ascens.unimore.robots.beh.datatypes.Explorable
 import eu.ascens.unimore.robots.beh.datatypes.ExplorableMessage
-import eu.ascens.unimore.robots.beh.interfaces.IActions
-import eu.ascens.unimore.robots.beh.interfaces.IPerceptions
+import eu.ascens.unimore.robots.beh.interfaces.IActionsExtra
+import eu.ascens.unimore.robots.beh.interfaces.IPerceptionsExtra
 import eu.ascens.unimore.robots.mason.datatypes.RelativeCoordinates
 import eu.ascens.unimore.xtend.macros.Step
 import eu.ascens.unimore.xtend.macros.StepCached
@@ -11,9 +12,8 @@ import fj.data.List
 import org.slf4j.LoggerFactory
 
 import static extension eu.ascens.unimore.robots.Utils.*
-import eu.ascens.unimore.robots.beh.datatypes.Explorable
 
-class ActionsPerceptionsImpl extends ActionsPerceptions implements IActions, IPerceptions {
+class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra, IPerceptionsExtra {
 
 	val logger = LoggerFactory.getLogger("agent")
 
@@ -44,6 +44,12 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActions, IPe
 		requires.move.setNextMove(move)
 	}
 	
+	override myId() {
+		requires.id.pull
+	}
+	
+	// must ABSOLUTELY be cached since requires.RBMessages.pull
+	// empty the message box
 	@StepCached(forceEnable=true)
 	private def rbMessages() {
 		val res = List.iterableList(requires.RBMessages.pull)
@@ -81,7 +87,6 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActions, IPe
 		
 	@StepCached
 	override conesCoveredByVisibleRobots() {
-		// consider all visible bots
 		visibleRobots.map[id -> coord.value.computeConeCoveredByBot(VISION_RANGE_SQUARED)]
 	}
 	

@@ -1,6 +1,7 @@
 package eu.ascens.unimore.robots.beh
 
 import org.slf4j.LoggerFactory
+import eu.ascens.unimore.robots.mason.interfaces.RobotVisu
 
 /*
  * Note
@@ -39,7 +40,7 @@ On documente la solution du problème, on en tire des conclusions
   * 
   */
 //@DisableStepCached
-class BehaviourImpl extends ComposedBehaviour {
+class BehaviourImpl extends ComposedBehaviour implements RobotVisu {
 	
 	val logger = LoggerFactory.getLogger("agent")
 	
@@ -53,19 +54,45 @@ class BehaviourImpl extends ComposedBehaviour {
 		new DecisionsImpl
 	}
 	
+	override protected make_r() {
+		new RepresentationsImpl
+	}
+	
 	override protected make_ap() {
 		new ActionsPerceptionsImpl
+	}
+	
+	override protected make_visu() {
+		this
 	}
 	
 	override protected make_step() {
 		[|
 			logger.info("\n\n-----------------------")
 			parts.ap.preStep.doIt
+			parts.r.preStep.doIt
 			parts.d.step.doIt
 		]
 	}
 	
-	override protected make_visu() {
-		parts.d.visu
+	override choice() {
+		parts.d.decisions.lastChoice
 	}
+	
+	override visibleBots() {
+		parts.ap.perceptions.conesCoveredByVisibleRobots.map[value]
+	}
+	
+	override explorables() {
+		parts.r.representations.explorables
+	}
+	
+	override explorablesOnlyFromMe() {
+		parts.r.representations.explorableOnlyFromMe
+	}
+	
+	override explorablesFromOthers() {
+		parts.r.representations.explorableFromOthers
+	}
+	
 }

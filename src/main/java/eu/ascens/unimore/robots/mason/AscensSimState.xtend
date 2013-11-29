@@ -248,7 +248,7 @@ class BotPortrayal2D extends OvalPortrayal2D {
 				}
 				
 				if (state.showExplorableFromOthersForAll || (info.selected && state.showExplorableFromOthers)) {
-					for(c: object.visu.consideredExplorableFromOthers) {
+					for(c: object.visu.explorablesFromOthers) {
 						// get absolute position
 						val sloc = c.coord.value.add(rPos)
 						val spos = fieldPortrayal.getRelativeObjectPosition(sloc, fPos, info)
@@ -259,7 +259,7 @@ class BotPortrayal2D extends OvalPortrayal2D {
 				}
 				
 				if (state.showExplorableOnlyFromMeForAll || (info.selected && state.showExplorableOnlyFromMe)) {
-					for(c: object.visu.consideredExplorableOnlyFromMe) {
+					for(c: object.visu.explorablesOnlyFromMe) {
 						// get absolute position
 						val sloc = c.coord.value.add(rPos)
 						val spos = fieldPortrayal.getRelativeObjectPosition(sloc, fPos, info)
@@ -269,7 +269,7 @@ class BotPortrayal2D extends OvalPortrayal2D {
 				}
 				
 				if (state.showExplorableForAll || (info.selected && state.showExplorable)) {
-					for(c: object.visu.consideredExplorable) {
+					for(c: object.visu.explorables) {
 						// get absolute position
 						val sloc = c.coord.value.add(rPos)
 						val spos = fieldPortrayal.getRelativeObjectPosition(sloc, fPos, info)
@@ -277,7 +277,7 @@ class BotPortrayal2D extends OvalPortrayal2D {
 						graphics.fillOval(spos.x as int, spos.y as int, w/2, h/2)
 						printLabel(c.criticality.toShortString, graphics, info, spos.x as int, spos.y as int)
 					}
-					val sloc = object.visu.lastChoice.value.add(rPos)
+					val sloc = object.visu.choice.value.add(rPos)
 					val spos = fieldPortrayal.getRelativeObjectPosition(sloc, fPos, info)
 					graphics.setPaint(Color.CYAN)
 					graphics.fillOval(spos.x as int, spos.y as int, w/2, h/2)

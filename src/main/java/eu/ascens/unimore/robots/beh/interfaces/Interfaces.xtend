@@ -13,13 +13,42 @@ interface IActions {
 	
 	def void broadcastExplorables(List<Explorable> explorables)
 	
+}
+
+interface IActionsExtra extends IActions {
 	
+} 
+
+interface IDecisions {
 	
+}
+
+interface IDecisionsExtra extends IDecisions {
+	
+	def RelativeCoordinates lastChoice()
+	
+}
+
+interface IRepresentations {
+	
+	def List<Explorable> explorables()
+	
+}
+
+interface IRepresentationsExtra extends IRepresentations {
+	
+	def List<Explorable> explorableVictims()
+	
+	def List<Explorable> explorableFromMe()
+	
+	def List<Explorable> explorableOnlyFromMe()
+	
+	def List<Explorable> explorableFromOthers()
 }
 
 interface IPerceptions {
 	
-	def List<RelativeCoordinates> wallsFromMe()
+	def String myId()
 	
 	def List<Pair<String, RelativeCoordinates>> conesCoveredByVisibleRobots()
 	
@@ -30,4 +59,10 @@ interface IPerceptions {
 	def List<RelativeCoordinates> visibleVictims()
 	
 	def List<RBEmitter> visibleRobots()
+}
+
+interface IPerceptionsExtra extends IPerceptions {
+	
+	def List<RelativeCoordinates> wallsFromMe()
+	
 }

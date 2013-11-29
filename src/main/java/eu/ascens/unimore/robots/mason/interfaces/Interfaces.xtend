@@ -25,13 +25,13 @@ interface RobotPerceptions {
 
 interface RobotVisu {
 	
-	def RelativeCoordinates getLastChoice()
+	def RelativeCoordinates choice()
 	
 	def Iterable<RelativeCoordinates> visibleBots()
 	
-	def Iterable<Explorable> consideredExplorable()
+	def Iterable<Explorable> explorables()
 	
-	def Iterable<Explorable> consideredExplorableOnlyFromMe()
+	def Iterable<Explorable> explorablesOnlyFromMe()
 	
-	def Iterable<Explorable> consideredExplorableFromOthers()
+	def Iterable<Explorable> explorablesFromOthers()
 }
