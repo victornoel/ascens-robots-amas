@@ -1,7 +1,7 @@
 package eu.ascens.unimore.robots.beh
 
-import org.slf4j.LoggerFactory
 import eu.ascens.unimore.robots.mason.interfaces.RobotVisu
+import org.slf4j.LoggerFactory
 
 /*
  * Note
@@ -17,29 +17,23 @@ import eu.ascens.unimore.robots.mason.interfaces.RobotVisu
  * 
  */ 
  
- /*
-  * problems:
-  * 
-  * 1) dès que y en a un qui voit une victime ils crient tous : moi moi moi je le vois
-  * et tout le monde se court après et forment une ronde :D
-  * 
-  * 2) quand ils se séparent, si ya 2 stream d'agents un peu opposé, ils se renforcent
-  * parce qu'ils vont que dans la direction inverse du plus...
-  * 
-  * 3) les agents ne font pas vraiment la diff entre là d'où ils viennent et là où ils vont
-  * il faudrait plus de mémoire pour qu'ils se déplacent en groupe plus vite
-  * 
-  * prez:
-
-milestones (fonctionalités : explorer, trouver, appeler les autres, retrouver maison et ramener)
-et pour chaque problèmes (non-fonctionnel : explorer en se séparant, trouver et ne pas s'aglutiner, retrouver maison de façon efficace, etc)
-
-détailler un peu plus les milestones et expliquer qu'on avance le dev jusqu'à en atteindre une et on se concentre sur les problèmes, puis on ocntinue-
-
-On documente la solution du problème, on en tire des conclusions
-  * 
-  */
-//@DisableStepCached
+  /*
+   * il y a des problemes de:
+   * -> outdated info qui se trimbale: quand on perd contacte et qu'il y a du monde, l'info tourne en rond
+   *   -> celui qui perd sait qu'il y a une victime dans cette direction, pourquoi il continue pas ?
+   *   -> on devrait continuer meme si on voit plus l'autre... peut-etre qu'on devrait utiliser l'info quand meme !
+   * 
+   * 3) les agents ne font pas vraiment la diff entre là d'où ils viennent et là où ils vont
+   * il faudrait plus de mémoire pour qu'ils se déplacent en groupe plus vite
+   *  -> ici l'idée serait qu'un agent est responsable d'un endroit qu'il voit
+   * et donc sur le temps, il pourrait évaluer sa criticité àa la baisse si pertinent
+   * 
+   * il faut une info supplémentaire pour choisir entre 2 trucs... peut-etre juste
+   * avec la crit qui varierai plus facilement? -> au niveau de l'origin évidemment
+   * ex: vict, personne à coté, qui y vont, etc
+   * ex: explo personne en face, derrière, etc
+   * 
+   */
 class BehaviourImpl extends ComposedBehaviour implements RobotVisu {
 	
 	val logger = LoggerFactory.getLogger("agent")
@@ -76,11 +70,11 @@ class BehaviourImpl extends ComposedBehaviour implements RobotVisu {
 	}
 	
 	override choice() {
-		parts.d.decisions.lastChoice
+		parts.ap.perceptions.lastChoice
 	}
 	
 	override visibleBots() {
-		parts.ap.perceptions.conesCoveredByVisibleRobots.map[value]
+		parts.ap.perceptions.visibleRobots.map[coord]
 	}
 	
 	override explorables() {
@@ -88,7 +82,7 @@ class BehaviourImpl extends ComposedBehaviour implements RobotVisu {
 	}
 	
 	override explorablesOnlyFromMe() {
-		parts.r.representations.explorableOnlyFromMe
+		parts.r.representations.responsibleSeen
 	}
 	
 	override explorablesFromOthers() {

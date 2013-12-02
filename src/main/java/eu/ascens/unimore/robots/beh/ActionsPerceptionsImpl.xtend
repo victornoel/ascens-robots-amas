@@ -1,17 +1,23 @@
 package eu.ascens.unimore.robots.beh
 
-import eu.ascens.unimore.robots.Constants
+import com.google.common.collect.EvictingQueue
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
 import eu.ascens.unimore.robots.beh.datatypes.ExplorableMessage
 import eu.ascens.unimore.robots.beh.interfaces.IActionsExtra
 import eu.ascens.unimore.robots.beh.interfaces.IPerceptionsExtra
+import eu.ascens.unimore.robots.mason.datatypes.RBEmitter
 import eu.ascens.unimore.robots.mason.datatypes.RelativeCoordinates
 import eu.ascens.unimore.xtend.macros.Step
 import eu.ascens.unimore.xtend.macros.StepCached
 import fj.data.List
+import java.util.Queue
+import org.eclipse.xtext.xbase.lib.Pair
 import org.slf4j.LoggerFactory
+import sim.util.Double2D
+import sim.util.MutableDouble2D
 
 import static extension eu.ascens.unimore.robots.Utils.*
+import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
 
 class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra, IPerceptionsExtra {
 
@@ -31,17 +37,52 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	override protected make_perceptions() {
 		this
 	}
-			
+	
+	override lastChoice() {
+		lastChoice
+	}
+	
+	var lastChoice = RelativeCoordinates.of(new Double2D(0,0))
+	
 	override broadcastExplorables(List<Explorable> explorables) {
-		requires.rbBroadcast.push(new ExplorableMessage(explorables, conesCoveredByVisibleRobots.toMap))
+		requires.rbBroadcast.push(
+			new ExplorableMessage(
+				explorables,
+				rbConesCoveredByVisibleRobots.toMap
+				//newHashMap
+			)
+		)
+	}
+	
+	// this is a kind of AVT but for 2D?
+	val Queue<Double2D> prevDirs = EvictingQueue.create(4)
+	
+	@StepCached
+	override previousDirection() {
+		val pd = new MutableDouble2D()
+		
+		var i = 1
+		for(d: prevDirs) {
+			pd.addIn(d.resize(i))
+			i = i+1
+		}
+		
+		RelativeCoordinates.of(new Double2D(pd))
+	}
+	
+	override goingBack(RelativeCoordinates dir) {
+		dir.dot(previousDirection) < 0
 	}
 	
 	override goTo(RelativeCoordinates to) {
 		
-		val move = to.computeDirectionWithAvoidance(provides.perceptions.wallsFromMe)
+		// TODO: smooth things using prevDirs? like not moving if it's useless
+		val move = to.computeDirectionWithAvoidance(wallsFromMe)
 		
 		logger.info("going to {} targetting {}.", move, to)
 		requires.move.setNextMove(move)
+		lastChoice = to
+		prevDirs.offer(to.value)
 	}
 	
 	override myId() {
@@ -52,13 +93,14 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	// empty the message box
 	@StepCached(forceEnable=true)
 	private def rbMessages() {
-		val res = List.iterableList(requires.RBMessages.pull)
-		logger.debug("rbMessages: {}", res)
-		res
+		List.iterableList(requires.RBMessages.pull)
+			=> [
+				logger.debug("rbMessages: {}", it)
+			]
 	}
 	
 	@StepCached
-	override wallsFromMe() {
+	private def wallsFromMe() {
 		sensorReadings
 			.filter[value]
 			.map[key]
@@ -66,48 +108,73 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 
 	@StepCached
 	override sensorReadings() {
-		val res = requires.see.sensorReadings
-		logger.info("sensorReadings: {}", res)
-		res
+		requires.see.sensorReadings
+			=> [
+				logger.info("sensorReadings: {}", it)
+			]
 	}
 	
 	@StepCached
 	override visibleRobots() {
-		val res = requires.see.RBVisibleRobots
-		logger.info("visibleRobots: {}", res)
-		res
+		requires.see.RBVisibleRobots
+			=> [
+				logger.info("visibleRobots: {}", it)
+			]
 	}
 	
 	@StepCached
 	override visibleVictims() {
 		requires.see.visibleVictims
+			=> [
+				logger.info("visibleVictims: {}", it)
+			]
+	}
+
+	@StepCached
+	override visionConesCoveredByVisibleRobots() {
+		visibleRobots.map[id -> coord.computeConeCoveredByBot(VISION_RANGE_SQUARED)]
 	}
 	
-	static val VISION_RANGE_SQUARED = Constants.VISION_RANGE*Constants.VISION_RANGE
-		
 	@StepCached
-	override conesCoveredByVisibleRobots() {
-		visibleRobots.map[id -> coord.value.computeConeCoveredByBot(VISION_RANGE_SQUARED)]
+	override rbConesCoveredByVisibleRobots() {
+		visibleRobots.map[id -> coord.computeConeCoveredByBot(RB_RANGE_SQUARED)]
 	}
 	
 	@StepCached
+	override escapeCrowdVector() {
+		visibleRobots.map[coord].computeCrowdVector
+	}
+	
+	var List<Pair<RBEmitter, ExplorableMessage>> pastMessages = List.nil
+	
+	// force because it changes pastMessages!
+	@StepCached(forceEnable=true)
 	override explorationMessages() {
+		
 		// I should have only one message from each robot TODO check
-		val res = rbMessages.filter[
+		val expl = rbMessages.filter[
 			val m = message
 			switch m {
 				ExplorableMessage case emitter.coord.value.lengthSq > 0: true
 				default: false
 			}
-		].map[
+		]
+		
+		val toRemove = newHashSet() => [s|
+			s += expl.map[emitter.id]
+			logger.info("got new messages from {}", s)
+		]
+		val toKeep = newHashSet() => [s|
+			s += visibleRobots.map[id]
+		]
+		
+		pastMessages = pastMessages.filter[m|
+			!toRemove.contains(m.key.id) && toKeep.contains(m.key.id) 
+		] + expl.map[
 			emitter -> (message as ExplorableMessage)
 		]
 		
-		if (logger.infoEnabled) {
-			logger.info("got messages from {}", res.map[key.id])
-		}
-		
-		res
+		pastMessages
 	}
 	
 }

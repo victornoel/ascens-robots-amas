@@ -10,7 +10,9 @@ import javax.swing.JFrame
 import sim.display.Controller
 import sim.display.Display2D
 import sim.display.GUIState
+import sim.engine.Schedule
 import sim.engine.SimState
+import sim.engine.Steppable
 import sim.field.continuous.Continuous2D
 import sim.field.grid.IntGrid2D
 import sim.portrayal.DrawInfo2D
@@ -25,7 +27,7 @@ import sim.util.gui.SimpleColorMap
 
 import static extension eu.ascens.unimore.robots.Utils.*
 
-abstract class AscensSimState<Bot extends MasonRobot<Bot>> extends SimState {
+abstract class AscensSimState extends SimState {
 
 	package val IntGrid2D maze
 	package var Continuous2D agents
@@ -35,7 +37,8 @@ abstract class AscensSimState<Bot extends MasonRobot<Bot>> extends SimState {
 	package val double speed = Constants.SPEED
 	package val double rbRange = Constants.RB_RANGE
 	
-	val List<Int2D> startingAreas = newArrayList()
+	val List<Int2D> availStartingAreas = newArrayList()
+	val List<Int2D> usedStartingAreas = newArrayList()
 	
 	new() throws IOException {
 		super(Constants.SEED)
@@ -47,7 +50,7 @@ abstract class AscensSimState<Bot extends MasonRobot<Bot>> extends SimState {
 		for(i: 0..<maze.width) {
 			for(j: 0..<maze.height) {
 				if (maze.get(i,j) == 2) {
-					startingAreas += new Int2D(i,j)
+					availStartingAreas += new Int2D(i,j)
 				}
 			}
 		}
@@ -58,7 +61,10 @@ abstract class AscensSimState<Bot extends MasonRobot<Bot>> extends SimState {
 	override start() {
 
 		super.start()
-
+		
+		availStartingAreas += usedStartingAreas
+		usedStartingAreas.clear
+		
 		agents = new Continuous2D(1, maze.width, maze.height)
 
 		populate()
@@ -101,8 +107,18 @@ abstract class AscensSimState<Bot extends MasonRobot<Bot>> extends SimState {
 		return false
 	}
 	
-	def randomStartingPosition() {
-		startingAreas.get(random.nextInt(startingAreas.size))
+	def add(Steppable r) {
+		if (!availStartingAreas.empty) {
+			val iPos = availStartingAreas.remove(random.nextInt(availStartingAreas.size))
+			usedStartingAreas += iPos
+			val pos = new Double2D(iPos.x+0.5, iPos.y+0.5)
+			agents.setObjectLocation(r, pos)
+			schedule.scheduleRepeating(Schedule.EPOCH, 0, r, 1)
+			pos
+		} else {
+			throw new NoStartingAreaAvailable
+		}
+		
 	}
 	
 	@Property boolean showSensorReadings = false
@@ -120,6 +136,8 @@ abstract class AscensSimState<Bot extends MasonRobot<Bot>> extends SimState {
 	@Property boolean showVisibleBotsAndVictims = false
 }
 
+class NoStartingAreaAvailable extends RuntimeException {}
+
 class AscensGUIState extends GUIState {
 
 	val FastValueGridPortrayal2D mazePortrayal = new FastValueGridPortrayal2D();
@@ -131,7 +149,7 @@ class AscensGUIState extends GUIState {
 	var Display2D display
 	var JFrame displayFrame
 
-	new(AscensSimState<?> state) {
+	new(AscensSimState state) {
 		super(state)
 	}
 	
@@ -140,7 +158,7 @@ class AscensGUIState extends GUIState {
 	}
 
 	def setupPortrayals() {
-		val state = (state as AscensSimState<?>)
+		val state = (state as AscensSimState)
 
 		// TODO
 		agentPortrayal.setField(state.agents)
@@ -171,7 +189,7 @@ class AscensGUIState extends GUIState {
 		super.init(controller)
 
 		// Make the Display2D.  We'll have it display stuff later
-		val s = state as AscensSimState<?>
+		val s = state as AscensSimState
 		display = new Display2D(s.maze.width * 8, s.maze.height * 8, this)
 
 		// register the frame so it appears in the "Display" list
@@ -209,9 +227,9 @@ class AscensGUIState extends GUIState {
 class BotPortrayal2D extends OvalPortrayal2D {
 	
 	val FieldPortrayal2D fieldPortrayal
-	val AscensSimState<?> state
+	val AscensSimState state
 	
-	new(FieldPortrayal2D fieldPortrayal, AscensSimState<?> state) {
+	new(FieldPortrayal2D fieldPortrayal, AscensSimState state) {
 		super(Color.DARK_GRAY, 1.0, true)
 		this.fieldPortrayal = fieldPortrayal
 		this.state = state
@@ -275,7 +293,7 @@ class BotPortrayal2D extends OvalPortrayal2D {
 						val spos = fieldPortrayal.getRelativeObjectPosition(sloc, fPos, info)
 						graphics.setPaint(Color.GREEN)
 						graphics.fillOval(spos.x as int, spos.y as int, w/2, h/2)
-						printLabel(c.criticality.toShortString, graphics, info, spos.x as int, spos.y as int)
+						printLabel(c.criticality.toShortString + "," + c.origin, graphics, info, spos.x as int, spos.y as int)
 					}
 					val sloc = object.visu.choice.value.add(rPos)
 					val spos = fieldPortrayal.getRelativeObjectPosition(sloc, fPos, info)
@@ -306,26 +324,6 @@ class BotPortrayal2D extends OvalPortrayal2D {
 						graphics.drawOval((spos.x - (w+2)/2) as int, (spos.y - (h+2)/2) as int, w+2, h+2)
 					}
 				}
-				
-//				if (info.selected) {
-//					for (nwc: object.surroundings.noWallCoords) {
-//						val nwp = fieldPortrayal.getRelativeObjectPosition(new Double2D(nwc), pos, info)
-//						graphics.setPaint(Color.GREEN)
-//						graphics.fillRect(nwp.x as int, nwp.y as int, w, h)
-//					}
-//					if (object.visu.lastChoice != null) {
-//						graphics.setPaint(Color.BLUE)
-//						val cloc = object.visu.lastChoice.value.resize(w*2).add(new Double2D(object.position))
-//						val cpos = fieldPortrayal.getRelativeObjectPosition(cloc, pos, info)
-//						graphics.fillOval(cpos.x as int, cpos.y as int, w/2, h/2)
-//					}
-//					if (object.visu.lastMove != null) {
-//						graphics.setPaint(Color.PINK)
-//						val cloc = object.visu.lastMove.value.add(new Double2D(object.position))
-//						val cpos = fieldPortrayal.getRelativeObjectPosition(cloc, pos, info)
-//						graphics.fillOval(cpos.x as int, cpos.y as int, w/2, h/2)
-//					}
-//				}
 			}
 		}
 		

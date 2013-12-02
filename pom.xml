@@ -94,8 +94,6 @@
 			<scope>system</scope>
 			<systemPath>/home/victor/code/rlforj.0.2.jar</systemPath>
 		</dependency>
-		<!-- dependency> <groupId>de.oehme.xtend.contrib</groupId> <artifactId>xtend-contrib-base</artifactId> 
-			<version>0.1.2-SNAPSHOT</version> </dependency -->
 		<dependency>
 			<groupId>eu.ascens.unimore</groupId>
 			<artifactId>xtend-macro</artifactId>
@@ -111,26 +109,6 @@
 		<repository>
 			<id>fr.irit.smac</id>
 			<url>http://www.irit.fr/~Victor.Noel/maven-repos/</url>
-		</repository>
-		<repository>
-			<id>oehme-releases</id>
-			<url>https://repository-oehme.forge.cloudbees.com/release</url>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
-		<repository>
-			<id>oehme-snapshots</id>
-			<url>https://repository-oehme.forge.cloudbees.com/snapshot</url>
-			<releases>
-				<enabled>false</enabled>
-			</releases>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
 		</repository>
 	</repositories>
 	<pluginRepositories>

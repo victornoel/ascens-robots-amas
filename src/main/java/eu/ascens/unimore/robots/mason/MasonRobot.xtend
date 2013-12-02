@@ -11,7 +11,6 @@ import org.eclipse.xtext.xbase.lib.Pair
 import org.slf4j.LoggerFactory
 import rlforj.los.ILosBoard
 import rlforj.los.PrecisePermissive
-import sim.engine.Schedule
 import sim.engine.SimState
 import sim.engine.Steppable
 import sim.util.Bag
@@ -20,22 +19,20 @@ import sim.util.Int2D
 import sim.util.MutableDouble2D
 
 import static extension eu.ascens.unimore.robots.Utils.*
-
 import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
 
-abstract class MasonRobot<Bot extends MasonRobot<Bot>> implements Steppable {
+abstract class MasonRobot implements Steppable {
 
 	val logger = LoggerFactory.getLogger("agent");
 
+	package val String id
 	package val MutableDouble2D position
-	package val AscensSimState<Bot> state
+	package val AscensSimState state
 
-	new(AscensSimState<Bot> state) {
+	new(AscensSimState state, String id) {
 		this.state = state
-		val pos = new Double2D(state.randomStartingPosition)
-		this.position = new MutableDouble2D(pos)
-		state.agents.setObjectLocation(this, pos)
-		state.schedule.scheduleRepeating(Schedule.EPOCH, 0, this, 1)
+		this.id = id
+		this.position = new MutableDouble2D(this.state.add(this))
 	}
 	
 	@Step
@@ -57,7 +54,7 @@ abstract class MasonRobot<Bot extends MasonRobot<Bot>> implements Steppable {
 	def getRadioReachableBots() {
 		// uses allObjects since the number of bot is limited and the distance is big
 		// will be more efficient than getNeighborsWithinDistance
-		List.iterableList(state.agents.allObjects as Iterable<Bot>).filter[b|
+		List.iterableList(state.agents.allObjects as Iterable<MasonRobot>).filter[b|
 			b !== this && b.position.distance(position) < state.radioRange
 		]
 		//getBotsAroundMe(state.radioRange).toList
@@ -75,7 +72,7 @@ abstract class MasonRobot<Bot extends MasonRobot<Bot>> implements Steppable {
 	def surroundings() {
 		val discrPos = new Int2D(position.x as int, position.y as int)
 		val dist = Math.max(state.rbRange, state.visionRange) as int
-		new Surroundings(this as Bot) => [s|
+		new Surroundings(this) => [s|
 			// shadow casting just sucks... this one is symmetric so it's better...
 			new PrecisePermissive().visitFieldOfView(s, discrPos.x, discrPos.y, dist)
 		]
@@ -94,12 +91,12 @@ abstract class MasonRobot<Bot extends MasonRobot<Bot>> implements Steppable {
 	}
 }
 
-class Surroundings<Bot extends MasonRobot<Bot>> implements ILosBoard {
+class Surroundings implements ILosBoard {
 	
-	val Bot me
+	val MasonRobot me
 	val Double2D position
 	
-	new(Bot me) {
+	new(MasonRobot me) {
 		this.me = me
 		this.position = new Double2D(me.position)
 	}
@@ -252,7 +249,7 @@ class Surroundings<Bot extends MasonRobot<Bot>> implements ILosBoard {
 	@StepCached(warnNoStep = false)
 	def getRBVisibleBotsWithCoordinate() {
 		foundBots.remove(me)
-		List.iterableList(foundBots as Iterable<Bot>).map[b|
+		List.iterableList(foundBots as Iterable<MasonRobot>).map[b|
 			b -> RelativeCoordinates.of(new Double2D(b.position).relativeVectorFor)
 		]
 	}

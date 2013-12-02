@@ -2,6 +2,7 @@ package eu.ascens.unimore.robots
 
 import eu.ascens.unimore.robots.beh.BehaviourImpl
 import eu.ascens.unimore.robots.mason.AscensMasonImpl
+import eu.ascens.unimore.robots.mason.NoStartingAreaAvailable
 import fr.irit.smac.may.lib.components.collections.ConcurrentQueueImpl
 
 class AscensRobotsImpl extends AscensRobots {
@@ -11,8 +12,14 @@ class AscensRobotsImpl extends AscensRobots {
 	}
 	
 	override protected make_populate() {[|
-		for(i: 1..Constants.NB_BOTS) {
-			newRobotAgent()
+		var nbCreated = 0
+		try {
+			for(i: 1..Constants.NB_BOTS) {
+				newRobotAgent()
+				nbCreated = i
+			}
+		} catch (NoStartingAreaAvailable e) {
+			println("no more starting area available, created "+nbCreated+" robots.")
 		}
 	]}
 	

@@ -235,6 +235,10 @@ import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensi
 		of(pc.toVector)
 	}
 	
+	def dot(RelativeCoordinates o) {
+		value.dot(o.value)
+	}
+	
 	def multiply(double s) {
 		of(value.multiply(s), cone)
 	}

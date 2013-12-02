@@ -7,7 +7,6 @@ import org.eclipse.xtext.xbase.lib.Pair;
 import org.slf4j.MDC;
 
 import sim.engine.SimState;
-import eu.ascens.unimore.robots.mason.AscensMasonImpl.RobotImpl.MyMasonRobot;
 import eu.ascens.unimore.robots.mason.datatypes.Message;
 import eu.ascens.unimore.robots.mason.datatypes.RBEmitter;
 import eu.ascens.unimore.robots.mason.datatypes.RBMessage;
@@ -22,14 +21,14 @@ import fr.irit.smac.may.lib.interfaces.Push;
 
 public class AscensMasonImpl extends AscensMason {
 
-	private final AscensSimState<MyMasonRobot> simState;
+	private final AscensSimState simState;
 
 	private final AtomicInteger nextId = new AtomicInteger();
 	
 	@SuppressWarnings("serial")
 	public AscensMasonImpl() {
 		try {
-			simState = new AscensSimState<MyMasonRobot>() {
+			simState = new AscensSimState() {
 				@Override
 				public void populate() {
 					requires().populateWorld().doIt();
@@ -54,15 +53,9 @@ public class AscensMasonImpl extends AscensMason {
 	
 	public class RobotImpl extends Robot {
 		
-		private final String id;
-		
 		private RelativeCoordinates nextMove = null;
 		
 		private MyMasonRobot bot;
-
-		public RobotImpl() {
-			this.id = "robot"+nextId.getAndIncrement();
-		}
 		
 		@Override
 		protected RobotMovements make_move() {
@@ -85,10 +78,10 @@ public class AscensMasonImpl extends AscensMason {
 				
 				@Override
 				public List<RBEmitter> getRBVisibleRobots() {
-					return bot.getRBVisibleBotsWithCoordinate().map(new F<Pair<MyMasonRobot,RelativeCoordinates>, RBEmitter>() {
+					return bot.getRBVisibleBotsWithCoordinate().map(new F<Pair<MasonRobot,RelativeCoordinates>, RBEmitter>() {
 						@Override
-						public RBEmitter f(Pair<MyMasonRobot, RelativeCoordinates> p) {
-							return new RBEmitter(p.getValue(), p.getKey().id());
+						public RBEmitter f(Pair<MasonRobot, RelativeCoordinates> p) {
+							return new RBEmitter(p.getValue(), p.getKey().id);
 						}
 					});
 				}
@@ -105,17 +98,17 @@ public class AscensMasonImpl extends AscensMason {
 			return new Pull<String>() {
 				@Override
 				public String pull() {
-					return id;
+					return bot.id;
 				}
 			};
 		}
 		
-		class MyMasonRobot extends MasonRobot<MyMasonRobot> {
+		class MyMasonRobot extends MasonRobot {
 			
 			private static final long serialVersionUID = 7654107358044750292L;
 
 			public MyMasonRobot() {
-				super(simState);
+				super(simState, ""+nextId.getAndIncrement());
 			}
 			
 			@Override
@@ -155,7 +148,6 @@ public class AscensMasonImpl extends AscensMason {
 		@Override
 		protected void start() {
 			super.start();
-			// TODO improve the positioning
 			this.bot = new MyMasonRobot();
 		}
 
@@ -164,8 +156,10 @@ public class AscensMasonImpl extends AscensMason {
 			return new Push<Message>() {
 				@Override
 				public void push(Message arg0) {
-					for(Pair<MyMasonRobot, RelativeCoordinates> p: bot.getRBVisibleBotsWithCoordinate()) {
-						p.getKey().pushMsg(new RBMessage(new RBEmitter(RelativeCoordinates.of(p.getValue().getValue().negate()), id), arg0));
+					for(Pair<MasonRobot, RelativeCoordinates> p: bot.getRBVisibleBotsWithCoordinate()) {
+						if (p.getKey() instanceof MyMasonRobot) {
+							((MyMasonRobot)p.getKey()).pushMsg(new RBMessage(new RBEmitter(RelativeCoordinates.of(p.getValue().getValue().negate()), bot.id), arg0));
+						}
 					}
 				}
 			};
@@ -176,8 +170,10 @@ public class AscensMasonImpl extends AscensMason {
 			return new Push<Message>() {
 				@Override
 				public void push(Message arg0) {
-					for(MyMasonRobot b: bot.getRadioReachableBots()) {
-						b.pushMsg(arg0);
+					for(MasonRobot b: bot.getRadioReachableBots()) {
+						if (b instanceof MyMasonRobot) {
+							((MyMasonRobot)b).pushMsg(arg0);
+						}
 					}
 				}
 			};
