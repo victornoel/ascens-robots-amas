@@ -4,7 +4,6 @@ import eu.ascens.unimore.robots.mason.datatypes.Message
 import eu.ascens.unimore.robots.mason.datatypes.RBEmitter
 import eu.ascens.unimore.robots.mason.datatypes.RelativeCoordinates
 import fj.data.List
-import java.util.Map
 
 import static extension eu.ascens.unimore.robots.Utils.*
 
@@ -18,6 +17,10 @@ import static extension eu.ascens.unimore.robots.Utils.*
 	
 	def via(RBEmitter via) {
 		new ExplorableWithSender(via.coord, criticality, distance+via.coord.value.length, origin, originTime, via.id)
+	}
+	
+	def translateVia(RBEmitter via) {
+		new ExplorableWithSender(coord, criticality, distance+via.coord.value.length, origin, originTime, via.id)
 	}
 	
 	def hasSender(String sender) {
@@ -49,6 +52,5 @@ import static extension eu.ascens.unimore.robots.Utils.*
 @Data class ExplorableMessage extends Message {
 	
 	val List<Explorable> worthExplorable
-	val Map<String, RelativeCoordinates> others
 	
 }

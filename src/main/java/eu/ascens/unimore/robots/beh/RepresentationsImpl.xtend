@@ -59,6 +59,7 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 	override explorableSeen() {
 		// only keep those where there is no wall
 		requires.perceptions.sensorReadings
+			// it is not a wall
 			.filter[!value]
 			.map[key.buildSeen]
 			=> [
@@ -73,57 +74,37 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 		// but we want the info from their actual position so uses data from conesCoveredByVisibleRobots
 		val eM = requires.perceptions.explorationMessages
 		val cones = requires.perceptions.visionConesCoveredByVisibleRobots.filter[p|eM.exists[key.id == p.key]]
-		requires.perceptions.sensorReadings
+		explorableSeen
 			.filter[
-				// it is not a wall
-				!value
 				// it is visible only from me
 				// i.e. this direction is not covered by others
-				&& !cones.exists[c|key.value.between(c.value.cone)]
-			].map[key.buildSeen]
+				!cones.exists[c|coord.value.between(c.value.cone)]
+			]
 			 => [
 				logger.info("responsibleSeen: {}", it)
 			]
 	}
 	
 	val Map<String, Integer> times = newHashMap
-	val Map<String, String> senders = newHashMap
 	
 	@StepCached
 	override explorableFromOthers() {
 		requires.perceptions.explorationMessages
-			.map[p|
-				// note: this vector is consistent with the position
-				// of the emitter when he sent them
-				// and also contains the rb cone covered at the time
-				val myConeFromHim = p.value.others.get(requires.perceptions.myId)
-				// only keep those not in the same direction as me from him
-				// this avoid getting back what we sent him for example
-				// and without me as sender -> isn't that the same?
-				// maybe not...
-				p.value.worthExplorable
-					.filter[
-						val t = times.get(origin)
-						//val s = senders.get(origin)
-						
-						(t == null || t <= originTime)
-						//&& (s == null || s != p.key.id)
-					].filter[
-						// if we are origin, either we still see it
-						// or it is an old explorable that should be forgotten
-						!hasOrigin(requires.perceptions.myId)
-						// if we are sender, then either we will see it
-						// or receive it again, or it is an old one
-						&& !hasSender(requires.perceptions.myId)
-						// remove those coming from my side and didn't see by himself
-						// in particular that must contain those sent from others
-						// since mine are ignored by "sender"
-						&& (myConeFromHim == null
-							|| !coord.value.between(myConeFromHim.cone)
-						)
-					].map[via(p.key)]
-			].flatten
+			.map[p|p.value.worthExplorable.map[e|e.via(p.key)]]
+			.flatten
 			.keepOnePerOrigin
+			.filter[
+				val t = times.get(origin)
+				//val s = senders.get(origin)
+				(t == null || t < originTime)
+				//&& (s == null || s != p.key.id)
+				// if we are origin, either we still see it
+				// or it is an old explorable that should be forgotten
+				&& !hasOrigin(requires.perceptions.myId)
+				// if we are sender, then either we will see it
+				// or receive it again, or it is an old one
+				&& !hasSender(requires.perceptions.myId)
+			]
 			.<Explorable>downcast
 			=> [
 				for(e: it) {

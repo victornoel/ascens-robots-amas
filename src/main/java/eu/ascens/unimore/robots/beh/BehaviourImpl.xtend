@@ -33,6 +33,14 @@ import org.slf4j.LoggerFactory
    * ex: vict, personne à coté, qui y vont, etc
    * ex: explo personne en face, derrière, etc
    * 
+   * 
+   * Jérémy: robot envoi (ou montre) direction, crit, distance de ce qu'il pense suivre
+   * (ou tout autre moyen d'avoir une idée si sa cible est derrière nous ou devant nous
+   * par rapport à lui) et on utilise ça pour savoir où aller (au lieu de le suivre).
+   * 
+   * Problème évitemment des autres : ça marche pas bien, par exemple dans maze3, en haut à gauche
+   * souvent on a 3 agents alignés, celui du milieu peut aller à droite, mais il y va pas
+   * car les 2 autres font justes deux vecteurs opposés qui s'annulent…
    */
 class BehaviourImpl extends ComposedBehaviour implements RobotVisu {
 	

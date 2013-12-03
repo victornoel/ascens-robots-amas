@@ -52,8 +52,6 @@ interface IPerceptions {
 	
 	def List<Pair<String, RelativeCoordinates>> visionConesCoveredByVisibleRobots()
 	
-	def List<Pair<String, RelativeCoordinates>> rbConesCoveredByVisibleRobots()
-	
 	def List<Pair<RBEmitter, ExplorableMessage>> explorationMessages()
 	
 	def List<Pair<RelativeCoordinates, Boolean>> sensorReadings()

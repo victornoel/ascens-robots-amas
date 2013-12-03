@@ -47,9 +47,7 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	override broadcastExplorables(List<Explorable> explorables) {
 		requires.rbBroadcast.push(
 			new ExplorableMessage(
-				explorables,
-				rbConesCoveredByVisibleRobots.toMap
-				//newHashMap
+				explorables
 			)
 		)
 	}
@@ -76,11 +74,13 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	
 	override goTo(RelativeCoordinates to) {
 		
-		// TODO: smooth things using prevDirs? like not moving if it's useless
-		val move = to.computeDirectionWithAvoidance(wallsFromMe)
-		
-		logger.info("going to {} targetting {}.", move, to)
-		requires.move.setNextMove(move)
+		if (to.value.lengthSq > 0) {
+			// TODO: smooth things using prevDirs? like not moving if it's useless
+			val move = to.computeDirectionWithAvoidance(wallsFromMe)
+			
+			logger.info("going to {} targetting {}.", move, to)
+			requires.move.setNextMove(move)
+		}
 		lastChoice = to
 		prevDirs.offer(to.value)
 	}
@@ -93,7 +93,7 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	// empty the message box
 	@StepCached(forceEnable=true)
 	private def rbMessages() {
-		List.iterableList(requires.RBMessages.pull)
+		requires.RBMessages.pull.toFJList
 			=> [
 				logger.debug("rbMessages: {}", it)
 			]
@@ -136,18 +136,15 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	}
 	
 	@StepCached
-	override rbConesCoveredByVisibleRobots() {
-		visibleRobots.map[id -> coord.computeConeCoveredByBot(RB_RANGE_SQUARED)]
-	}
-	
-	@StepCached
 	override escapeCrowdVector() {
 		visibleRobots.map[coord].computeCrowdVector
 	}
 	
 	var List<Pair<RBEmitter, ExplorableMessage>> pastMessages = List.nil
 	
-	// force because it changes pastMessages!
+	// force because it changes pastMessages
+	// and relies on rbMessages which is also force
+	// so can be called only once per turn
 	@StepCached(forceEnable=true)
 	override explorationMessages() {
 		
