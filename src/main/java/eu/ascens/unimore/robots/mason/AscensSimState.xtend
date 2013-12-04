@@ -25,7 +25,7 @@ import sim.util.Int2D
 import sim.util.TableLoader
 import sim.util.gui.SimpleColorMap
 
-import static extension eu.ascens.unimore.robots.Utils.*
+import static extension eu.ascens.unimore.robots.geometry.GeometryExtensions.*
 
 abstract class AscensSimState extends SimState {
 

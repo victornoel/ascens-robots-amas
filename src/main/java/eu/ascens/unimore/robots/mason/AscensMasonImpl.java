@@ -7,10 +7,10 @@ import org.eclipse.xtext.xbase.lib.Pair;
 import org.slf4j.MDC;
 
 import sim.engine.SimState;
+import eu.ascens.unimore.robots.geometry.RelativeCoordinates;
 import eu.ascens.unimore.robots.mason.datatypes.Message;
 import eu.ascens.unimore.robots.mason.datatypes.RBEmitter;
 import eu.ascens.unimore.robots.mason.datatypes.RBMessage;
-import eu.ascens.unimore.robots.mason.datatypes.RelativeCoordinates;
 import eu.ascens.unimore.robots.mason.interfaces.RobotMovements;
 import eu.ascens.unimore.robots.mason.interfaces.RobotPerceptions;
 import eu.ascens.unimore.robots.mason.interfaces.RobotVisu;
@@ -158,7 +158,7 @@ public class AscensMasonImpl extends AscensMason {
 				public void push(Message arg0) {
 					for(Pair<MasonRobot, RelativeCoordinates> p: bot.getRBVisibleBotsWithCoordinate()) {
 						if (p.getKey() instanceof MyMasonRobot) {
-							((MyMasonRobot)p.getKey()).pushMsg(new RBMessage(new RBEmitter(RelativeCoordinates.of(p.getValue().getValue().negate()), bot.id), arg0));
+							((MyMasonRobot)p.getKey()).pushMsg(new RBMessage(new RBEmitter(p.getValue().negate(), bot.id), arg0));
 						}
 					}
 				}

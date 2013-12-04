@@ -2,8 +2,7 @@ package eu.ascens.unimore.robots.mason
 
 import com.vividsolutions.jts.algorithm.Angle
 import eu.ascens.unimore.robots.Constants
-import eu.ascens.unimore.robots.mason.datatypes.RelativeCoordinates
-import eu.ascens.unimore.robots.mason.datatypes.SlopeComparator
+import eu.ascens.unimore.robots.geometry.RelativeCoordinates
 import eu.ascens.unimore.xtend.macros.Step
 import eu.ascens.unimore.xtend.macros.StepCached
 import fj.data.List
@@ -18,7 +17,8 @@ import sim.util.Double2D
 import sim.util.Int2D
 import sim.util.MutableDouble2D
 
-import static extension eu.ascens.unimore.robots.Utils.*
+import static extension eu.ascens.unimore.robots.geometry.GeometryExtensions.*
+
 import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
 
 abstract class MasonRobot implements Steppable {
@@ -40,7 +40,7 @@ abstract class MasonRobot implements Steppable {
 	}
 
 	def void applyMove(RelativeCoordinates to) {
-		val s = Math.min(state.speed, to.value.length)
+		val s = Math.min(state.speed, to.length)
 		val newLoc = new Double2D(new MutableDouble2D(to.value).resize(s).addIn(position))
 		if (state.isInMaze(newLoc) && !state.isWall(newLoc)) {
 			// TODO what if there is already an agent in it?
@@ -160,7 +160,7 @@ class Surroundings implements ILosBoard {
 			return List.single(tr.apply(h,h))
 		}
 		
-		val sorted = in.sort(SlopeComparator.ORD_D2D.comap([Pair<Double2D, B> p| p.key]))
+		val sorted = in.sort(ORD_D2D.comap([Pair<Double2D, B> p| p.key]))
 		
 		// this is mutable, careful!
 		var res = List.Buffer.empty
@@ -235,7 +235,7 @@ class Surroundings implements ILosBoard {
 				// the mean of the distances of the wall in this cone
 				ws.foldLeft([s,e|s+e.key.length+e.value.length], 0.0)/(ws.length*2)
 			}
-			d.multiply(l) -> !ws.empty
+			d*l -> !ws.empty
 		]
 	}
 	

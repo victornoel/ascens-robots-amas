@@ -49,7 +49,7 @@ class BehaviourImpl extends ComposedBehaviour implements RobotVisu {
 	// this prevent the bug with inner classes from appearing
 	// by populating the import section with the Component qname
 	def neverCalled() {
-		newComponent(null)
+		_newComponent(null,true)
 	}
 	
 	override protected make_d() {

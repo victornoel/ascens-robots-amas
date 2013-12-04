@@ -3,13 +3,12 @@ package eu.ascens.unimore.robots.beh
 import eu.ascens.unimore.robots.Constants
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
 import eu.ascens.unimore.robots.beh.interfaces.IRepresentationsExtra
-import eu.ascens.unimore.robots.mason.datatypes.RelativeCoordinates
+import eu.ascens.unimore.robots.geometry.RelativeCoordinates
 import eu.ascens.unimore.xtend.macros.Step
 import eu.ascens.unimore.xtend.macros.StepCached
-import java.util.Map
 import org.slf4j.LoggerFactory
 
-import static extension eu.ascens.unimore.robots.Utils.*
+import static extension eu.ascens.unimore.robots.beh.Utils.*
 import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
 
 class RepresentationsImpl extends Representations implements IRepresentationsExtra {
@@ -44,10 +43,13 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 	override responsibleVictims() {
 		explorableVictims
 			.filter[v|
-				// do not take care of it if there is another robot closer
-				val distToV = v.coord.value.lengthSq
+				// do not consider it if there is another robot closer
+				val distToV = v.coord.lengthSq
 				requires.perceptions.visibleRobots.forall[b|
-					b.coord.value.distanceSq(v.coord.value) >= distToV
+					val d = b.coord.distanceSq(v.coord)
+					d > distToV
+					// in case the distance is the same…
+					|| (d == distToV && requires.perceptions.myId > b.id)
 				]
 			] => [
 				logger.info("responsibleVictims: {}", it)
@@ -78,41 +80,26 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 			.filter[
 				// it is visible only from me
 				// i.e. this direction is not covered by others
-				!cones.exists[c|coord.value.between(c.value.cone)]
+				!cones.exists[c|coord.between(c.value)]
 			]
 			 => [
 				logger.info("responsibleSeen: {}", it)
 			]
 	}
 	
-	val Map<String, Integer> times = newHashMap
-	
 	@StepCached
 	override explorableFromOthers() {
 		requires.perceptions.explorationMessages
-			.map[p|p.value.worthExplorable.map[e|e.via(p.key)]]
-			.flatten
+			.map[p|p.value.map[e|
+					val r = e.translatedVia(p.key)
+					if (requires.perceptions.visibleWalls
+						.exists[w|r.coord.between(w)]
+					) e.via(p.key)
+					else r
+				]
+			].flatten
 			.keepOnePerOrigin
-			.filter[
-				val t = times.get(origin)
-				//val s = senders.get(origin)
-				(t == null || t < originTime)
-				//&& (s == null || s != p.key.id)
-				// if we are origin, either we still see it
-				// or it is an old explorable that should be forgotten
-				&& !hasOrigin(requires.perceptions.myId)
-				// if we are sender, then either we will see it
-				// or receive it again, or it is an old one
-				&& !hasSender(requires.perceptions.myId)
-			]
-			.<Explorable>downcast
 			=> [
-				for(e: it) {
-//					switch e {
-//						ExplorableWithSender: senders.put(e.origin, e.sender)
-//					}
-					times.put(e.origin, e.originTime)
-				}
 				logger.info("explorableFromOthers: {}", it)
 			]
 		/*
@@ -129,19 +116,20 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 		val explo = (
 			responsibleSeen
 			+ responsibleVictims
-			+ explorableFromOthers
+			+ explorableFromOthers.downcast
 		)
 		
 		// normalize them over the 24 directions
-		RelativeCoordinates.SENSORS_DIRECTIONS_CONES
-			.map[p|explo.filter[coord.value.between(p.cone)]]
-			.filter[!empty]
-			.map[
-				// TODO what if we skip things that have meaning for others?!
-				// for equivalent criticality of course...
-				maximum(explorableCriticalityOrd)
-			]
-			=> [
+//		RelativeCoordinates.SENSORS_DIRECTIONS_CONES
+//			.map[p|explo.filter[coord.value.between(p.cone)]]
+//			.filter[!empty]
+//			.map[
+//				maximum(explorableCriticalityOrd)
+//			]
+//			=> [
+//				logger.info("explorable: {}", it)
+//			]
+			explo => [
 				logger.info("explorable: {}", it)
 			]
 	}
@@ -151,9 +139,9 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 		// TODO maybe smooth it a little?
 		new Explorable(
 			coord,
-//			if (requires.perceptions.goingBack(coord))
-//				Constants.STARTING_EXPLORABLE_CRITICALITY/2.0
-//			else
+			if (requires.perceptions.goingBack(coord))
+				Constants.STARTING_EXPLORABLE_CRITICALITY/2.0
+			else
 			// we nee dsomething more intelligent here...
 				Constants.STARTING_EXPLORABLE_CRITICALITY,
 			0,

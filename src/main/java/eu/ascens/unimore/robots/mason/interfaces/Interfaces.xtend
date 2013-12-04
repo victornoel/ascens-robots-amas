@@ -1,8 +1,9 @@
 package eu.ascens.unimore.robots.mason.interfaces
 
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
+import eu.ascens.unimore.robots.beh.datatypes.ExplorableWithSender
+import eu.ascens.unimore.robots.geometry.RelativeCoordinates
 import eu.ascens.unimore.robots.mason.datatypes.RBEmitter
-import eu.ascens.unimore.robots.mason.datatypes.RelativeCoordinates
 import fj.data.List
 import org.eclipse.xtext.xbase.lib.Pair
 
@@ -33,5 +34,5 @@ interface RobotVisu {
 	
 	def Iterable<Explorable> explorablesOnlyFromMe()
 	
-	def Iterable<Explorable> explorablesFromOthers()
+	def Iterable<ExplorableWithSender> explorablesFromOthers()
 }

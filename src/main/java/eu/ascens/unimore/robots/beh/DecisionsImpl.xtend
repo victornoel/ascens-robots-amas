@@ -9,7 +9,7 @@ import fj.P2
 import fj.data.List
 import org.slf4j.LoggerFactory
 
-import static extension eu.ascens.unimore.robots.Utils.*
+import static extension eu.ascens.unimore.robots.beh.Utils.*
 import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
 
 class DecisionsImpl extends Decisions implements IDecisionsExtra {
@@ -26,25 +26,22 @@ class DecisionsImpl extends Decisions implements IDecisionsExtra {
 	
 	@Step
 	private def void step() {
-		
-		val choice = chooseWhereToGo
-		
-		if (choice == null) {
-			logger.info("nowhere to go")
-		} else {
-			requires.actions.goTo(choice)
-			// we send all of them and not only the most critical
-			// because ... why?
-			requires.actions.broadcastExplorables(requires.representations.explorables)
-		}
-	}
-	
-	private def chooseWhereToGo() {
 		val explorables = requires.representations.explorables
-		if (explorables.empty) null
-		else explorables
-				.keepEquivalentDirections
-				.chooseBetweenEquivalentDirections
+		
+		switch explorables {
+			case List.nil: {
+				logger.info("nowhere to go")
+			}
+			default: {
+				val es = explorables.keepEquivalentDirections
+				val choice = es.chooseBetweenEquivalentDirections
+				
+				requires.actions.goTo(choice.coord)
+				// we send all of them and not only the most critical
+				// because ... why?
+				requires.actions.broadcastExplorables(List.single(choice))
+			}
+		}
 	}
 	
 	private def keepEquivalentDirections(List<Explorable> in) {
@@ -62,7 +59,6 @@ class DecisionsImpl extends Decisions implements IDecisionsExtra {
 			.map[P.p(_1, _1.distanceToLast)]
 			.maximum(Ord.doubleOrd.comap(P2.__2))
 			._1
-			.coord
 	}
 	
 	// the bigger the closer to the previous direction

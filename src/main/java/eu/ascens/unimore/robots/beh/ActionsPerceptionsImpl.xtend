@@ -5,18 +5,19 @@ import eu.ascens.unimore.robots.beh.datatypes.Explorable
 import eu.ascens.unimore.robots.beh.datatypes.ExplorableMessage
 import eu.ascens.unimore.robots.beh.interfaces.IActionsExtra
 import eu.ascens.unimore.robots.beh.interfaces.IPerceptionsExtra
+import eu.ascens.unimore.robots.geometry.RelativeCoordinates
 import eu.ascens.unimore.robots.mason.datatypes.RBEmitter
-import eu.ascens.unimore.robots.mason.datatypes.RelativeCoordinates
 import eu.ascens.unimore.xtend.macros.Step
 import eu.ascens.unimore.xtend.macros.StepCached
 import fj.data.List
+import java.util.Map
 import java.util.Queue
 import org.eclipse.xtext.xbase.lib.Pair
 import org.slf4j.LoggerFactory
 import sim.util.Double2D
 import sim.util.MutableDouble2D
 
-import static extension eu.ascens.unimore.robots.Utils.*
+import static extension eu.ascens.unimore.robots.beh.Utils.*
 import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
 
 class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra, IPerceptionsExtra {
@@ -53,15 +54,27 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	}
 	
 	// this is a kind of AVT but for 2D?
-	val Queue<Double2D> prevDirs = EvictingQueue.create(4)
+	val Queue<RelativeCoordinates> prevDirs = EvictingQueue.create(4)
 	
+//	@StepCached
+//	override previousDirection() {
+//		var pd = RelativeCoordinates.of(new Double2D(0,0))
+//		
+//		var i = 1
+//		for(d: prevDirs) {
+//			pd = pd + d.resize(i)
+//			i = i+1
+//		}
+//		
+//		pd
+//	}
 	@StepCached
 	override previousDirection() {
 		val pd = new MutableDouble2D()
 		
 		var i = 1
 		for(d: prevDirs) {
-			pd.addIn(d.resize(i))
+			pd.addIn(d.value.resize(i))
 			i = i+1
 		}
 		
@@ -74,15 +87,15 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	
 	override goTo(RelativeCoordinates to) {
 		
-		if (to.value.lengthSq > 0) {
+		if (to.lengthSq > 0) {
 			// TODO: smooth things using prevDirs? like not moving if it's useless
-			val move = to.computeDirectionWithAvoidance(wallsFromMe)
+			val move = to.computeDirectionWithAvoidance(visibleWalls)
 			
 			logger.info("going to {} targetting {}.", move, to)
 			requires.move.setNextMove(move)
 		}
 		lastChoice = to
-		prevDirs.offer(to.value)
+		prevDirs.offer(to)
 	}
 	
 	override myId() {
@@ -100,7 +113,7 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	}
 	
 	@StepCached
-	private def wallsFromMe() {
+	override visibleWalls() {
 		sensorReadings
 			.filter[value]
 			.map[key]
@@ -140,7 +153,8 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 		visibleRobots.map[coord].computeCrowdVector
 	}
 	
-	var List<Pair<RBEmitter, ExplorableMessage>> pastMessages = List.nil
+	var List<Pair<RBEmitter, List<Explorable>>> pastMessages = List.nil
+	val Map<String, Integer> times = newHashMap
 	
 	// force because it changes pastMessages
 	// and relies on rbMessages which is also force
@@ -149,27 +163,44 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	override explorationMessages() {
 		
 		// I should have only one message from each robot TODO check
-		val expl = rbMessages.filter[
-			val m = message
-			switch m {
-				ExplorableMessage case emitter.coord.value.lengthSq > 0: true
-				default: false
+		val expl = rbMessages.map[rbM|
+			val m = rbM.message
+			rbM.emitter -> switch m {
+				ExplorableMessage case rbM.emitter.coord.lengthSq > 0: {
+					m.worthExplorable.filter[
+						val t = times.get(origin)
+						(t == null || t < originTime)
+						//&& (s == null || s != p.key.id)
+						// if we are origin, either we still see it
+						// or it is an old explorable that should be forgotten
+						&& !hasOrigin(myId)
+						// if we are sender, then either we will see it
+						// or receive it again, or it is an old one
+						&& !hasSender(myId)
+					]
+				}
+				default: List.nil
 			}
 		]
 		
+		// I update this info only with the new messages
+		for(e: expl.map[value].flatten) {
+//			senders.put(e.origin, e.sender)
+			times.put(e.origin, e.originTime)
+		}
+		
 		val toRemove = newHashSet() => [s|
-			s += expl.map[emitter.id]
+			s += expl.map[key.id]
 			logger.info("got new messages from {}", s)
 		]
+		
 		val toKeep = newHashSet() => [s|
 			s += visibleRobots.map[id]
 		]
 		
 		pastMessages = pastMessages.filter[m|
 			!toRemove.contains(m.key.id) && toKeep.contains(m.key.id) 
-		] + expl.map[
-			emitter -> (message as ExplorableMessage)
-		]
+		] + expl.filter[!value.empty]
 		
 		pastMessages
 	}
