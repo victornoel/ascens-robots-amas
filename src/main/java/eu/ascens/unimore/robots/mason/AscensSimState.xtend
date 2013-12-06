@@ -98,15 +98,6 @@ abstract class AscensSimState extends SimState {
 		maze.get(x, y) == 1
 	}
 	
-	def touches(Int2D a, Int2D b) {
-		for (i: -1..1) {
-			for (j: -1..1) {
-				if (a.equals(new Int2D(b.x+i,b.y+j))) return true
-			}
-		}
-		return false
-	}
-	
 	def add(Steppable r) {
 		if (!availStartingAreas.empty) {
 			val iPos = availStartingAreas.remove(random.nextInt(availStartingAreas.size))
@@ -255,6 +246,14 @@ class BotPortrayal2D extends OvalPortrayal2D {
 						graphics.setPaint(Color.RED)
 						graphics.fillRect(wp.x as int, wp.y as int, w, h)
 					}
+					for (wc: object.surroundings.wallCones) {
+						val sloc1 = wc.key.add(rPos)
+						val spos1 = fieldPortrayal.getRelativeObjectPosition(sloc1, fPos, info)
+						val sloc2 = wc.value.add(rPos)
+						val spos2 = fieldPortrayal.getRelativeObjectPosition(sloc2, fPos, info)
+						graphics.setPaint(Color.BLUE)
+						graphics.drawLine(spos1.x as int, spos1.y as int, spos2.x as int, spos2.y as int)
+					}
 				}
 				
 				if (state.showVisibleForAlls || (info.selected && state.showVisible)) {
@@ -268,7 +267,7 @@ class BotPortrayal2D extends OvalPortrayal2D {
 				if (state.showExplorableFromOthersForAll || (info.selected && state.showExplorableFromOthers)) {
 					for(c: object.visu.explorablesFromOthers) {
 						// get absolute position
-						val sloc = c.coord.value.add(rPos)
+						val sloc = c.coord.add(rPos)
 						val spos = fieldPortrayal.getRelativeObjectPosition(sloc, fPos, info)
 						graphics.setPaint(Color.GREEN)
 						graphics.fillRect(spos.x as int, spos.y as int, w/2, h/2)
@@ -279,7 +278,7 @@ class BotPortrayal2D extends OvalPortrayal2D {
 				if (state.showExplorableOnlyFromMeForAll || (info.selected && state.showExplorableOnlyFromMe)) {
 					for(c: object.visu.explorablesOnlyFromMe) {
 						// get absolute position
-						val sloc = c.coord.value.add(rPos)
+						val sloc = c.coord.add(rPos)
 						val spos = fieldPortrayal.getRelativeObjectPosition(sloc, fPos, info)
 						graphics.setPaint(Color.GREEN)
 						graphics.fillOval(spos.x as int, spos.y as int, w/2, h/2)
@@ -289,23 +288,27 @@ class BotPortrayal2D extends OvalPortrayal2D {
 				if (state.showExplorableForAll || (info.selected && state.showExplorable)) {
 					for(c: object.visu.explorables) {
 						// get absolute position
-						val sloc = c.coord.value.add(rPos)
+						val sloc = c.coord.add(rPos)
 						val spos = fieldPortrayal.getRelativeObjectPosition(sloc, fPos, info)
 						graphics.setPaint(Color.GREEN)
 						graphics.fillOval(spos.x as int, spos.y as int, w/2, h/2)
 						printLabel(c.criticality.toShortString + "," + c.origin, graphics, info, spos.x as int, spos.y as int)
 					}
-					val sloc = object.visu.choice.value.add(rPos)
+					val sloc = object.visu.choice.add(rPos)
 					val spos = fieldPortrayal.getRelativeObjectPosition(sloc, fPos, info)
 					graphics.setPaint(Color.CYAN)
 					graphics.fillOval(spos.x as int, spos.y as int, w/2, h/2)
+					val sloc2 = object.visu.move.add(rPos)
+					val spos2 = fieldPortrayal.getRelativeObjectPosition(sloc2, fPos, info)
+					graphics.setPaint(Color.MAGENTA)
+					graphics.fillOval(spos2.x as int, spos2.y as int, w/2, h/2)
 				}
 				
 				if (state.showSensorReadingsForAll || (info.selected && state.showSensorReadings)) {
 					for(p: object.sensorReadings) {
 						// get absolute position
-						val sloc = p.key.value.add(rPos)
-						if (!p.value) {
+						val sloc = p.dir.add(rPos)
+						if (!p.hasWall) {
 							graphics.setPaint(Color.MAGENTA)
 						} else {
 							graphics.setPaint(Color.PINK)
@@ -318,7 +321,7 @@ class BotPortrayal2D extends OvalPortrayal2D {
 				if (state.showVisibleBotsAndVictims && info.selected) {
 					val vis = object.surroundings.RBVisibleBotsWithCoordinate.map[value].append(object.surroundings.visibleVictims)
 					for(b: vis) {
-						val sloc = b.value.add(rPos)
+						val sloc = b.add(rPos)
 						val spos = fieldPortrayal.getRelativeObjectPosition(sloc, fPos, info)
 						graphics.setPaint(Color.BLUE)
 						graphics.drawOval((spos.x - (w+2)/2) as int, (spos.y - (h+2)/2) as int, w+2, h+2)

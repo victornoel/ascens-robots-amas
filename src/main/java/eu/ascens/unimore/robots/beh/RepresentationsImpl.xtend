@@ -3,13 +3,18 @@ package eu.ascens.unimore.robots.beh
 import eu.ascens.unimore.robots.Constants
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
 import eu.ascens.unimore.robots.beh.interfaces.IRepresentationsExtra
-import eu.ascens.unimore.robots.geometry.RelativeCoordinates
 import eu.ascens.unimore.xtend.macros.Step
 import eu.ascens.unimore.xtend.macros.StepCached
+import fj.Ord
+import fj.P
+import fj.P2
+import fj.data.List
 import org.slf4j.LoggerFactory
+import sim.util.Double2D
 
 import static extension eu.ascens.unimore.robots.beh.Utils.*
 import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
+import static extension eu.ascens.unimore.robots.geometry.GeometryExtensions.*
 
 class RepresentationsImpl extends Representations implements IRepresentationsExtra {
 	
@@ -23,11 +28,8 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 		this
 	}
 	
-	var int timestamp = 0
-	
 	@Step
 	def preStep() {
-		timestamp = timestamp+1
 	}
 	
 	@StepCached
@@ -60,10 +62,8 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 	@StepCached
 	override explorableSeen() {
 		// only keep those where there is no wall
-		requires.perceptions.sensorReadings
-			// it is not a wall
-			.filter[!value]
-			.map[key.buildSeen]
+		requires.perceptions.visibleFreeAreas
+			.map[dir.buildSeen]
 			=> [
 				logger.info("explorableSeen: {}", it)
 			]
@@ -74,7 +74,7 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 		// consider only those from explorationMessages because if not
 		// we have hole of vision when we didn't get some messages
 		// but we want the info from their actual position so uses data from conesCoveredByVisibleRobots
-		val eM = requires.perceptions.explorationMessages
+		val eM = requires.messaging.explorationMessages
 		val cones = requires.perceptions.visionConesCoveredByVisibleRobots.filter[p|eM.exists[key.id == p.key]]
 		explorableSeen
 			.filter[
@@ -89,75 +89,72 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 	
 	@StepCached
 	override explorableFromOthers() {
-		requires.perceptions.explorationMessages
-			.map[p|p.value.map[e|
+		requires.messaging.explorationMessages
+			.map[p|
+				p.value.map[e|
 					val r = e.translatedVia(p.key)
 					if (requires.perceptions.visibleWalls
-						.exists[w|r.coord.between(w)]
+						.exists[w|r.coord.between(w.cone)]
 					) e.via(p.key)
 					else r
-				]
-			].flatten
+				].maxEquivalentCriticalities
+				.chooseBetweenEquivalentDirections
+			]
 			.keepOnePerOrigin
 			=> [
 				logger.info("explorableFromOthers: {}", it)
 			]
-		/*
-		 * we did:
-		 * 1) remove things from me
-		 * 3) keep only one per origin/maxcrit for all based on distance
-		 * => we have one per origin, different crits
-		 */
+	}
+	private def chooseBetweenEquivalentDirections(List<Explorable> in) {
+		in
+			.map[e|P.p(e,e.distanceToCrowd)]
+			// use maximum in case they are all equal!
+//			.maximum(crowdOrd.comap(P2.__2))
+			.maximums(crowdEq.comap(P2.__2), crowdOrd.comap(P2.__2))
+			.map[_1]
+			.map[e|P.p(e, e.distanceToLast)]
+			.maximum(Ord.doubleOrd.comap(P2.__2))
+			._1
 	}
 	
+	// the bigger the closer to the previous direction
+	private def distanceToLast(Explorable e) {
+		requires.perceptions.previousDirection.dot(e.coord)
+	}
+	
+	// the bigger, the closer to the farthest from the crowd
+	private def distanceToCrowd(Explorable e) {
+		e.coord.dot(requires.perceptions.escapeCrowdVector)
+	}
 	@StepCached
 	override explorables() {
 		
-		val explo = (
-			responsibleSeen
+		(responsibleSeen
 			+ responsibleVictims
-			+ explorableFromOthers.downcast
-		)
-		
-		// normalize them over the 24 directions
-//		RelativeCoordinates.SENSORS_DIRECTIONS_CONES
-//			.map[p|explo.filter[coord.value.between(p.cone)]]
-//			.filter[!empty]
-//			.map[
-//				maximum(explorableCriticalityOrd)
-//			]
-//			=> [
-//				logger.info("explorable: {}", it)
-//			]
-			explo => [
+			+ explorableFromOthers
+		) => [
 				logger.info("explorable: {}", it)
 			]
 	}
 	
-	def buildSeen(RelativeCoordinates coord) {
+	def buildSeen(Double2D coord) {
 		// reduce criticality of visible place where I come from?
 		// TODO maybe smooth it a little?
-		new Explorable(
+		// we need something more intelligent here...
+		requires.messaging.newSeenExplorable(
 			coord,
-			if (requires.perceptions.goingBack(coord))
-				Constants.STARTING_EXPLORABLE_CRITICALITY/2.0
-			else
-			// we nee dsomething more intelligent here...
-				Constants.STARTING_EXPLORABLE_CRITICALITY,
-			0,
-			requires.perceptions.myId,
-			timestamp
+//			if (requires.perceptions.goingBack(coord))
+//				Constants.STARTING_EXPLORABLE_CRITICALITY/2.0
+//			else
+				Constants.STARTING_EXPLORABLE_CRITICALITY
 		)
 	}
 	
-	def buildVictim(RelativeCoordinates coord) {
+	def buildVictim(Double2D coord) {
 		// TODO reduce if there is a lot of people around?
-		new Explorable(
+		requires.messaging.newSeenExplorable(
 			coord,
-			Constants.STARTING_VICTIM_CRITICALITY,
-			0,
-			requires.perceptions.myId,
-			timestamp
+			Constants.STARTING_VICTIM_CRITICALITY
 		)
 	}
 }

@@ -1,12 +1,10 @@
 package eu.ascens.unimore.robots.mason
 
-import com.vividsolutions.jts.algorithm.Angle
 import eu.ascens.unimore.robots.Constants
-import eu.ascens.unimore.robots.geometry.RelativeCoordinates
+import eu.ascens.unimore.robots.mason.datatypes.SensorReading
 import eu.ascens.unimore.xtend.macros.Step
 import eu.ascens.unimore.xtend.macros.StepCached
 import fj.data.List
-import org.eclipse.xtext.xbase.lib.Pair
 import org.slf4j.LoggerFactory
 import rlforj.los.ILosBoard
 import rlforj.los.PrecisePermissive
@@ -18,7 +16,6 @@ import sim.util.Int2D
 import sim.util.MutableDouble2D
 
 import static extension eu.ascens.unimore.robots.geometry.GeometryExtensions.*
-
 import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
 
 abstract class MasonRobot implements Steppable {
@@ -39,11 +36,10 @@ abstract class MasonRobot implements Steppable {
 	override step(SimState state) {
 	}
 
-	def void applyMove(RelativeCoordinates to) {
+	def void applyMove(Double2D to) {
 		val s = Math.min(state.speed, to.length)
-		val newLoc = new Double2D(new MutableDouble2D(to.value).resize(s).addIn(position))
+		val newLoc = new Double2D(new MutableDouble2D(to).resize(s).addIn(position))
 		if (state.isInMaze(newLoc) && !state.isWall(newLoc)) {
-			// TODO what if there is already an agent in it?
 			position.setTo(newLoc)
 			state.agents.setObjectLocation(this, newLoc);
 		} else {
@@ -58,10 +54,6 @@ abstract class MasonRobot implements Steppable {
 			b !== this && b.position.distance(position) < state.radioRange
 		]
 		//getBotsAroundMe(state.radioRange).toList
-	}
-	
-	def getVisibleWalls() {
-		surroundings.wallCoords
 	}
 	
 	def getVisibleVictims() {
@@ -87,7 +79,7 @@ abstract class MasonRobot implements Steppable {
 	}
 
 	override toString() {
-		"@" + RelativeCoordinates.of(new Double2D(position))
+		"@" + new Double2D(position).toShortString
 	}
 }
 
@@ -142,92 +134,85 @@ class Surroundings implements ILosBoard {
 		}
 	}
 	
-	// this will gather pairs of Vectors that 
-	// satisfies f and that are next to each other in terms of angle
-	// in the counter-clockwise direction
-	// in particular it handles the special case of the last and the first
-	// when they are around the 0 angle
-	// for the special of one element, consider the cone around it (of arc ~= 1)
-	def <B,C> gathers(List<Pair<Double2D, B>> in, (Pair<Double2D, B>,Pair<Double2D, B>) => Boolean pred, (Pair<Double2D, B>,Pair<Double2D, B>) => C tr) {
-		
-		if (in.empty) {
-			return List.nil
-		}
-		
-		// length == 1
-		if (in.tail.empty) {
-			val h = in.head
-			return List.single(tr.apply(h,h))
-		}
-		
-		val sorted = in.sort(ORD_D2D.comap([Pair<Double2D, B> p| p.key]))
-		
-		// this is mutable, careful!
-		var res = List.Buffer.empty
-		var Pair<Double2D, B> prev = null
-		
-		// length == 2
-		val length2 = sorted.tail.tail.empty
-		if (length2) {
-			prev = sorted.tail.head
+	private def coneForWallFromMe(Int2D wall, Int2D meD) {
+//		// assumption is that blocks are 1m wide
+//		var ys = if (wall.x < meD.x) -1
+//				else if (wall.x > meD.x) 1
+//				else 0
+//		
+//		var xs = if (wall.y < meD.y) 1
+//				else if (wall.y > meD.y) -1
+//				else 0
+//		
+//		if (xs == 0 && ys == 0) {
+//			// can't happen
+//			throw new RuntimeException("impossible, bot would be inside a wall.")
+//		}
+
+		// correspond to the center of the wall from double2d bot position pov
+		val wx = wall.x + 0.5
+		val wy = wall.y + 0.5
+//		
+//		val from = new Double2D(wx - 0.5*xs, wy - 0.5*ys)
+//		val to = new Double2D(wx + 0.5*xs, wy + 0.5*ys)
+
+		if (wall.x < meD.x) {
+			if (wall.y < meD.y) {
+				// TODO relative!
+				new Double2D(wx - 0.5, wy + 0.5) -> new Double2D(wx + 0.5, wy - 0.5) 
+			} else if (wall.y > meD.y) {
+				new Double2D(wx + 0.5, wy + 0.5)-> new Double2D(wx - 0.5, wy - 0.5) 
+			} else {
+				new Double2D(wx + 0.5, wy + 0.5) -> new Double2D(wx + 0.5, wy - 0.5)
+			}
+		} else if (wall.x > meD.x) {
+			if (wall.y < meD.y) {
+				new Double2D(wx - 0.5, wy - 0.5) -> new Double2D(wx + 0.5, wy + 0.5)
+			} else if (wall.y > meD.y) {
+				new Double2D(wx + 0.5, wy - 0.5) -> new Double2D(wx - 0.5, wy + 0.5)
+			} else {
+				new Double2D(wx - 0.5, wy - 0.5)-> new Double2D(wx - 0.5, wy + 0.5) 
+			}
 		} else {
-			for (wc: sorted) {
-				if (prev != null && pred.apply(prev,wc)) {
-					res += tr.apply(prev,wc)
-				}
-				prev = wc
+			// these two are not covered by the previous implemention
+			if (wall.y < meD.y) {
+				new Double2D(wx - 0.5, wy + 0.5) -> new Double2D(wx + 0.5, wy + 0.5)
+			} else if (wall.y > meD.y) {
+				new Double2D(wx + 0.5, wy - 0.5)-> new Double2D(wx - 0.5, wy - 0.5) 
+			} else {
+				// can't happen!
+				throw new RuntimeException("impossible, bot would be inside a wall.")
 			}
 		}
 		
-		if (prev != null) {
-			// prev is the last
-			val h = sorted.head
-			if (pred.apply(prev,h)) {
-				val pa = prev.key.angle
-				val ca = h.key.angle
-				if (pa < 0 && pa > -Angle.PI_OVER_2 && ca >= 0 && ca < Angle.PI_OVER_2) {
-					res += tr.apply(prev,h)
-				} else if (length2) {
-					res += tr.apply(h,prev)
-				}
-			}
-		}
-		
-		res.toList
+//		from -> to
 	}
 	
-	private def relativeDiscretizedPosition(Int2D p) {
-		new Double2D(p).subtract(new Double2D(position.x as int, position.y as int))
+	@StepCached(warnNoStep = false)
+	def wallCones() {
+		val meD = me.state.agents.discretize(position)
+		wallCoords.map[coneForWallFromMe(meD)].map[key.relativeVectorFor -> value.relativeVectorFor]
 	}
 	
 	@StepCached(warnNoStep = false)
 	def getSensorReadings() {
 		
-		val dircones = RelativeCoordinates.SENSORS_DIRECTIONS_CONES
-		
 		// we compute the relative vector
 		// from a discretized version of the bot position
 		// in order to have position coherent with the positions of the walls
-		val wcs = wallCoords.map[it.relativeDiscretizedPosition -> it]
-
-		// build small cones 
-		val wcones = wcs.gathers([p1, p2|
-			me.state.touches(p1.value,p2.value)
-		], [p1,p2|
-			// TODO optimize that a bit, see behaviour or Utils…
-			val rotRight = new Double2D(p1.key.y, -p1.key.x).resize(1.0/2.0)
-			val rotLeft = new Double2D(-p2.key.y, p2.key.x).resize(1.0/2.0)
-			p1.key.add(rotRight) -> p2.key.add(rotLeft)
-		])
+		//val wcs = wallCoords.map[it.relativeDiscretizedPosition -> it]
 		
-		dircones.map[d|
-			val fromD = d.cone.key
-			val toD = d.cone.value
+		// build small cones 
+		val wcones = wallCones//.map[key.relativeVectorFor -> value.relativeVectorFor]
+		
+		SENSORS_DIRECTIONS_CONES.map[d|
+			val fromD = d.value.key
+			val toD = d.value.value
 			// TODO would be better if we had the cones which cover a space where there is no wall?
 			// instead of covering no wall at all?
 			val ws = wcones.filter[
 				fromD.between(it) || toD.between(it) // sides of d touch walls
-				|| it.key.between(d.cone) || it.value.between(d.cone) // exist walls inside d
+				|| it.key.between(d.value) || it.value.between(d.value) // exist walls inside d
 			]
 			val l = if (ws.empty) {
 				Constants.VISION_RANGE
@@ -235,14 +220,15 @@ class Surroundings implements ILosBoard {
 				// the mean of the distances of the wall in this cone
 				ws.foldLeft([s,e|s+e.key.length+e.value.length], 0.0)/(ws.length*2)
 			}
-			d*l -> !ws.empty
+			val dist = Math.min(Constants.VISION_RANGE, l)
+			new SensorReading(d.key*dist, d.value, !ws.empty)
 		]
 	}
 	
 	@StepCached(warnNoStep = false)
 	def getVisibleVictims() {
 		victims.map[b|
-			RelativeCoordinates.of(new Double2D(b).relativeVectorFor)
+			new Double2D(b).relativeVectorFor
 		]
 	}
 	
@@ -250,7 +236,7 @@ class Surroundings implements ILosBoard {
 	def getRBVisibleBotsWithCoordinate() {
 		foundBots.remove(me)
 		List.iterableList(foundBots as Iterable<MasonRobot>).map[b|
-			b -> RelativeCoordinates.of(new Double2D(b.position).relativeVectorFor)
+			b -> new Double2D(b.position).relativeVectorFor
 		]
 	}
 }

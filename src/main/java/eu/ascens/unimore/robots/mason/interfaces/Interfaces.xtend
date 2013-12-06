@@ -1,15 +1,14 @@
 package eu.ascens.unimore.robots.mason.interfaces
 
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
-import eu.ascens.unimore.robots.beh.datatypes.ExplorableWithSender
-import eu.ascens.unimore.robots.geometry.RelativeCoordinates
 import eu.ascens.unimore.robots.mason.datatypes.RBEmitter
+import eu.ascens.unimore.robots.mason.datatypes.SensorReading
 import fj.data.List
-import org.eclipse.xtext.xbase.lib.Pair
+import sim.util.Double2D
 
 interface RobotMovements {
 	
-	def void setNextMove(RelativeCoordinates m)
+	def void setNextMove(Double2D m)
 	
 }
 
@@ -18,21 +17,23 @@ interface RobotPerceptions {
 	def List<RBEmitter> getRBVisibleRobots()
 	
 	// bool is true if it is a wall
-	def List<Pair<RelativeCoordinates, Boolean>> getSensorReadings()
+	def List<SensorReading> getSensorReadings()
 	
-	def List<RelativeCoordinates> getVisibleVictims()
+	def List<Double2D> getVisibleVictims()
 	
 }
 
 interface RobotVisu {
 	
-	def RelativeCoordinates choice()
+	def Double2D choice()
 	
-	def Iterable<RelativeCoordinates> visibleBots()
+	def Double2D move()
+	
+	def Iterable<Double2D> visibleBots()
 	
 	def Iterable<Explorable> explorables()
 	
 	def Iterable<Explorable> explorablesOnlyFromMe()
 	
-	def Iterable<ExplorableWithSender> explorablesFromOthers()
+	def Iterable<Explorable> explorablesFromOthers()
 }

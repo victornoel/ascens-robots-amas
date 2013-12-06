@@ -10,6 +10,7 @@ import fj.data.List
 import org.slf4j.LoggerFactory
 
 import static extension eu.ascens.unimore.robots.beh.Utils.*
+import static extension eu.ascens.unimore.robots.geometry.GeometryExtensions.*
 import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
 
 class DecisionsImpl extends Decisions implements IDecisionsExtra {
@@ -33,30 +34,33 @@ class DecisionsImpl extends Decisions implements IDecisionsExtra {
 				logger.info("nowhere to go")
 			}
 			default: {
-				val es = explorables.keepEquivalentDirections
-				val choice = es.chooseBetweenEquivalentDirections
+				
+				// normalize them over the 36 directions
+				val explo = SENSORS_DIRECTIONS_CONES
+					.map[p|explorables.filter[coord.between(p.value)]]
+					.filter[notEmpty]
+					.map[
+						maxEquivalentCriticalities.chooseBetweenEquivalentDirections
+					]
+				
+				val choice = explo.maxEquivalentCriticalities.chooseBetweenEquivalentDirections
 				
 				requires.actions.goTo(choice.coord)
 				// we send all of them and not only the most critical
 				// because ... why?
-				requires.actions.broadcastExplorables(List.single(choice))
+				requires.actions.broadcastExplorables(explo)
 			}
 		}
 	}
 	
-	private def keepEquivalentDirections(List<Explorable> in) {
-		in.maxEquivalentCriticalities
-			=> [
-				logger.info("kept: {}.", it)
-			]
-	}
-	
 	private def chooseBetweenEquivalentDirections(List<Explorable> in) {
-		in.map[e|P.p(e,e.distanceToCrowd)]
+		in
+			.map[e|P.p(e,e.distanceToCrowd)]
 			// use maximum in case they are all equal!
-			//.maximum(crowdOrd.comap(P2.__2))
+//			.maximum(crowdOrd.comap(P2.__2))
 			.maximums(crowdEq.comap(P2.__2), crowdOrd.comap(P2.__2))
-			.map[P.p(_1, _1.distanceToLast)]
+			.map[_1]
+			.map[e|P.p(e, e.distanceToLast)]
 			.maximum(Ord.doubleOrd.comap(P2.__2))
 			._1
 	}

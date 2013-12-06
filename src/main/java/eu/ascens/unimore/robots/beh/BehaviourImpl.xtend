@@ -19,8 +19,7 @@ import org.slf4j.LoggerFactory
  
   /*
    * il y a des problemes de:
-   * -> outdated info qui se trimbale: quand on perd contacte et qu'il y a du monde, l'info tourne en rond
-   *   -> celui qui perd sait qu'il y a une victime dans cette direction, pourquoi il continue pas ?
+   *  -> celui qui perd sait qu'il y a une victime dans cette direction, pourquoi il continue pas ?
    *   -> on devrait continuer meme si on voit plus l'autre... peut-etre qu'on devrait utiliser l'info quand meme !
    * 
    * 3) les agents ne font pas vraiment la diff entre là d'où ils viennent et là où ils vont
@@ -32,11 +31,6 @@ import org.slf4j.LoggerFactory
    * avec la crit qui varierai plus facilement? -> au niveau de l'origin évidemment
    * ex: vict, personne à coté, qui y vont, etc
    * ex: explo personne en face, derrière, etc
-   * 
-   * 
-   * Jérémy: robot envoi (ou montre) direction, crit, distance de ce qu'il pense suivre
-   * (ou tout autre moyen d'avoir une idée si sa cible est derrière nous ou devant nous
-   * par rapport à lui) et on utilise ça pour savoir où aller (au lieu de le suivre).
    * 
    * Problème évitemment des autres : ça marche pas bien, par exemple dans maze3, en haut à gauche
    * souvent on a 3 agents alignés, celui du milieu peut aller à droite, mais il y va pas
@@ -64,6 +58,10 @@ class BehaviourImpl extends ComposedBehaviour implements RobotVisu {
 		new ActionsPerceptionsImpl
 	}
 	
+	override protected make_m() {
+		new MessagingImpl
+	}
+	
 	override protected make_visu() {
 		this
 	}
@@ -71,6 +69,7 @@ class BehaviourImpl extends ComposedBehaviour implements RobotVisu {
 	override protected make_step() {
 		[|
 			logger.info("\n\n-----------------------")
+			parts.m.preStep.doIt
 			parts.ap.preStep.doIt
 			parts.r.preStep.doIt
 			parts.d.step.doIt
@@ -79,6 +78,10 @@ class BehaviourImpl extends ComposedBehaviour implements RobotVisu {
 	
 	override choice() {
 		parts.ap.perceptions.lastChoice
+	}
+	
+	override move() {
+		parts.ap.perceptions.lastMove
 	}
 	
 	override visibleBots() {

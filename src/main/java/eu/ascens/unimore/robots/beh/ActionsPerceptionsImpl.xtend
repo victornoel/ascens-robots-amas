@@ -5,12 +5,12 @@ import eu.ascens.unimore.robots.beh.datatypes.Explorable
 import eu.ascens.unimore.robots.beh.datatypes.ExplorableMessage
 import eu.ascens.unimore.robots.beh.interfaces.IActionsExtra
 import eu.ascens.unimore.robots.beh.interfaces.IPerceptionsExtra
-import eu.ascens.unimore.robots.geometry.RelativeCoordinates
-import eu.ascens.unimore.robots.mason.datatypes.RBEmitter
 import eu.ascens.unimore.xtend.macros.Step
 import eu.ascens.unimore.xtend.macros.StepCached
+import fj.Ord
 import fj.data.List
-import java.util.Map
+import fj.data.Stream
+import fj.data.Zipper
 import java.util.Queue
 import org.eclipse.xtext.xbase.lib.Pair
 import org.slf4j.LoggerFactory
@@ -18,7 +18,8 @@ import sim.util.Double2D
 import sim.util.MutableDouble2D
 
 import static extension eu.ascens.unimore.robots.beh.Utils.*
-import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
+import static extension eu.ascens.unimore.robots.geometry.GeometryExtensions.*
+import eu.ascens.unimore.robots.mason.datatypes.SensorReading
 
 class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra, IPerceptionsExtra {
 
@@ -43,84 +44,135 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 		lastChoice
 	}
 	
-	var lastChoice = RelativeCoordinates.of(new Double2D(0,0))
+	override lastMove() {
+		lastMove
+	}
+	
+	var lastChoice = new Double2D(0,0)
+	var lastMove = new Double2D(0,0)
 	
 	override broadcastExplorables(List<Explorable> explorables) {
 		requires.rbBroadcast.push(
 			new ExplorableMessage(
-				explorables
+				explorables.map[requires.messaging.explorableWithSender(it)]
 			)
 		)
 	}
 	
 	// this is a kind of AVT but for 2D?
-	val Queue<RelativeCoordinates> prevDirs = EvictingQueue.create(4)
+	val Queue<Double2D> prevDirs = EvictingQueue.create(4)
 	
-//	@StepCached
-//	override previousDirection() {
-//		var pd = RelativeCoordinates.of(new Double2D(0,0))
-//		
-//		var i = 1
-//		for(d: prevDirs) {
-//			pd = pd + d.resize(i)
-//			i = i+1
-//		}
-//		
-//		pd
-//	}
 	@StepCached
 	override previousDirection() {
 		val pd = new MutableDouble2D()
 		
 		var i = 1
 		for(d: prevDirs) {
-			pd.addIn(d.value.resize(i))
+			pd.addIn(d.resize(i))
 			i = i+1
 		}
 		
-		RelativeCoordinates.of(new Double2D(pd))
+		new Double2D(pd)
 	}
 	
-	override goingBack(RelativeCoordinates dir) {
+	override goingBack(Double2D dir) {
 		dir.dot(previousDirection) < 0
 	}
 	
-	override goTo(RelativeCoordinates to) {
+	override goTo(Double2D to) {
 		
 		if (to.lengthSq > 0) {
 			// TODO: smooth things using prevDirs? like not moving if it's useless
-			val move = to.computeDirectionWithAvoidance(visibleWalls)
+			val move = to.computeDirectionWithAvoidance
 			
 			logger.info("going to {} targetting {}.", move, to)
-			requires.move.setNextMove(move)
+			requires.move.setNextMove(move.dir)
+			lastMove = move.dir
 		}
 		lastChoice = to
-		prevDirs.offer(to)
+		//prevDirs.offer(to)
+	}
+	
+	// taken from http://link.springer.com/chapter/10.1007%2F978-3-642-22907-7_7
+	private def computeDirectionWithAvoidance(Double2D to) {
+		
+		val sensorsReadingsWithLengthSq = sensorReadings.map[it -> it.dir.lengthSq]
+		// this is the best I can get
+		val maxSq = sensorsReadingsWithLengthSq.map[value].maximum(Ord.doubleOrd)-0.1
+		
+		val vision = Zipper.fromStream(Stream.iterableStream(sensorsReadingsWithLengthSq)).some
+		
+		val desiredDirection = vision.find[d|to.between(d.key.cone)].some
+		
+		var gothroughR = desiredDirection
+		var gothroughL = desiredDirection
+		
+		do {
+			if (gothroughR.focus.value >= maxSq) {
+				return gothroughR.chooseBest(maxSq, true)
+			} else if (gothroughL.focus.value >= maxSq) {
+				return gothroughL.chooseBest(maxSq, false)
+			}
+			gothroughR = gothroughR.cyclePrevious
+			gothroughL = gothroughL.cycleNext
+		} while ((gothroughR.focus != desiredDirection.focus)
+			&& (gothroughL.focus != desiredDirection.focus))
+		
+		return desiredDirection.focus.key
+	}
+	
+	private def chooseBest(Zipper<Pair<SensorReading, Double>> z, double maxSq, boolean inverse) {
+		val prev = z.cyclePrevious(inverse)
+		val prevprev = prev.cyclePrevious(inverse)
+		val next = z.cycleNext(inverse)
+		val nextnext = next.cycleNext(inverse)
+		if (prev.focus.value < 9 || prevprev.focus.value < 9) {
+			if (next.focus.value >= maxSq) {
+				if (nextnext.focus.value >= maxSq) {
+					return nextnext.focus.key
+				}
+				return next.focus.key
+			}
+		}
+		if (next.focus.value < 9 || nextnext.focus.value < 9) {
+			if (prev.focus.value >= maxSq) {
+				if (prevprev.focus.value >= maxSq) {
+					return prevprev.focus.key
+				}
+				return prev.focus.key
+			}
+		}
+		return z.focus.key
+	}
+	
+	def <A> cycleNext(Zipper<A> z, boolean inverse) {
+		if (inverse) z.cyclePrevious
+		else z.cycleNext
+	}
+	
+	def <A> cyclePrevious(Zipper<A> z, boolean inverse) {
+		if (inverse) z.cycleNext
+		else z.cyclePrevious
 	}
 	
 	override myId() {
 		requires.id.pull
 	}
 	
-	// must ABSOLUTELY be cached since requires.RBMessages.pull
-	// empty the message box
-	@StepCached(forceEnable=true)
-	private def rbMessages() {
-		requires.RBMessages.pull.toFJList
-			=> [
-				logger.debug("rbMessages: {}", it)
-			]
+	@StepCached
+	override visibleFreeAreas() {
+		sensorReadings
+			.filter[!hasWall]
 	}
 	
 	@StepCached
 	override visibleWalls() {
 		sensorReadings
-			.filter[value]
-			.map[key]
+			.filter[hasWall]
 	}
 
 	@StepCached
-	override sensorReadings() {
+	private def sensorReadings() {
 		requires.see.sensorReadings
 			=> [
 				logger.info("sensorReadings: {}", it)
@@ -152,57 +204,4 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	override escapeCrowdVector() {
 		visibleRobots.map[coord].computeCrowdVector
 	}
-	
-	var List<Pair<RBEmitter, List<Explorable>>> pastMessages = List.nil
-	val Map<String, Integer> times = newHashMap
-	
-	// force because it changes pastMessages
-	// and relies on rbMessages which is also force
-	// so can be called only once per turn
-	@StepCached(forceEnable=true)
-	override explorationMessages() {
-		
-		// I should have only one message from each robot TODO check
-		val expl = rbMessages.map[rbM|
-			val m = rbM.message
-			rbM.emitter -> switch m {
-				ExplorableMessage case rbM.emitter.coord.lengthSq > 0: {
-					m.worthExplorable.filter[
-						val t = times.get(origin)
-						(t == null || t < originTime)
-						//&& (s == null || s != p.key.id)
-						// if we are origin, either we still see it
-						// or it is an old explorable that should be forgotten
-						&& !hasOrigin(myId)
-						// if we are sender, then either we will see it
-						// or receive it again, or it is an old one
-						&& !hasSender(myId)
-					]
-				}
-				default: List.nil
-			}
-		]
-		
-		// I update this info only with the new messages
-		for(e: expl.map[value].flatten) {
-//			senders.put(e.origin, e.sender)
-			times.put(e.origin, e.originTime)
-		}
-		
-		val toRemove = newHashSet() => [s|
-			s += expl.map[key.id]
-			logger.info("got new messages from {}", s)
-		]
-		
-		val toKeep = newHashSet() => [s|
-			s += visibleRobots.map[id]
-		]
-		
-		pastMessages = pastMessages.filter[m|
-			!toRemove.contains(m.key.id) && toKeep.contains(m.key.id) 
-		] + expl.filter[!value.empty]
-		
-		pastMessages
-	}
-	
 }

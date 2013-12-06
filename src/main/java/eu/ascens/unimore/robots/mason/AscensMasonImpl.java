@@ -7,10 +7,11 @@ import org.eclipse.xtext.xbase.lib.Pair;
 import org.slf4j.MDC;
 
 import sim.engine.SimState;
-import eu.ascens.unimore.robots.geometry.RelativeCoordinates;
+import sim.util.Double2D;
 import eu.ascens.unimore.robots.mason.datatypes.Message;
 import eu.ascens.unimore.robots.mason.datatypes.RBEmitter;
 import eu.ascens.unimore.robots.mason.datatypes.RBMessage;
+import eu.ascens.unimore.robots.mason.datatypes.SensorReading;
 import eu.ascens.unimore.robots.mason.interfaces.RobotMovements;
 import eu.ascens.unimore.robots.mason.interfaces.RobotPerceptions;
 import eu.ascens.unimore.robots.mason.interfaces.RobotVisu;
@@ -53,7 +54,7 @@ public class AscensMasonImpl extends AscensMason {
 	
 	public class RobotImpl extends Robot {
 		
-		private RelativeCoordinates nextMove = null;
+		private Double2D nextMove = null;
 		
 		private MyMasonRobot bot;
 		
@@ -61,7 +62,7 @@ public class AscensMasonImpl extends AscensMason {
 		protected RobotMovements make_move() {
 			return new RobotMovements() {
 				@Override
-				public void setNextMove(RelativeCoordinates m) {
+				public void setNextMove(Double2D m) {
 					nextMove = m;
 				}
 			};
@@ -72,22 +73,22 @@ public class AscensMasonImpl extends AscensMason {
 			return new RobotPerceptions() {
 				
 				@Override
-				public List<Pair<RelativeCoordinates,Boolean>> getSensorReadings() {
+				public List<SensorReading> getSensorReadings() {
 					return bot.getSensorReadings();
 				}
 				
 				@Override
 				public List<RBEmitter> getRBVisibleRobots() {
-					return bot.getRBVisibleBotsWithCoordinate().map(new F<Pair<MasonRobot,RelativeCoordinates>, RBEmitter>() {
+					return bot.getRBVisibleBotsWithCoordinate().map(new F<Pair<MasonRobot,Double2D>, RBEmitter>() {
 						@Override
-						public RBEmitter f(Pair<MasonRobot, RelativeCoordinates> p) {
+						public RBEmitter f(Pair<MasonRobot, Double2D> p) {
 							return new RBEmitter(p.getValue(), p.getKey().id);
 						}
 					});
 				}
 				
 				@Override
-				public List<RelativeCoordinates> getVisibleVictims() {
+				public List<Double2D> getVisibleVictims() {
 					return bot.getVisibleVictims();
 				}
 			};
@@ -156,7 +157,7 @@ public class AscensMasonImpl extends AscensMason {
 			return new Push<Message>() {
 				@Override
 				public void push(Message arg0) {
-					for(Pair<MasonRobot, RelativeCoordinates> p: bot.getRBVisibleBotsWithCoordinate()) {
+					for(Pair<MasonRobot, Double2D> p: bot.getRBVisibleBotsWithCoordinate()) {
 						if (p.getKey() instanceof MyMasonRobot) {
 							((MyMasonRobot)p.getKey()).pushMsg(new RBMessage(new RBEmitter(p.getValue().negate(), bot.id), arg0));
 						}
