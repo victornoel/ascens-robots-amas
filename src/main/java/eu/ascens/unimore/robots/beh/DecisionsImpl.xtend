@@ -9,9 +9,11 @@ import fj.P2
 import fj.data.List
 import org.slf4j.LoggerFactory
 
+import static eu.ascens.unimore.robots.geometry.GeometryExtensions.*
+
 import static extension eu.ascens.unimore.robots.beh.Utils.*
-import static extension eu.ascens.unimore.robots.geometry.GeometryExtensions.*
 import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
+import static extension eu.ascens.unimore.xtend.extensions.MasonExtensions.*
 
 class DecisionsImpl extends Decisions implements IDecisionsExtra {
 

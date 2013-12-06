@@ -14,7 +14,7 @@ import sim.util.Double2D
 
 import static extension eu.ascens.unimore.robots.beh.Utils.*
 import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
-import static extension eu.ascens.unimore.robots.geometry.GeometryExtensions.*
+import static extension eu.ascens.unimore.xtend.extensions.MasonExtensions.*
 
 class RepresentationsImpl extends Representations implements IRepresentationsExtra {
 	

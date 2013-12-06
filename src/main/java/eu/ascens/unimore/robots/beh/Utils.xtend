@@ -12,19 +12,15 @@ import org.eclipse.xtext.xbase.lib.Pure
 import sim.util.Double2D
 import sim.util.MutableDouble2D
 
-import static extension eu.ascens.unimore.robots.geometry.GeometryExtensions.*
 import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
+import static extension eu.ascens.unimore.xtend.extensions.MasonExtensions.*
 
 class Utils {
-	
-	public static val VISION_RANGE_SQUARED = Constants.VISION_RANGE*Constants.VISION_RANGE
-	public static val RB_RANGE_SQUARED = Constants.RB_RANGE*Constants.RB_RANGE
-	public static val OBSTACLE_AVOID_RANGE_SQUARED = Constants.OBSTACLE_AVOID_TARGET_DISTANCE*Constants.OBSTACLE_AVOID_TARGET_DISTANCE
 	
 	public static val criticalityOrd = Ord.doubleOrd
 	public static val distanceOrd = Ord.doubleOrd
 	public static val criticalityEq = Equal.equal [double a|[double b|
-		Math.abs(a - b) <= 0.01
+		Math.abs(a - b) <= Constants.CRITICALITY_PRECISION
 	]]
 	public static val originEq = Equal.stringEqual
 	public static val sender = Equal.stringEqual
@@ -81,19 +77,6 @@ class Utils {
 	}
 	
 	// inspired from http://buildnewgames.com/vector-field-collision-avoidance/
-//	@Pure
-//	static def computeDirectionWithAvoidance(RelativeCoordinates target, Iterable<RelativeCoordinates> obstacles) {
-//		val v = new MutableDouble2D(target.value.resize(Constants.OBSTACLE_AVOID_TARGET_DISTANCE))
-//		for(o: obstacles) {
-//			val lsq = o.value.lengthSq
-//			if (lsq < OBSTACLE_AVOID_RANGE_SQUARED) {
-//				v.subtractIn(o.value.resize(1.0/lsq))
-//			}
-//		}
-//		RelativeCoordinates.of(new Double2D(v))
-//	}
-	
-	// inspired from http://buildnewgames.com/vector-field-collision-avoidance/
 	@Pure
 	static def computeCrowdVector(Iterable<Double2D> bots) {
 		val v = new MutableDouble2D(0,0)
@@ -120,9 +103,9 @@ class Utils {
 		} else {
 			0.0
 		}
-		val cL = c.length
+		val m = l/c.length
 		// from http://stackoverflow.com/a/3349134
-		val rotRight = new Double2D((l*c.y)/cL, -(l*c.x)/cL)
+		val rotRight = new Double2D(c.y*m, -c.x*m)
 		val start = half.add(rotRight) // compute start of its covered area for us
 		val end = half.subtract(rotRight) // compute start of its covered area for us
 		start -> end

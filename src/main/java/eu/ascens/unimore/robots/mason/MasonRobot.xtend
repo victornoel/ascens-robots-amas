@@ -17,6 +17,7 @@ import sim.util.MutableDouble2D
 
 import static extension eu.ascens.unimore.robots.geometry.GeometryExtensions.*
 import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
+import static extension eu.ascens.unimore.xtend.extensions.MasonExtensions.*
 
 abstract class MasonRobot implements Steppable {
 
@@ -180,12 +181,9 @@ class Surroundings implements ILosBoard {
 	def getSensorReadings() {
 		
 		SENSORS_DIRECTIONS_CONES.map[d|
-			// TODO would be better if we had the cones which cover a space where there is no wall?
-			// instead of covering no wall at all?
-			val ws = wallCones.filter[
-				d.value.key.between(it) || d.value.value.between(it) // sides of d touch walls
-				|| it.key.between(d.value) || it.value.between(d.value) // exist walls inside d
-			]
+			// this could miss some walls being between two of the directions
+			// but when we get closer we would see it anyway
+			val ws = wallCones.filter[d.key.between(it)]
 			val l = if (ws.empty) {
 				Constants.VISION_RANGE
 			} else {

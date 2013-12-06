@@ -6,6 +6,7 @@ import fj.data.List
 import sim.util.Double2D
 
 import static extension eu.ascens.unimore.robots.geometry.GeometryExtensions.*
+import static extension eu.ascens.unimore.xtend.extensions.MasonExtensions.*
 
 @Data class Explorable {
 	

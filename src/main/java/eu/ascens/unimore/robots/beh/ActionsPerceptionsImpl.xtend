@@ -1,10 +1,12 @@
 package eu.ascens.unimore.robots.beh
 
 import com.google.common.collect.EvictingQueue
+import eu.ascens.unimore.robots.Constants
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
 import eu.ascens.unimore.robots.beh.datatypes.ExplorableMessage
 import eu.ascens.unimore.robots.beh.interfaces.IActionsExtra
 import eu.ascens.unimore.robots.beh.interfaces.IPerceptionsExtra
+import eu.ascens.unimore.robots.mason.datatypes.SensorReading
 import eu.ascens.unimore.xtend.macros.Step
 import eu.ascens.unimore.xtend.macros.StepCached
 import fj.Ord
@@ -18,8 +20,7 @@ import sim.util.Double2D
 import sim.util.MutableDouble2D
 
 import static extension eu.ascens.unimore.robots.beh.Utils.*
-import static extension eu.ascens.unimore.robots.geometry.GeometryExtensions.*
-import eu.ascens.unimore.robots.mason.datatypes.SensorReading
+import static extension eu.ascens.unimore.xtend.extensions.MasonExtensions.*
 
 class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra, IPerceptionsExtra {
 
@@ -126,7 +127,7 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 		val prevprev = prev.cyclePrevious(inverse)
 		val next = z.cycleNext(inverse)
 		val nextnext = next.cycleNext(inverse)
-		if (prev.focus.value < 9 || prevprev.focus.value < 9) {
+		if (prev.focus.value < Constants.AVOID_VERY_CLOSE_WALL_DISTANCE_SQUARED || prevprev.focus.value < Constants.AVOID_VERY_CLOSE_WALL_DISTANCE_SQUARED) {
 			if (next.focus.value >= maxSq) {
 				if (nextnext.focus.value >= maxSq) {
 					return nextnext.focus.key
@@ -134,7 +135,7 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 				return next.focus.key
 			}
 		}
-		if (next.focus.value < 9 || nextnext.focus.value < 9) {
+		if (next.focus.value < Constants.AVOID_VERY_CLOSE_WALL_DISTANCE_SQUARED || nextnext.focus.value < Constants.AVOID_VERY_CLOSE_WALL_DISTANCE_SQUARED) {
 			if (prev.focus.value >= maxSq) {
 				if (prevprev.focus.value >= maxSq) {
 					return prevprev.focus.key
@@ -174,30 +175,24 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	@StepCached
 	private def sensorReadings() {
 		requires.see.sensorReadings
-			=> [
-				logger.info("sensorReadings: {}", it)
-			]
+			=> [logger.info("sensorReadings: {}", it)]
 	}
 	
 	@StepCached
 	override visibleRobots() {
 		requires.see.RBVisibleRobots
-			=> [
-				logger.info("visibleRobots: {}", it)
-			]
+			=> [logger.info("visibleRobots: {}", it)]
 	}
 	
 	@StepCached
 	override visibleVictims() {
 		requires.see.visibleVictims
-			=> [
-				logger.info("visibleVictims: {}", it)
-			]
+			=> [logger.info("visibleVictims: {}", it)]
 	}
 
 	@StepCached
 	override visionConesCoveredByVisibleRobots() {
-		visibleRobots.map[id -> coord.computeConeCoveredByBot(VISION_RANGE_SQUARED)]
+		visibleRobots.map[id -> coord.computeConeCoveredByBot(Constants.VISION_RANGE_SQUARED)]
 	}
 	
 	@StepCached
