@@ -23,8 +23,8 @@ class GeometryExtensions {
 	
 	public static val SENSORS_DIRECTIONS_CONES =
 		Radiangle.buildCones(Constants.NB_WALL_SENSORS).map[
-			val cone = RelativeCoordinates.of(it.key).value -> RelativeCoordinates.of(it.value).value
-			RelativeCoordinates.of(cone).value -> cone
+			val cone = it.key.toNormalizedVector -> it.value.toNormalizedVector
+			cone.middleAngledVector -> cone
 		].sort(ORD_D2D.comap[Pair<Double2D, Pair<Double2D, Double2D>> it|key]) // sort evaluates
 	
 	@Pure
@@ -53,18 +53,18 @@ class GeometryExtensions {
 		} else if (d > 0 && w == 0) {
 			from
 		} else {
-			// dot sign gives us the correct direction
-			from.add(to).multiply(w)
+			// dot (wedge??) sign gives us the correct direction
+			(from+to)*w
 		}
 		v.normalize
 	}
 	
-	/*
-    	> 0 if b is clockwise from a
-    	< 0 if a is clockwise from b
-    	0 if a and b are collinear
+	/**
+	 * from https://github.com/mikolalysenko/compare-slope/blob/master/slope.js
+	 * > 0 if b is clockwise from a
+	 * < 0 if a is clockwise from b
+	 * 0 if a and b are collinear
 	 */
-	// from https://github.com/mikolalysenko/compare-slope/blob/master/slope.js
 	@Pure
 	static def compare(Double2D a, Double2D b) {
 		val d = quadrant(a) - quadrant(b)
@@ -133,10 +133,10 @@ class GeometryExtensions {
 		// 1) from is before to in counter clockwise and 2) to is before from
 		if (from.beforeIncluding(to)) {
 			// -Pi ------ F ********** T ------- Pi
-			what.afterIncluding(from) && what.beforeIncluding(to)
+			what.afterStrict(from) && what.beforeIncluding(to)
 		} else {
 			// -Pi ******* T ---------- F ******* Pi
-			what.beforeIncluding(to) || what.afterIncluding(from)
+			what.beforeIncluding(to) || what.afterStrict(from)
 		}
 	}
 	

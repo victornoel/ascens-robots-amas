@@ -232,7 +232,7 @@ class BotPortrayal2D extends OvalPortrayal2D {
 				val w = info.draw.width as int
 				val h = info.draw.height as int
 				val fPos = fieldPortrayal.getObjectLocation(object, info.gui) as Double2D
-				val rPos = new Double2D(object.position)
+				val rPos = object.position
 				
 				if (info.selected) {
 					this.paint = Color.MAGENTA

@@ -3,7 +3,6 @@ package eu.ascens.unimore.robots.geometry
 import com.vividsolutions.jts.algorithm.Angle
 import fj.data.List
 import org.eclipse.xtext.xbase.lib.Pair
-import org.eclipse.xtext.xbase.lib.Pure
 import sim.util.Double2D
 
 import static extension eu.ascens.unimore.robots.geometry.GeometryExtensions.*
@@ -94,7 +93,7 @@ package class Radiangle {
 	
 	// includes to but not from
 	def between(double from, double to) {
-		if (from < to) {
+		if (from <= to) {
 			from < value && value <= to
 		} else {
 			value <= to || from < value
@@ -105,40 +104,4 @@ package class Radiangle {
 		"Rad["+value.toShortString+"]"
 	}
 	
-}
-
-package class RelativeCoordinates {
-	
-	@Property val Double2D value
-	val Pair<Double2D,Double2D> cone
-	
-	private new(Double2D value, Pair<Double2D,Double2D> cone) {
-		this._value = value
-		this.cone = cone
-	}
-	
-	@Pure
-	static def of(Double2D vector, Pair<Double2D,Double2D> cone) {
-		return new RelativeCoordinates(vector, cone)
-	}
-	
-	@Pure
-	static def of(Pair<Double2D,Double2D> cone) {
-		return new RelativeCoordinates(cone.middleAngledVector, cone)
-	}
-	
-	@Pure
-	static def of(Radiangle rad) {
-		of(rad.toNormalizedVector)
-	}
-	
-	@Pure
-	static def of(Double2D vector) {
-		return of(vector, null)
-	}
-	
-	@Pure
-	override toString() {
-		"Rel["+value.x.toShortString+","+value.y.toShortString+"]"
-	}
 }

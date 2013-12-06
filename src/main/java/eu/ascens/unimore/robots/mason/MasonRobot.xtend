@@ -23,13 +23,13 @@ abstract class MasonRobot implements Steppable {
 	val logger = LoggerFactory.getLogger("agent");
 
 	package val String id
-	package val MutableDouble2D position
+	package var Double2D position
 	package val AscensSimState state
 
 	new(AscensSimState state, String id) {
 		this.state = state
 		this.id = id
-		this.position = new MutableDouble2D(this.state.add(this))
+		this.position = this.state.add(this)
 	}
 	
 	@Step
@@ -40,7 +40,7 @@ abstract class MasonRobot implements Steppable {
 		val s = Math.min(state.speed, to.length)
 		val newLoc = new Double2D(new MutableDouble2D(to).resize(s).addIn(position))
 		if (state.isInMaze(newLoc) && !state.isWall(newLoc)) {
-			position.setTo(newLoc)
+			position = newLoc
 			state.agents.setObjectLocation(this, newLoc);
 		} else {
 			logger.error("tried to go into a wall: from {} to {}.",position,newLoc)
@@ -53,7 +53,6 @@ abstract class MasonRobot implements Steppable {
 		List.iterableList(state.agents.allObjects as Iterable<MasonRobot>).filter[b|
 			b !== this && b.position.distance(position) < state.radioRange
 		]
-		//getBotsAroundMe(state.radioRange).toList
 	}
 	
 	def getVisibleVictims() {
@@ -62,7 +61,7 @@ abstract class MasonRobot implements Steppable {
 	
 	@StepCached
 	def surroundings() {
-		val discrPos = new Int2D(position.x as int, position.y as int)
+		val discrPos = state.agents.discretize(position)
 		val dist = Math.max(state.rbRange, state.visionRange) as int
 		new Surroundings(this) => [s|
 			// shadow casting just sucks... this one is symmetric so it's better...
@@ -79,18 +78,16 @@ abstract class MasonRobot implements Steppable {
 	}
 
 	override toString() {
-		"@" + new Double2D(position).toShortString
+		"@" + position.toShortString
 	}
 }
 
 class Surroundings implements ILosBoard {
 	
 	val MasonRobot me
-	val Double2D position
 	
 	new(MasonRobot me) {
 		this.me = me
-		this.position = new Double2D(me.position)
 	}
 	
 	override contains(int x, int y) {
@@ -102,7 +99,11 @@ class Surroundings implements ILosBoard {
 	}
 	
 	def getRelativeVectorFor(Double2D p) {
-		p.subtract(position);
+		p - me.position
+	}
+	
+	def getRelativeVectorFor(Int2D p) {
+		new Double2D(p.x+0.5, p.y+0.5).getRelativeVectorFor
 	}
 	
 	val foundBots = new Bag
@@ -113,7 +114,7 @@ class Surroundings implements ILosBoard {
 	override visit(int x, int y) {
 		val ob = isObstacle(x, y)
 		val pos = new Int2D(x,y)
-		val dist = position.distance(pos)
+		val dist = me.position.distance(pos)
 		
 		if (!ob && dist < me.state.rbRange) {
 			val r = me.state.agents.getObjectsAtDiscretizedLocation(pos)
@@ -135,30 +136,12 @@ class Surroundings implements ILosBoard {
 	}
 	
 	private def coneForWallFromMe(Int2D wall, Int2D meD) {
-//		// assumption is that blocks are 1m wide
-//		var ys = if (wall.x < meD.x) -1
-//				else if (wall.x > meD.x) 1
-//				else 0
-//		
-//		var xs = if (wall.y < meD.y) 1
-//				else if (wall.y > meD.y) -1
-//				else 0
-//		
-//		if (xs == 0 && ys == 0) {
-//			// can't happen
-//			throw new RuntimeException("impossible, bot would be inside a wall.")
-//		}
-
 		// correspond to the center of the wall from double2d bot position pov
 		val wx = wall.x + 0.5
 		val wy = wall.y + 0.5
-//		
-//		val from = new Double2D(wx - 0.5*xs, wy - 0.5*ys)
-//		val to = new Double2D(wx + 0.5*xs, wy + 0.5*ys)
 
 		if (wall.x < meD.x) {
 			if (wall.y < meD.y) {
-				// TODO relative!
 				new Double2D(wx - 0.5, wy + 0.5) -> new Double2D(wx + 0.5, wy - 0.5) 
 			} else if (wall.y > meD.y) {
 				new Double2D(wx + 0.5, wy + 0.5)-> new Double2D(wx - 0.5, wy - 0.5) 
@@ -174,44 +157,33 @@ class Surroundings implements ILosBoard {
 				new Double2D(wx - 0.5, wy - 0.5)-> new Double2D(wx - 0.5, wy + 0.5) 
 			}
 		} else {
-			// these two are not covered by the previous implemention
 			if (wall.y < meD.y) {
 				new Double2D(wx - 0.5, wy + 0.5) -> new Double2D(wx + 0.5, wy + 0.5)
 			} else if (wall.y > meD.y) {
 				new Double2D(wx + 0.5, wy - 0.5)-> new Double2D(wx - 0.5, wy - 0.5) 
 			} else {
-				// can't happen!
 				throw new RuntimeException("impossible, bot would be inside a wall.")
 			}
 		}
-		
-//		from -> to
 	}
 	
 	@StepCached(warnNoStep = false)
 	def wallCones() {
-		val meD = me.state.agents.discretize(position)
-		wallCoords.map[coneForWallFromMe(meD)].map[key.relativeVectorFor -> value.relativeVectorFor]
+		val meD = me.state.agents.discretize(me.position)
+		wallCoords.map[
+			val r = coneForWallFromMe(meD)
+			r.key.relativeVectorFor -> r.value.relativeVectorFor
+		]
 	}
 	
 	@StepCached(warnNoStep = false)
 	def getSensorReadings() {
 		
-		// we compute the relative vector
-		// from a discretized version of the bot position
-		// in order to have position coherent with the positions of the walls
-		//val wcs = wallCoords.map[it.relativeDiscretizedPosition -> it]
-		
-		// build small cones 
-		val wcones = wallCones//.map[key.relativeVectorFor -> value.relativeVectorFor]
-		
 		SENSORS_DIRECTIONS_CONES.map[d|
-			val fromD = d.value.key
-			val toD = d.value.value
 			// TODO would be better if we had the cones which cover a space where there is no wall?
 			// instead of covering no wall at all?
-			val ws = wcones.filter[
-				fromD.between(it) || toD.between(it) // sides of d touch walls
+			val ws = wallCones.filter[
+				d.value.key.between(it) || d.value.value.between(it) // sides of d touch walls
 				|| it.key.between(d.value) || it.value.between(d.value) // exist walls inside d
 			]
 			val l = if (ws.empty) {
@@ -227,16 +199,14 @@ class Surroundings implements ILosBoard {
 	
 	@StepCached(warnNoStep = false)
 	def getVisibleVictims() {
-		victims.map[b|
-			new Double2D(b).relativeVectorFor
-		]
+		victims.map[relativeVectorFor]
 	}
 	
 	@StepCached(warnNoStep = false)
 	def getRBVisibleBotsWithCoordinate() {
 		foundBots.remove(me)
 		List.iterableList(foundBots as Iterable<MasonRobot>).map[b|
-			b -> new Double2D(b.position).relativeVectorFor
+			b -> b.position.relativeVectorFor
 		]
 	}
 }
