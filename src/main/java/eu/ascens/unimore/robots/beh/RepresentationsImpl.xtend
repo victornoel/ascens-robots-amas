@@ -1,6 +1,7 @@
 package eu.ascens.unimore.robots.beh
 
 import eu.ascens.unimore.robots.Constants
+import eu.ascens.unimore.robots.beh.datatypes.Explorable
 import eu.ascens.unimore.robots.beh.interfaces.IRepresentationsExtra
 import eu.ascens.unimore.xtend.macros.Step
 import eu.ascens.unimore.xtend.macros.StepCached
@@ -28,12 +29,17 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 		requires.perceptions.visibleVictims
 			.map[v|
 				// TODO reduce if there is a lot of people around?
-				requires.messaging.newSeenExplorable(
+				new Explorable(
 					v,
+					0,
+					requires.messaging.currentSig,
+					null,
+					0,
 //					if (requires.perceptions.visibleRobots.count[b|b.coord.distanceSq(v) < 6] > 10)
 //						Constants.STARTING_VICTIM_CRITICALITY / 2.2
 //					else 
-						Constants.STARTING_VICTIM_CRITICALITY
+						Constants.STARTING_VICTIM_CRITICALITY,
+					null
 				)
 			]
 	}
@@ -46,12 +52,17 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 				// reduce criticality of visible place where I come from?
 				// TODO maybe smooth it a little?
 				// we need something more intelligent here...
-				requires.messaging.newSeenExplorable(
+				new Explorable(
 					dir,
+					0,
+					requires.messaging.currentSig,
+					null,
+					0,
 //					if (requires.perceptions.goingBack(dir))
 //						Constants.STARTING_BACK_EXPLORABLE_CRITICALITY
 //					else
-						Constants.STARTING_EXPLORABLE_CRITICALITY
+						Constants.STARTING_EXPLORABLE_CRITICALITY,
+					null
 				)
 			]
 	}
@@ -109,16 +120,11 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 				e.via(dir, via)
 			]
 		].flatten
-		//.keepOnePerOrigin
-//		.minimums(
-//			Equal.intEqual.comap[Pair<Explorable, Integer> it|value],
-//			Ord.intOrd.comap[Pair<Explorable, Integer> it|value]
-//		)
-		//.map[key]
+		.keepOnePerOrigin
 	}
 	
 	@StepCached
 	override explorables() {
-		responsibleSeen	+ responsibleVictims + explorableFromOthers.keepOnePerOrigin
+		responsibleSeen	+ responsibleVictims + explorableFromOthers
 	}
 }

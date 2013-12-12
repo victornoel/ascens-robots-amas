@@ -1,19 +1,17 @@
 package eu.ascens.unimore.robots.beh
 
+import eu.ascens.unimore.robots.beh.datatypes.AgentSig
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
 import eu.ascens.unimore.robots.beh.datatypes.ExplorableMessage
-import eu.ascens.unimore.robots.beh.datatypes.ExplorableWithSender
 import eu.ascens.unimore.robots.beh.interfaces.IMessagingExtra
 import eu.ascens.unimore.xtend.macros.Step
 import eu.ascens.unimore.xtend.macros.StepCached
 import fj.data.List
 import java.util.Map
 import java.util.Set
-import sim.util.Double2D
 
 import static extension eu.ascens.unimore.robots.beh.Utils.*
 import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
-import eu.ascens.unimore.robots.beh.datatypes.MessageSignature
 
 class MessagingImpl extends Messaging implements IMessagingExtra {
 
@@ -32,7 +30,7 @@ class MessagingImpl extends Messaging implements IMessagingExtra {
 		timestamp = timestamp + 1
 	}
 	
-	var Set<ExplorableWithSender> previousTurn = newHashSet
+	var Set<Explorable> previousTurn = newHashSet
 	val Map<String, Integer> times = newHashMap
 	
 	@StepCached(forceEnable=true)
@@ -76,12 +74,8 @@ class MessagingImpl extends Messaging implements IMessagingExtra {
 		res
 	}
 	
-	override explorableWithSender(Explorable e) {
-		e.withSender(requires.perceptions.myId, timestamp)
-	}
-	
-	override newSeenExplorable(Double2D coord, double criticality) {
-		new Explorable(coord, 0, new MessageSignature(requires.perceptions.myId, timestamp), 0, criticality, null)
+	override currentSig() {
+		new AgentSig(requires.perceptions.myId, timestamp)
 	}
 	
 }

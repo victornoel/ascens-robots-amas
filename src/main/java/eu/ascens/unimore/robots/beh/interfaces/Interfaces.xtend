@@ -1,12 +1,12 @@
 package eu.ascens.unimore.robots.beh.interfaces
 
+import eu.ascens.unimore.robots.beh.datatypes.AgentSig
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
-import eu.ascens.unimore.robots.beh.datatypes.ExplorableWithSender
 import eu.ascens.unimore.robots.mason.datatypes.RBEmitter
+import eu.ascens.unimore.robots.mason.datatypes.SensorReading
 import fj.data.List
 import org.eclipse.xtext.xbase.lib.Pair
 import sim.util.Double2D
-import eu.ascens.unimore.robots.mason.datatypes.SensorReading
 
 interface IActions {
 	
@@ -76,11 +76,9 @@ interface IPerceptionsExtra extends IPerceptions {
 
 interface IMessaging {
 	
-	def List<Pair<RBEmitter, List<ExplorableWithSender>>> explorationMessages()
+	def List<Pair<RBEmitter, List<Explorable>>> explorationMessages()
 	
-	def ExplorableWithSender explorableWithSender(Explorable e)
-	
-	def Explorable newSeenExplorable(Double2D coord, double criticality)
+	def AgentSig currentSig()
 	
 }
 

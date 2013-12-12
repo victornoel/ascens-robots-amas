@@ -45,11 +45,7 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	var lastMove = new Double2D(0,0)
 	
 	override broadcastExplorables(List<Explorable> explorables) {
-		requires.rbPublish.push(
-			new ExplorableMessage(
-				explorables.map[requires.messaging.explorableWithSender(it)]
-			)
-		)
+		requires.rbPublish.push(new ExplorableMessage(explorables))
 	}
 	
 	override previousDirection() {

@@ -12,24 +12,32 @@ import static extension eu.ascens.unimore.robots.geometry.GeometryExtensions.*
 	val Double2D direction
 	val double distance
 	
-	val MessageSignature origin
+	val AgentSig origin
 	
+	val String sender
+	
+	// not used
 	val int howMuch
 	
 	val double criticality
 	
+	// used by visu
 	val Double2D via
 	
-	def withSender(String sender, int senderTime) {
-		new ExplorableWithSender(direction, distance, origin, 0, criticality, null, new MessageSignature(sender, senderTime))
-	}
-	
 	def hasSender(String sender) {
-		false
+		this.sender == sender
 	}
 	
 	def hasOrigin(String origin) {
 		this.origin.id == origin
+	}
+	
+	def withSender(String sender) {
+		new Explorable(direction,distance,origin,sender,howMuch,criticality,via)
+	}
+	
+	def via(Double2D newDir, RBEmitter via) {
+		new Explorable(newDir, distance+via.coord.length, origin, via.id, 0, criticality, via.coord)
 	}
 	
 	override def toString() {
@@ -37,7 +45,7 @@ import static extension eu.ascens.unimore.robots.geometry.GeometryExtensions.*
 	}
 }
 
-@Data class MessageSignature {
+@Data class AgentSig {
 	
 	val String id
 	val int time
@@ -47,21 +55,8 @@ import static extension eu.ascens.unimore.robots.geometry.GeometryExtensions.*
 	}
 }
 
-@Data class ExplorableWithSender extends Explorable {
-	
-	val MessageSignature sender
-	
-	override hasSender(String sender) {
-		this.sender.id == sender
-	}
-	
-	def via(Double2D newDir, RBEmitter via) {
-		new Explorable(newDir, distance+via.coord.length, origin, 0, criticality, via.coord)
-	}
-}
-
 @Data class ExplorableMessage extends Message {
 	
-	val List<ExplorableWithSender> worthExplorable
+	val List<Explorable> worthExplorable
 	
 }

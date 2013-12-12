@@ -2,7 +2,6 @@ package eu.ascens.unimore.robots.beh
 
 import eu.ascens.unimore.robots.Constants
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
-import eu.ascens.unimore.robots.beh.datatypes.ExplorableWithSender
 import fj.Equal
 import fj.Ord
 import fj.data.List
@@ -28,8 +27,8 @@ class Utils {
 	public static def <E extends Explorable> explorableDistanceOrd() { distanceOrd.comap[E e|e.distance] }
 	public static def <E extends Explorable> explorableOriginEq() { Equal.stringEqual.comap[E e|e.origin.id] }
 	public static def <E extends Explorable> explorableOriginOrd() { Ord.stringOrd.comap[E e|e.origin.id] }
-	public static def <E extends ExplorableWithSender> explorableSenderEq() { Equal.stringEqual.comap[E e|e.sender.id] }
-	public static def <E extends ExplorableWithSender> explorableSenderOrd() { Ord.stringOrd.comap[E e|e.sender.id] }
+	public static def <E extends Explorable> explorableSenderEq() { Equal.stringEqual.comap[E e|e.sender] }
+	public static def <E extends Explorable> explorableSenderOrd() { Ord.stringOrd.comap[E e|e.sender] }
 	
 	public static val crowdOrd = Ord.doubleOrd
 	public static val crowdEq = Equal.equal [double a|[double b|
@@ -64,11 +63,6 @@ class Utils {
 	}
 	
 	@Pure
-	static def <E extends ExplorableWithSender> maxEquivalentSenderTimestamp(List<E> l) {
-		l.maximums(Equal.intEqual.comap[E e|e.sender.time], Ord.intOrd.comap[E e|e.sender.time])
-	}
-	
-	@Pure
 	static def <E extends Explorable> keepOnePerOrigin(List<E> in) {
 		in.sort(explorableOriginOrd)
 			.group(explorableOriginEq)
@@ -77,18 +71,7 @@ class Utils {
 //				val a = maxEquivalentOriginTimestamp
 //				a.
 				val m = minimum(explorableDistanceOrd)
-				new Explorable(m.direction, m.distance, m.origin, it.length, m.criticality, m.via)
-			]
-	}
-	
-	@Pure
-	static def <E extends ExplorableWithSender> keepOnePerSender(List<E> in) {
-		in.sort(explorableSenderOrd)
-			.group(explorableSenderEq)
-			.map[
-				val m = maxEquivalentSenderTimestamp
-				if (m.tail.notEmpty) throw new RuntimeException("should have one msg per sender/timestamp.")
-				m.head
+				new Explorable(m.direction, m.distance, m.origin, m.sender, it.length, m.criticality, m.via)
 			]
 	}
 	
