@@ -22,14 +22,14 @@ class Utils {
 	public static val criticalityEq = Equal.equal [double a|[double b|
 		Math.abs(a - b) <= Constants.CRITICALITY_PRECISION
 	]]
-	public static val originEq = Equal.stringEqual
-	public static val sender = Equal.stringEqual
 	
 	public static def <E extends Explorable> explorableCriticalityOrd() { criticalityOrd.comap[E e|e.criticality] }	
 	public static def <E extends Explorable> explorableCriticalityEq() { criticalityEq.comap[E e|e.criticality] }
 	public static def <E extends Explorable> explorableDistanceOrd() { distanceOrd.comap[E e|e.distance] }
-	public static def <E extends Explorable> explorableOriginEq() { originEq.comap[E e|e.origin] }
-	public static def <E extends ExplorableWithSender> explorableSenderEq() { originEq.comap[E e|e.sender] }
+	public static def <E extends Explorable> explorableOriginEq() { Equal.stringEqual.comap[E e|e.origin.id] }
+	public static def <E extends Explorable> explorableOriginOrd() { Ord.stringOrd.comap[E e|e.origin.id] }
+	public static def <E extends ExplorableWithSender> explorableSenderEq() { Equal.stringEqual.comap[E e|e.sender.id] }
+	public static def <E extends ExplorableWithSender> explorableSenderOrd() { Ord.stringOrd.comap[E e|e.sender.id] }
 	
 	public static val crowdOrd = Ord.doubleOrd
 	public static val crowdEq = Equal.equal [double a|[double b|
@@ -46,29 +46,45 @@ class Utils {
 	}
 	
 	@Pure
+	static def <K, V> V getOr(Map<K, V> m, K key, V or) {
+		val r = m.get(key)
+		if (r == null) {
+			or
+		} else r
+	}
+	
+	@Pure
 	static def <E extends Explorable> maxEquivalentCriticalities(List<E> l) {
 		l.maximums(explorableCriticalityEq,	explorableCriticalityOrd)
 	}
 	
 	@Pure
 	static def <E extends Explorable> maxEquivalentOriginTimestamp(List<E> l) {
-		l.maximums(Equal.intEqual.comap[E e|e.originTime], Ord.intOrd.comap[E e|e.originTime])
+		l.maximums(Equal.intEqual.comap[E e|e.origin.time], Ord.intOrd.comap[E e|e.origin.time])
 	}
 	
 	@Pure
 	static def <E extends ExplorableWithSender> maxEquivalentSenderTimestamp(List<E> l) {
-		l.maximums(Equal.intEqual.comap[E e|e.senderTime], Ord.intOrd.comap[E e|e.senderTime])
+		l.maximums(Equal.intEqual.comap[E e|e.sender.time], Ord.intOrd.comap[E e|e.sender.time])
 	}
 	
 	@Pure
 	static def <E extends Explorable> keepOnePerOrigin(List<E> in) {
-		in.group(explorableOriginEq)
-			.map[maxEquivalentOriginTimestamp.minimum(explorableDistanceOrd)]
+		in.sort(explorableOriginOrd)
+			.group(explorableOriginEq)
+			.map[
+				// maybe not needed since we already clean in messaging
+//				val a = maxEquivalentOriginTimestamp
+//				a.
+				val m = minimum(explorableDistanceOrd)
+				new Explorable(m.direction, m.distance, m.origin, it.length, m.criticality, m.via)
+			]
 	}
 	
-		@Pure
+	@Pure
 	static def <E extends ExplorableWithSender> keepOnePerSender(List<E> in) {
-		in.group(explorableSenderEq)
+		in.sort(explorableSenderOrd)
+			.group(explorableSenderEq)
 			.map[
 				val m = maxEquivalentSenderTimestamp
 				if (m.tail.notEmpty) throw new RuntimeException("should have one msg per sender/timestamp.")
@@ -82,7 +98,9 @@ class Utils {
 		val v = new MutableDouble2D(0,0)
 		for(o: bots) {
 			val lsq = o.lengthSq
-			v.subtractIn(o.resize(1.0/lsq))
+			if (lsq > 0) {
+				v.subtractIn(o.resize(1.0/lsq))
+			}
 		}
 		new Double2D(v)
 	}
@@ -109,5 +127,5 @@ class Utils {
 		val start = half.add(rotRight) // compute start of its covered area for us
 		val end = half.subtract(rotRight) // compute start of its covered area for us
 		start -> end
-	}
+	}	
 }

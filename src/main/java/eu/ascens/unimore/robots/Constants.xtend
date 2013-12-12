@@ -25,7 +25,8 @@ class Constants {
 	
 	// Behaviour constants
 	
-	public static val CRITICALITY_PRECISION = 0.1
+	public static val CRITICALITY_PRECISION = 0.01
+	public static val STARTING_BACK_EXPLORABLE_CRITICALITY = 0.1
 	public static val STARTING_EXPLORABLE_CRITICALITY = 0.5
 	public static val STARTING_VICTIM_CRITICALITY = 1.0
 	public static val AVOID_VERY_CLOSE_WALL_DISTANCE = 3.0

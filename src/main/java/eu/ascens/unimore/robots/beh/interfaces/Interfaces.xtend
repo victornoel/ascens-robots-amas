@@ -26,6 +26,7 @@ interface IDecisions {
 
 interface IDecisionsExtra extends IDecisions {
 	
+	def Explorable lastChoice()
 }
 
 interface IRepresentations {
@@ -69,8 +70,6 @@ interface IPerceptions {
 }
 
 interface IPerceptionsExtra extends IPerceptions {
-	
-	def Double2D lastChoice()
 	
 	def Double2D lastMove()
 }

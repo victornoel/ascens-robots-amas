@@ -77,7 +77,7 @@ class BehaviourImpl extends ComposedBehaviour implements RobotVisu {
 	}
 	
 	override choice() {
-		parts.ap.perceptions.lastChoice
+		parts.d.decisions.lastChoice
 	}
 	
 	override move() {

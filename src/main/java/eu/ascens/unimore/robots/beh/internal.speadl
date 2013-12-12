@@ -9,7 +9,6 @@ import eu.ascens.unimore.robots.beh.interfaces.IPerceptionsExtra
 import eu.ascens.unimore.robots.beh.interfaces.IRepresentations
 import eu.ascens.unimore.robots.beh.interfaces.IRepresentationsExtra
 import eu.ascens.unimore.robots.mason.datatypes.Message
-import eu.ascens.unimore.robots.mason.datatypes.RBMessage
 import eu.ascens.unimore.robots.mason.interfaces.RobotMovements
 import eu.ascens.unimore.robots.mason.interfaces.RobotPerceptions
 import fr.irit.smac.may.lib.interfaces.Do
@@ -36,13 +35,12 @@ namespace eu.ascens.unimore.robots.beh {
 			bind move to move
 			bind see to see
 			bind radioBroadcast to radioBroadcast
-			bind rbBroadcast to rbBroadcast
+			bind rbPublish to rbPublish
 			bind id to id
 			bind messaging to m.messaging
 		}
 		
 		part m: Messaging {
-			bind getRBMessages to getRBMessages
 			bind getRadioMessages to getRadioMessages
 			bind perceptions to ap.perceptions
 		}
@@ -57,7 +55,6 @@ namespace eu.ascens.unimore.robots.beh {
 		requires perceptions: IPerceptions
 		
 		requires getRadioMessages: Pull[Collection[Message]]
-		requires getRBMessages: Pull[Collection[RBMessage]]
 	}
 	
 	component Representations {
@@ -89,7 +86,7 @@ namespace eu.ascens.unimore.robots.beh {
 		requires messaging: IMessaging
 		requires see: RobotPerceptions
 		requires move: RobotMovements
-		requires rbBroadcast: Push[Message]
+		requires rbPublish: Push[Message]
 		requires radioBroadcast: Push[Message]
 		
 	}

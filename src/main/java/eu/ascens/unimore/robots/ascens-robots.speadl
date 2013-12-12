@@ -1,6 +1,5 @@
 import eu.ascens.unimore.robots.mason.AscensMason
 import eu.ascens.unimore.robots.mason.datatypes.Message
-import eu.ascens.unimore.robots.mason.datatypes.RBMessage
 import eu.ascens.unimore.robots.mason.interfaces.RobotMovements
 import eu.ascens.unimore.robots.mason.interfaces.RobotPerceptions
 import eu.ascens.unimore.robots.mason.interfaces.RobotVisu
@@ -20,10 +19,9 @@ namespace eu.ascens.unimore.robots {
 		requires see: RobotPerceptions
 		requires move: RobotMovements
 		requires id: Pull[String]
-		requires rbBroadcast: Push[Message]
+		requires rbPublish: Push[Message]
 		requires radioBroadcast: Push[Message]
 		requires getRadioMessages: Pull[Collection[Message]]
-		requires getRBMessages: Pull[Collection[RBMessage]]
 	}
 	
 	ecosystem AscensRobots {
@@ -37,22 +35,19 @@ namespace eu.ascens.unimore.robots {
 		species RobotAgent {
 			
 			part mbox: Queue[Message]
-			part mboxRB: Queue[RBMessage]
 			
 			part beh: Behaviour {
 				bind move to robot.move
 				bind see to robot.see
 				bind radioBroadcast to robot.radioBroadcast
-				bind rbBroadcast to robot.rbBroadcast
+				bind rbPublish to robot.rbPublish
 				bind getRadioMessages to mbox.getAll
-				bind getRBMessages to mboxRB.getAll
 				bind id to robot.id
 			}
 			
 			use robot: env.Robot {
 				bind step to beh.step
 				bind pushRadioMessage to mbox.put
-				bind pushRBMessage to mboxRB.put
 				bind visu to beh.visu
 			}
 		}

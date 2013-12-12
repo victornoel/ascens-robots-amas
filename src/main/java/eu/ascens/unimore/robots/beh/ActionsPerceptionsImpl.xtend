@@ -1,6 +1,5 @@
 package eu.ascens.unimore.robots.beh
 
-import com.google.common.collect.EvictingQueue
 import eu.ascens.unimore.robots.Constants
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
 import eu.ascens.unimore.robots.beh.datatypes.ExplorableMessage
@@ -13,11 +12,9 @@ import fj.Ord
 import fj.data.List
 import fj.data.Stream
 import fj.data.Zipper
-import java.util.Queue
 import org.eclipse.xtext.xbase.lib.Pair
 import org.slf4j.LoggerFactory
 import sim.util.Double2D
-import sim.util.MutableDouble2D
 
 import static extension eu.ascens.unimore.robots.beh.Utils.*
 import static extension eu.ascens.unimore.xtend.extensions.MasonExtensions.*
@@ -41,39 +38,22 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 		this
 	}
 	
-	override lastChoice() {
-		lastChoice
-	}
-	
 	override lastMove() {
 		lastMove
 	}
 	
-	var lastChoice = new Double2D(0,0)
 	var lastMove = new Double2D(0,0)
 	
 	override broadcastExplorables(List<Explorable> explorables) {
-		requires.rbBroadcast.push(
+		requires.rbPublish.push(
 			new ExplorableMessage(
 				explorables.map[requires.messaging.explorableWithSender(it)]
 			)
 		)
 	}
 	
-	// this is a kind of AVT but for 2D?
-	val Queue<Double2D> prevDirs = EvictingQueue.create(4)
-	
-	@StepCached
 	override previousDirection() {
-		val pd = new MutableDouble2D()
-		
-		var i = 1
-		for(d: prevDirs) {
-			pd.addIn(d.resize(i))
-			i = i+1
-		}
-		
-		new Double2D(pd)
+		lastMove
 	}
 	
 	override goingBack(Double2D dir) {
@@ -81,17 +61,18 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	}
 	
 	override goTo(Double2D to) {
-		
-		if (to.lengthSq > 0) {
-			// TODO: smooth things using prevDirs? like not moving if it's useless
-			val move = to.computeDirectionWithAvoidance
+//		if (to.lengthSq > 0) {
 			
-			logger.info("going to {} targetting {}.", move, to)
-			requires.move.setNextMove(move.dir)
-			lastMove = move.dir
-		}
-		lastChoice = to
-		//prevDirs.offer(to)
+			// TODO maybe difference speed and directions? smooth only on speed!
+			val realTo = lastMove*0.6+to.resize(Math.min(to.length, Constants.SPEED))*0.4
+			
+			// TODO: smooth things using prevDirs? like not moving if it's useless
+			val move = realTo.computeDirectionWithAvoidance.dir.resize(realTo.length)
+			lastMove = realTo
+			
+			logger.info("going to {} targetting {}.", move, realTo)
+			requires.move.setNextMove(move)
+//		}
 	}
 	
 	// taken from http://link.springer.com/chapter/10.1007%2F978-3-642-22907-7_7

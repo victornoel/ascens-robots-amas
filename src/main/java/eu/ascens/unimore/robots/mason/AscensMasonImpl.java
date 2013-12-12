@@ -10,13 +10,13 @@ import sim.engine.SimState;
 import sim.util.Double2D;
 import eu.ascens.unimore.robots.mason.datatypes.Message;
 import eu.ascens.unimore.robots.mason.datatypes.RBEmitter;
-import eu.ascens.unimore.robots.mason.datatypes.RBMessage;
 import eu.ascens.unimore.robots.mason.datatypes.SensorReading;
 import eu.ascens.unimore.robots.mason.interfaces.RobotMovements;
 import eu.ascens.unimore.robots.mason.interfaces.RobotPerceptions;
 import eu.ascens.unimore.robots.mason.interfaces.RobotVisu;
 import fj.F;
 import fj.data.List;
+import fj.data.Option;
 import fr.irit.smac.may.lib.interfaces.Pull;
 import fr.irit.smac.may.lib.interfaces.Push;
 
@@ -82,7 +82,7 @@ public class AscensMasonImpl extends AscensMason {
 					return bot.getRBVisibleBotsWithCoordinate().map(new F<Pair<MasonRobot,Double2D>, RBEmitter>() {
 						@Override
 						public RBEmitter f(Pair<MasonRobot, Double2D> p) {
-							return new RBEmitter(p.getValue(), p.getKey().id);
+							return new RBEmitter(p.getValue(), p.getKey().id, ((MyMasonRobot)p.getKey()).lastMsgs());
 						}
 					});
 				}
@@ -124,12 +124,12 @@ public class AscensMasonImpl extends AscensMason {
 				}
 			}
 			
-			public void pushMsg(RBMessage m) {
-				requires().pushRBMessage().push(m);
-			}
-			
 			public void pushMsg(Message m) {
 				requires().pushRadioMessage().push(m);
+			}
+			
+			public Option<Message> lastMsgs() {
+				return Option.fromNull(lastMsgs);
 			}
 			
 			public String id() {
@@ -151,17 +151,15 @@ public class AscensMasonImpl extends AscensMason {
 			super.start();
 			this.bot = new MyMasonRobot();
 		}
+		
+		private Message lastMsgs = null;
 
 		@Override
-		protected Push<Message> make_rbBroadcast() {
+		protected Push<Message> make_rbPublish() {
 			return new Push<Message>() {
 				@Override
 				public void push(Message arg0) {
-					for(Pair<MasonRobot, Double2D> p: bot.getRBVisibleBotsWithCoordinate()) {
-						if (p.getKey() instanceof MyMasonRobot) {
-							((MyMasonRobot)p.getKey()).pushMsg(new RBMessage(new RBEmitter(p.getValue().negate(), bot.id), arg0));
-						}
-					}
+					lastMsgs = arg0;
 				}
 			};
 		}

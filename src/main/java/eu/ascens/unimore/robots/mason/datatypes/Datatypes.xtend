@@ -1,5 +1,6 @@
 package eu.ascens.unimore.robots.mason.datatypes
 
+import fj.data.Option
 import org.eclipse.xtext.xbase.lib.Pair
 import sim.util.Double2D
 
@@ -15,6 +16,7 @@ import sim.util.Double2D
 @Data class RBEmitter {
 	Double2D coord
 	String id
+	Option<Message> message
 }
 
 

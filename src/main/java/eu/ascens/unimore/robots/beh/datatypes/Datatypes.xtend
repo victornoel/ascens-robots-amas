@@ -6,18 +6,22 @@ import fj.data.List
 import sim.util.Double2D
 
 import static extension eu.ascens.unimore.robots.geometry.GeometryExtensions.*
-import static extension eu.ascens.unimore.xtend.extensions.MasonExtensions.*
 
 @Data class Explorable {
 	
-	val Double2D coord
-	val double criticality
+	val Double2D direction
 	val double distance
-	val String origin
-	val int originTime
+	
+	val MessageSignature origin
+	
+	val int howMuch
+	
+	val double criticality
+	
+	val Double2D via
 	
 	def withSender(String sender, int senderTime) {
-		new ExplorableWithSender(coord, criticality, distance, origin, originTime, sender, senderTime)
+		new ExplorableWithSender(direction, distance, origin, 0, criticality, null, new MessageSignature(sender, senderTime))
 	}
 	
 	def hasSender(String sender) {
@@ -25,38 +29,34 @@ import static extension eu.ascens.unimore.xtend.extensions.MasonExtensions.*
 	}
 	
 	def hasOrigin(String origin) {
-		this.origin == origin
+		this.origin.id == origin
 	}
 	
 	override def toString() {
-		"Expl["+criticality.toShortString+","+distance.toShortString+","+coord.toShortString+"]"
+		"Expl["+criticality.toShortString+","+distance.toShortString+","+direction.toShortString+"]"
+	}
+}
+
+@Data class MessageSignature {
+	
+	val String id
+	val int time
+	
+	override def toString() {
+		"Sig("+ id + ","+ time ")"
 	}
 }
 
 @Data class ExplorableWithSender extends Explorable {
 	
-	val String sender
-	val int senderTime
-		
-	def via(RBEmitter via) {
-		new Explorable(via.coord, criticality, distance+via.coord.length, origin, originTime)
-	}
-	
-	def translatedVia(RBEmitter via) {
-		val vd = via.coord.length
-		val nc = {
-			val c = coord+via.coord
-			if (c.lengthSq == 0) {
-				(coord*0.01)+via.coord
-			} else {
-				c
-			}
-		}
-		new Explorable(nc.resize(vd), criticality, distance+vd, origin, originTime)
-	}
+	val MessageSignature sender
 	
 	override hasSender(String sender) {
-		this.sender == sender
+		this.sender.id == sender
+	}
+	
+	def via(Double2D newDir, RBEmitter via) {
+		new Explorable(newDir, distance+via.coord.length, origin, 0, criticality, via.coord)
 	}
 }
 

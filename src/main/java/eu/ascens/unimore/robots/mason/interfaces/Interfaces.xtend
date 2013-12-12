@@ -16,7 +16,6 @@ interface RobotPerceptions {
 	
 	def List<RBEmitter> getRBVisibleRobots()
 	
-	// bool is true if it is a wall
 	def List<SensorReading> getSensorReadings()
 	
 	def List<Double2D> getVisibleVictims()
@@ -25,7 +24,7 @@ interface RobotPerceptions {
 
 interface RobotVisu {
 	
-	def Double2D choice()
+	def Explorable choice()
 	
 	def Double2D move()
 	

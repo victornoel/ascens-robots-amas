@@ -41,8 +41,4 @@ class RobotAgentImpl extends AscensRobots.RobotAgent {
 	override protected make_mbox() {
 		new ConcurrentQueueImpl
 	}
-	
-	override protected make_mboxRB() {
-		new ConcurrentQueueImpl
-	}
 }

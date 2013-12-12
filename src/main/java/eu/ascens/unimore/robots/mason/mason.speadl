@@ -1,5 +1,4 @@
 import eu.ascens.unimore.robots.mason.datatypes.Message
-import eu.ascens.unimore.robots.mason.datatypes.RBMessage
 import eu.ascens.unimore.robots.mason.interfaces.RobotMovements
 import eu.ascens.unimore.robots.mason.interfaces.RobotPerceptions
 import eu.ascens.unimore.robots.mason.interfaces.RobotVisu
@@ -24,8 +23,8 @@ namespace eu.ascens.unimore.robots.mason {
 
 			requires step: Do
 
-			requires pushRBMessage: Push[RBMessage]
-			provides rbBroadcast: Push[Message]
+			provides rbPublish: Push[Message]
+			
 			requires pushRadioMessage: Push[Message]
 			provides radioBroadcast: Push[Message]
 
