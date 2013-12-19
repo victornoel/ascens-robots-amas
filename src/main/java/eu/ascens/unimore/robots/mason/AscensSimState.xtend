@@ -28,6 +28,8 @@ import sim.util.Int2D
 import sim.util.TableLoader
 import sim.util.gui.SimpleColorMap
 
+import static extension eu.ascens.unimore.xtend.extensions.JavaExtensions.*
+
 abstract class AscensSimState extends SimState {
 
 	package val IntGrid2D maze
@@ -160,7 +162,7 @@ class AscensGUIState extends GUIState {
 
 		// set up the maze portrayal
 		//mazePortrayal.setPortrayalForAll(new MazeCellPortrayal(state.maze));
-		mazePortrayal.setMap(new SimpleColorMap(0,3,Color.DARK_GRAY,Color.WHITE))
+		mazePortrayal.setMap(new SimpleColorMap(0,3,Color.LIGHT_GRAY,Color.WHITE))
 		mazePortrayal.setField(state.maze);
 
 		//robotsPortrayal.setPortrayalForClass(ObstacleObject, new GeomPortrayal(Color.YELLOW,1.0,true))
@@ -339,7 +341,7 @@ class BotPortrayal2D extends OvalPortrayal2D {
 		graphics.setPaint(Color.GREEN)
 		graphics.drawArrow(botFPos.x as int, botFPos.y as int, spos.x as int, spos.y as int)
 		//graphics.fillOval(spos.x as int, spos.y as int, w/2, h/2)
-		printLabel(e.origin+"/"+e.howMuch, graphics, info, spos.x as int, spos.y as int)
+		printLabel(e.criticality.toShortString+"/"+e.howMuch, graphics, info, spos.x as int, spos.y as int)
 	}
 	
 	val static FONT = new Font("SansSerif",Font.PLAIN, 10)

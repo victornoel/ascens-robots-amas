@@ -6,8 +6,9 @@ import fj.data.List
 import sim.util.Double2D
 
 import static extension eu.ascens.unimore.robots.geometry.GeometryExtensions.*
+import static extension eu.ascens.unimore.xtend.extensions.JavaExtensions.*
 
-@Data class Explorable {
+@Data abstract class Explorable {
 	
 	val Double2D direction
 	val double distance
@@ -32,16 +33,47 @@ import static extension eu.ascens.unimore.robots.geometry.GeometryExtensions.*
 		this.origin.id == origin
 	}
 	
-	def withSender(String sender) {
-		new Explorable(direction,distance,origin,sender,howMuch,criticality,via)
+	def sawMyself() {
+		this.via == null
 	}
 	
-	def via(Double2D newDir, RBEmitter via) {
-		new Explorable(newDir, distance+via.coord.length, origin, via.id, 0, criticality, via.coord)
-	}
+	abstract def Explorable withSender(String sender)
+	
+	abstract def Explorable via(Double2D newDir, RBEmitter via)
 	
 	override def toString() {
 		"Expl["+criticality.toShortString+","+distance.toShortString+","+direction.toShortString+"]"
+	}
+}
+
+@Data class Victim extends Explorable {
+		
+	override withSender(String sender) {
+		new Victim(direction,distance,origin,sender,howMuch,criticality,via)
+	}
+	
+	override via(Double2D newDir, RBEmitter via) {
+		new Victim(newDir, distance+via.coord.length, origin, via.id, howMuch, criticality, via.coord)
+	}
+	
+	def minusOne() {
+		new Victim(direction,distance,origin,sender,Math.max(0,howMuch-1),criticality,via)
+	}
+	
+	def withHowMuch(int howMuch) {
+		new Victim(direction,distance,origin,sender,Math.max(0,howMuch),criticality,via)
+	}
+	
+}
+
+@Data class Area extends Explorable {
+	
+	override withSender(String sender) {
+		new Area(direction,distance,origin,sender,howMuch,criticality,via)
+	}
+	
+	override via(Double2D newDir, RBEmitter via) {
+		new Area(newDir, distance+via.coord.length, origin, via.id, howMuch, criticality, via.coord)
 	}
 }
 
@@ -51,7 +83,7 @@ import static extension eu.ascens.unimore.robots.geometry.GeometryExtensions.*
 	val int time
 	
 	override def toString() {
-		"Sig("+ id + ","+ time ")"
+		"Sig("+ id + ","+ time + ")"
 	}
 }
 

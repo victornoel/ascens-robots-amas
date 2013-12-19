@@ -6,31 +6,31 @@ class Constants {
 	
 	public static val SEED = 12345L
 	
-	
 	// Environment
 	
 	// use mtpaint to draw it: 0 for walls, 1 for victims, 2 for starting area, rest for nothing
 	public static val MAZE = "/maze1.png"
-	public static val NB_BOTS = 200
-	
+	public static val NB_BOTS = 800
 	
 	// Robots characteristics
 	
 	public static val RADIO_RANGE = 60
-	public static val RB_RANGE = 30
+	public static val RB_RANGE = 6
 	public static val VISION_RANGE = 6
 	public static val SPEED = 0.15
 	public static val NB_WALL_SENSORS = 36
-	
 	
 	// Behaviour constants
 	
 	public static val CRITICALITY_PRECISION = 0.01
 	public static val STARTING_BACK_EXPLORABLE_CRITICALITY = 0.1
 	public static val STARTING_EXPLORABLE_CRITICALITY = 0.5
-	public static val STARTING_VICTIM_CRITICALITY = 1.0
+	public static val STARTING_VICTIM_CRITICALITY = 0.8
 	public static val AVOID_VERY_CLOSE_WALL_DISTANCE = 3.0
-	
+	public static val STOP_AS_RESP_NEXT_TO_VICTIM_DISTANCE = 1.0
+	public static val STOP_NEXT_TO_VICTIM_DISTANCE = 2.0
+	public static val CONSIDERED_NEXT_TO_VICTIM_DISTANCE = 3.0
+	public static val HOW_MUCH_PER_VICTIM = 5
 	
 	// Useful constants based on the others
 	

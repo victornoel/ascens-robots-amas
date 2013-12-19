@@ -13,10 +13,11 @@ import fj.data.List
 import fj.data.Stream
 import fj.data.Zipper
 import org.eclipse.xtext.xbase.lib.Pair
+import org.eclipse.xtext.xbase.lib.Pure
 import org.slf4j.LoggerFactory
 import sim.util.Double2D
+import sim.util.MutableDouble2D
 
-import static extension eu.ascens.unimore.robots.beh.Utils.*
 import static extension eu.ascens.unimore.xtend.extensions.MasonExtensions.*
 
 class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra, IPerceptionsExtra {
@@ -59,7 +60,7 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	override goTo(Double2D to) {
 //		if (to.lengthSq > 0) {
 			
-			// TODO maybe difference speed and directions? smooth only on speed!
+			// TODO maybe differentiate speed and directions? smooth only on speed!
 			val realTo = lastMove*0.6+to.resize(Math.min(to.length, Constants.SPEED))*0.4
 			
 			// TODO: smooth things using prevDirs? like not moving if it's useless
@@ -78,9 +79,9 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 		// this is the best I can get
 		val maxSq = sensorsReadingsWithLengthSq.map[value].maximum(Ord.doubleOrd)-0.1
 		
-		val vision = Zipper.fromStream(Stream.iterableStream(sensorsReadingsWithLengthSq)).some
+		val vision = Zipper.fromStream(Stream.iterableStream(sensorsReadingsWithLengthSq)).some()
 		
-		val desiredDirection = vision.find[d|to.between(d.key.cone)].some
+		val desiredDirection = vision.find[d|to.between(d.key.cone)].some()
 		
 		var gothroughR = desiredDirection
 		var gothroughL = desiredDirection
@@ -169,11 +170,48 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 
 	@StepCached
 	override visionConesCoveredByVisibleRobots() {
-		visibleRobots.map[id -> coord.computeConeCoveredByBot(Constants.VISION_RANGE_SQUARED)]
+		visibleRobots.map[id -> coord.computeConeCoveredByBot]
 	}
 	
 	@StepCached
 	override escapeCrowdVector() {
 		visibleRobots.map[coord].computeCrowdVector
+	}
+	
+		// take the perpendicular in the middle of the vector
+	// and return the start and the end of the arc of desired radius
+	// intersecting with this perpendicular and of center 0,0
+	@Pure
+	private def computeConeCoveredByBot(Double2D c) {
+		val half = c/2.0
+		val hlSq = half.lengthSq
+		val l = if (hlSq > 0) {
+			if (hlSq < Constants.VISION_RANGE_SQUARED) {
+				Math.sqrt(Constants.VISION_RANGE_SQUARED - hlSq)
+			} else {
+				1
+			}
+		} else {
+			0.0
+		}
+		val m = l/c.length
+		// from http://stackoverflow.com/a/3349134
+		val rotRight = new Double2D(c.y*m, -c.x*m)
+		val start = half + rotRight // compute start of its covered area for us
+		val end = half - rotRight // compute start of its covered area for us
+		start -> end
+	}
+	
+	// inspired from http://buildnewgames.com/vector-field-collision-avoidance/
+	@Pure
+	private def computeCrowdVector(Iterable<Double2D> bots) {
+		val v = new MutableDouble2D(0,0)
+		for(o: bots) {
+			val lsq = o.lengthSq
+			if (lsq > 0) {
+				v -= o.resize(1.0/lsq)
+			}
+		}
+		new Double2D(v)
 	}
 }

@@ -37,11 +37,7 @@ interface IRepresentations {
 
 interface IRepresentationsExtra extends IRepresentations {
 	
-	def List<Explorable> explorableVictims()
-	
 	def List<Explorable> responsibleVictims()
-	
-	def List<Explorable> explorableSeen()
 	
 	def List<Explorable> responsibleSeen()
 	

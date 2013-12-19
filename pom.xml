@@ -4,6 +4,11 @@
 	<groupId>eu.ascens.unimore</groupId>
 	<artifactId>ascens-robots</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
+
+	<properties>
+		<xtend-version>2.5.0</xtend-version>
+	</properties>
+
 	<build>
 		<plugins>
 			<plugin>
@@ -17,7 +22,7 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>build-helper-maven-plugin</artifactId>
-				<version>1.7</version>
+				<version>1.8</version>
 				<executions>
 					<execution>
 						<id>add-source</id>
@@ -27,8 +32,25 @@
 						</goals>
 						<configuration>
 							<sources>
-								<source>src/main/speadl-gen</source>
+								<source>speadl-gen</source>
 							</sources>
+						</configuration>
+					</execution>
+					<execution>
+						<!-- Needed so that speadl files are included in the jar -->
+						<id>add-resource</id>
+						<goals>
+							<goal>add-resource</goal>
+						</goals>
+						<configuration>
+							<resources>
+								<resource>
+									<directory>${project.build.sourceDirectory}</directory>
+									<includes>
+										<include>**/*.speadl</include>
+									</includes>
+								</resource>
+							</resources>
 						</configuration>
 					</execution>
 				</executions>
@@ -36,12 +58,32 @@
 			<plugin>
 				<groupId>org.eclipse.xtend</groupId>
 				<artifactId>xtend-maven-plugin</artifactId>
-				<version>2.4.3</version>
+				<version>${xtend-version}</version>
 				<executions>
 					<execution>
 						<goals>
 							<goal>compile</goal>
 						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-clean-plugin</artifactId>
+				<version>2.5</version>
+				<executions>
+					<execution>
+						<phase>clean</phase>
+						<goals>
+							<goal>clean</goal>
+						</goals>
+						<configuration>
+							<filesets>
+								<fileset>
+									<directory>src/main/xtend-gen</directory>
+								</fileset>
+							</filesets>
+						</configuration>
 					</execution>
 				</executions>
 			</plugin>
@@ -52,12 +94,12 @@
 		<dependency>
 			<groupId>org.eclipse.xtend</groupId>
 			<artifactId>org.eclipse.xtend.lib</artifactId>
-			<version>2.4.3</version>
+			<version>${xtend-version}</version>
 		</dependency>
 		<dependency>
 			<groupId>fr.irit.smac.lib.may</groupId>
 			<artifactId>common-components</artifactId>
-			<version>3.2.0-SNAPSHOT</version>
+			<version>3.2.1</version>
 		</dependency>
 		<!-- For making videos -->
 		<dependency>
@@ -65,11 +107,8 @@
 			<artifactId>jmf</artifactId>
 			<version>2.1.1e</version>
 		</dependency>
-<!-- 		<dependency>
-			<groupId>com.lowagie</groupId>
-			<artifactId>itext</artifactId>
-			<version>4.2.0</version>
-		</dependency> -->
+		<!-- <dependency> <groupId>com.lowagie</groupId> <artifactId>itext</artifactId> 
+			<version>4.2.0</version> </dependency> -->
 		<!-- For manipulating angles mainly -->
 		<dependency>
 			<groupId>com.vividsolutions</groupId>

@@ -1,6 +1,8 @@
 package eu.ascens.unimore.robots.beh
 
+import eu.ascens.unimore.robots.Constants
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
+import eu.ascens.unimore.robots.beh.datatypes.Victim
 import eu.ascens.unimore.robots.beh.interfaces.IDecisionsExtra
 import eu.ascens.unimore.xtend.macros.Step
 import fj.Ord
@@ -30,6 +32,22 @@ class DecisionsImpl extends Decisions implements IDecisionsExtra {
 		lastChoice
 	}
 	
+	private def removeUninterestingVictims(List<Explorable> es) {
+		es.filter[e|
+			switch e {
+				Victim: {
+					// TODO not really correct, more than the desired number could be
+					// getting closer then…
+					// maybe consider how much bots are closer than me?
+					e.sawMyself
+					|| e.distance < Constants.CONSIDERED_NEXT_TO_VICTIM_DISTANCE
+					|| e.howMuch > 0
+				}
+				default: true
+			}
+		]
+	}
+	
 	@Step
 	private def void step() {
 		val explorables = requires.representations.explorables
@@ -40,22 +58,31 @@ class DecisionsImpl extends Decisions implements IDecisionsExtra {
 			}
 			default: {
 				
-				// normalize them over the 36 directions
-//				val explo = SENSORS_DIRECTIONS_CONES
-//					.map[p|explorables.filter[direction.between(p.value)]]
-//					.filter[notEmpty]
-//					.map[
-//						maxEquivalentCriticalities
-//						.chooseBetweenEquivalentDirections
-//					]
+				val eqEs = explorables.maxEquivalentCriticalities
+				val eqEsWoutHM = eqEs.removeUninterestingVictims
 				
-				val choice = explorables
-								.maxEquivalentCriticalities
-								//.keepOnePerOrigin
-								.chooseBetweenEquivalentDirections
+				val toUse = if (eqEsWoutHM.notEmpty) eqEsWoutHM else {
+					val expWoutHM = explorables.removeUninterestingVictims
+					if (expWoutHM.notEmpty) expWoutHM.maxEquivalentCriticalities
+					else eqEs
+				}
+				val choice = toUse.chooseBetweenEquivalentDirections
 				
-				requires.actions.goTo(choice.direction)
-				requires.actions.broadcastExplorables(List.single(choice))
+				switch choice {
+					Victim case (choice.sawMyself && choice.distance < Constants.STOP_AS_RESP_NEXT_TO_VICTIM_DISTANCE)
+								|| (!choice.sawMyself && choice.distance < Constants.STOP_NEXT_TO_VICTIM_DISTANCE): {
+						// but stop closer if you are the one that saw it
+						// in that case do nothing, no need to go crazily around
+					}
+					default: requires.actions.goTo(choice.direction)
+				}
+				
+				val toSend = switch choice {
+					Victim: choice.minusOne
+					default: choice
+				}
+				
+				requires.actions.broadcastExplorables(List.single(toSend))
 				
 				lastChoice = choice
 			}
@@ -63,16 +90,39 @@ class DecisionsImpl extends Decisions implements IDecisionsExtra {
 	}
 	
 	private def chooseBetweenEquivalentDirections(List<Explorable> in) {
-		in
-			//.minimums(Equal.intEqual.comap[Explorable it|howMuch], Ord.intOrd.comap[Explorable it|howMuch])
-			.map[e|P.p(e,e.distanceToCrowd)]
-			// use maximum in case they are all equal!
-			//.maximum(crowdOrd.comap(P2.__2))
-			.maximums(crowdEq.comap(P2.__2), crowdOrd.comap(P2.__2))
-			.map[_1]
-			.map[e|P.p(e, e.distanceToLast)]
-			.maximum(Ord.doubleOrd.comap(P2.__2))
-			._1
+		
+//		val onlyFromMe = in.filter[sawMyself]
+//		
+//		if (onlyFromMe.notEmpty) {
+//			// unless it's because I just lost contact...
+//			onlyFromMe
+//				.map[e|P.p(e,e.distanceToCrowd)]
+//				.maximums(crowdEq.comap(P2.__2), crowdOrd.comap(P2.__2))
+//				.map[_1]
+//				.map[e|P.p(e, e.distanceToLast)]
+//				.maximum(Ord.doubleOrd.comap(P2.__2))
+//				._1
+//		} else {
+//			val fromPreviousOrigin = if (lastChoice != null) {
+//				in.filter[origin.id == lastChoice.origin.id]
+//			} else List.nil
+//			
+//			if (fromPreviousOrigin.notEmpty) {
+//				doAssert(fromPreviousOrigin.size == 1, fromPreviousOrigin.toString)
+//				fromPreviousOrigin.head
+//			} else {
+				in
+					//.minimums(Equal.intEqual.comap[Explorable it|howMuch], Ord.intOrd.comap[Explorable it|howMuch])
+					.map[e|P.p(e,e.distanceToCrowd)]
+					// use maximum in case they are all equal!
+//					.maximum(crowdOrd.comap(P2.__2))
+					.maximums(crowdEq.comap(P2.__2), crowdOrd.comap(P2.__2))
+					.map[_1]
+					.map[e|P.p(e, e.distanceToLast)]
+					.maximum(Ord.doubleOrd.comap(P2.__2))
+					._1
+//			}
+//		}
 	}
 	
 	// the bigger the closer to the previous direction

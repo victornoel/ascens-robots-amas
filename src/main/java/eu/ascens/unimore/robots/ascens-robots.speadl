@@ -11,7 +11,7 @@ import java.util.Collection
 
 namespace eu.ascens.unimore.robots {
 	
-	component Behaviour { 
+	component Behaviour {
 		
 		provides step: Do
 		provides visu: RobotVisu

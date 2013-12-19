@@ -40,12 +40,6 @@ class BehaviourImpl extends ComposedBehaviour implements RobotVisu {
 	
 	val logger = LoggerFactory.getLogger("agent")
 	
-	// this prevent the bug with inner classes from appearing
-	// by populating the import section with the Component qname
-	def neverCalled() {
-		_newComponent(null,true)
-	}
-	
 	override protected make_d() {
 		new DecisionsImpl
 	}

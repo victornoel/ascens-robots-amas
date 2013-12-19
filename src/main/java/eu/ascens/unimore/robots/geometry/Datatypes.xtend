@@ -5,8 +5,8 @@ import fj.data.List
 import org.eclipse.xtext.xbase.lib.Pair
 import sim.util.Double2D
 
-import static extension eu.ascens.unimore.robots.geometry.GeometryExtensions.*
 import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
+import static extension eu.ascens.unimore.xtend.extensions.JavaExtensions.*
 
 package class Radiangle {
 	

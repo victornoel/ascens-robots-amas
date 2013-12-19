@@ -9,6 +9,7 @@ import org.eclipse.xtext.xbase.lib.Pure
 import sim.util.Double2D
 
 import static extension eu.ascens.unimore.xtend.extensions.MasonExtensions.*
+import static extension eu.ascens.unimore.xtend.extensions.JavaExtensions.*
 
 class GeometryExtensions {
 	
@@ -27,11 +28,7 @@ class GeometryExtensions {
 			val cone = it.key.toNormalizedVector -> it.value.toNormalizedVector
 			cone.middleAngledVector -> cone
 		].sort(ORD_D2D.comap[Pair<Double2D, Pair<Double2D, Double2D>> it|key]) // sort evaluates
-	
-	@Pure
-	static def toShortString(double d) {
-		(((d*100) as int as double)/100).toString
-	}
+
 	
 	@Pure
 	static def toShortString(Double2D d) {
