@@ -1,7 +1,6 @@
 package eu.ascens.unimore.robots.beh.datatypes
 
 import eu.ascens.unimore.robots.mason.datatypes.Message
-import eu.ascens.unimore.robots.mason.datatypes.RBEmitter
 import fj.data.List
 import sim.util.Double2D
 
@@ -16,9 +15,6 @@ import static extension eu.ascens.unimore.xtend.extensions.JavaExtensions.*
 	val AgentSig origin
 	
 	val String sender
-	
-	// not used
-	val int howMuch
 	
 	val double criticality
 	
@@ -37,9 +33,7 @@ import static extension eu.ascens.unimore.xtend.extensions.JavaExtensions.*
 		this.via == null
 	}
 	
-	abstract def Explorable withSender(String sender)
-	
-	abstract def Explorable via(Double2D newDir, RBEmitter via)
+	abstract def Explorable via(Double2D newDir, String fromId, Double2D fromCoord)
 	
 	override def toString() {
 		"Expl["+criticality.toShortString+","+distance.toShortString+","+direction.toShortString+"]"
@@ -47,34 +41,37 @@ import static extension eu.ascens.unimore.xtend.extensions.JavaExtensions.*
 }
 
 @Data class Victim extends Explorable {
-		
-	override withSender(String sender) {
-		new Victim(direction,distance,origin,sender,howMuch,criticality,via)
-	}
 	
-	override via(Double2D newDir, RBEmitter via) {
-		new Victim(newDir, distance+via.coord.length, origin, via.id, howMuch, criticality, via.coord)
-	}
+	val int howMuch
 	
-	def minusOne() {
-		new Victim(direction,distance,origin,sender,Math.max(0,howMuch-1),criticality,via)
+	override via(Double2D newDir, String fromId, Double2D fromCoord) {
+		new Victim(newDir, distance+fromCoord.length, origin, fromId, criticality, fromCoord, howMuch)
 	}
 	
 	def withHowMuch(int howMuch) {
-		new Victim(direction,distance,origin,sender,Math.max(0,howMuch),criticality,via)
+		new Victim(direction,distance,origin,sender,criticality,via,howMuch)
 	}
 	
 }
 
 @Data class Area extends Explorable {
+		
+	override via(Double2D newDir, String fromId, Double2D fromCoord) {
+		new Area(newDir, distance+fromCoord.length, origin, fromId, criticality, fromCoord)
+	}
+}
+
+@Data class ReceivedExplorable {
 	
-	override withSender(String sender) {
-		new Area(direction,distance,origin,sender,howMuch,criticality,via)
+	String fromId
+	Double2D fromCoord
+	Explorable explorable
+	int fromHowMany
+	
+	def toExplorable(Double2D newDir) {
+		explorable.via(newDir, fromId, fromCoord)
 	}
 	
-	override via(Double2D newDir, RBEmitter via) {
-		new Area(newDir, distance+via.coord.length, origin, via.id, howMuch, criticality, via.coord)
-	}
 }
 
 @Data class AgentSig {

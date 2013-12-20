@@ -18,8 +18,6 @@ class Utils {
 	
 	public static def <E extends Explorable> explorableCriticalityOrd() { criticalityOrd.comap[E e|e.criticality] }	
 	public static def <E extends Explorable> explorableCriticalityEq() { criticalityEq.comap[E e|e.criticality] }
-	public static def <E extends Explorable> explorableOriginEq() { Equal.stringEqual.comap[E e|e.origin.id] }
-	public static def <E extends Explorable> explorableOriginOrd() { Ord.stringOrd.comap[E e|e.origin.id] }
 	
 	public static val crowdOrd = Ord.doubleOrd
 	public static val crowdEq = Equal.equal [double a|[double b|
@@ -29,10 +27,5 @@ class Utils {
 	@Pure
 	static def <E extends Explorable> maxEquivalentCriticalities(List<E> l) {
 		l.maximums(explorableCriticalityEq,	explorableCriticalityOrd)
-	}
-	
-	@Pure
-	static def <E extends Explorable> maxEquivalentOriginTimestamp(List<E> l) {
-		l.maximums(Equal.intEqual.comap[E e|e.origin.time], Ord.intOrd.comap[E e|e.origin.time])
 	}
 }

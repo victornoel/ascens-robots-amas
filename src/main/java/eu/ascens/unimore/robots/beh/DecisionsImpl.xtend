@@ -32,97 +32,65 @@ class DecisionsImpl extends Decisions implements IDecisionsExtra {
 		lastChoice
 	}
 	
-	private def removeUninterestingVictims(List<Explorable> es) {
-		es.filter[e|
-			switch e {
-				Victim: {
-					// TODO not really correct, more than the desired number could be
-					// getting closer then…
-					// maybe consider how much bots are closer than me?
-					e.sawMyself
-					|| e.distance < Constants.CONSIDERED_NEXT_TO_VICTIM_DISTANCE
-					|| e.howMuch > 0
-				}
-				default: true
-			}
-		]
-	}
-	
 	@Step
 	private def void step() {
-		val explorables = requires.representations.explorables
 		
+		val explorables = requires.representations.explorables
+		// perceive
 		switch explorables {
 			case List.nil: {
 				logger.info("nowhere to go")
 			}
 			default: {
+				// decide
+				val choice = explorables
+								.maxEquivalentCriticalities
+								.chooseBetweenEquivalentDirections
 				
-				val eqEs = explorables.maxEquivalentCriticalities
-				val eqEsWoutHM = eqEs.removeUninterestingVictims
-				
-				val toUse = if (eqEsWoutHM.notEmpty) eqEsWoutHM else {
-					val expWoutHM = explorables.removeUninterestingVictims
-					if (expWoutHM.notEmpty) expWoutHM.maxEquivalentCriticalities
-					else eqEs
-				}
-				val choice = toUse.chooseBetweenEquivalentDirections
-				
-				switch choice {
-					Victim case (choice.sawMyself && choice.distance < Constants.STOP_AS_RESP_NEXT_TO_VICTIM_DISTANCE)
-								|| (!choice.sawMyself && choice.distance < Constants.STOP_NEXT_TO_VICTIM_DISTANCE): {
-						// but stop closer if you are the one that saw it
-						// in that case do nothing, no need to go crazily around
-					}
-					default: requires.actions.goTo(choice.direction)
-				}
-				
-				val toSend = switch choice {
-					Victim: choice.minusOne
-					default: choice
-				}
-				
-				requires.actions.broadcastExplorables(List.single(toSend))
-				
+				// act
+				handleGoTo(choice)
+				handleSend(choice)
 				lastChoice = choice
 			}
 		}
 	}
 	
-	private def chooseBetweenEquivalentDirections(List<Explorable> in) {
+	// TODO we need to slow down to wait for others to keep them advertised
+	// or we need to keep some memory of previous choices in case
+	// we loose contact
+	private def handleGoTo(Explorable to) {
+		switch to {
+			Victim case (to.sawMyself && to.distance < Constants.STOP_AS_RESP_NEXT_TO_VICTIM_DISTANCE)
+						|| (!to.sawMyself && to.distance < Constants.STOP_NEXT_TO_VICTIM_DISTANCE): {
+				// in that case do nothing, no need to go crazily around
+				// but stop closer if you are the one that saw it
+			}
+			default: requires.actions.goTo(to.direction)
+		}
+	}
+	
+	private def handleSend(Explorable to) {
+		val toSend = switch to {
+			Victim case to.distance > Constants.CONSIDERED_NEXT_TO_VICTIM_DISTANCE: {
+				// I'm going there and I'm not counted in the howMuch
+				to.withHowMuch(to.howMuch-1)
+			}
+			default: to
+		}
 		
-//		val onlyFromMe = in.filter[sawMyself]
-//		
-//		if (onlyFromMe.notEmpty) {
-//			// unless it's because I just lost contact...
-//			onlyFromMe
-//				.map[e|P.p(e,e.distanceToCrowd)]
-//				.maximums(crowdEq.comap(P2.__2), crowdOrd.comap(P2.__2))
-//				.map[_1]
-//				.map[e|P.p(e, e.distanceToLast)]
-//				.maximum(Ord.doubleOrd.comap(P2.__2))
-//				._1
-//		} else {
-//			val fromPreviousOrigin = if (lastChoice != null) {
-//				in.filter[origin.id == lastChoice.origin.id]
-//			} else List.nil
-//			
-//			if (fromPreviousOrigin.notEmpty) {
-//				doAssert(fromPreviousOrigin.size == 1, fromPreviousOrigin.toString)
-//				fromPreviousOrigin.head
-//			} else {
-				in
-					//.minimums(Equal.intEqual.comap[Explorable it|howMuch], Ord.intOrd.comap[Explorable it|howMuch])
-					.map[e|P.p(e,e.distanceToCrowd)]
-					// use maximum in case they are all equal!
-//					.maximum(crowdOrd.comap(P2.__2))
-					.maximums(crowdEq.comap(P2.__2), crowdOrd.comap(P2.__2))
-					.map[_1]
-					.map[e|P.p(e, e.distanceToLast)]
-					.maximum(Ord.doubleOrd.comap(P2.__2))
-					._1
-//			}
-//		}
+		requires.actions.broadcastExplorables(List.single(toSend))
+	}
+	
+	private def chooseBetweenEquivalentDirections(List<Explorable> in) {
+		in
+			// TODO instead of that, go in the direction when
+			// no other is going, or less people is going
+			.map[e|P.p(e,e.distanceToCrowd)]
+			.maximums(crowdEq.comap(P2.__2), crowdOrd.comap(P2.__2))
+			.map[_1]
+			.map[e|P.p(e, e.distanceToLast)]
+			.maximum(Ord.doubleOrd.comap(P2.__2))
+			._1
 	}
 	
 	// the bigger the closer to the previous direction

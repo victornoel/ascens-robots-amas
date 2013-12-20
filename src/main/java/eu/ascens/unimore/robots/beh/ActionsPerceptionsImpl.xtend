@@ -167,39 +167,10 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 		requires.see.visibleVictims
 			=> [logger.info("visibleVictims: {}", it)]
 	}
-
-	@StepCached
-	override visionConesCoveredByVisibleRobots() {
-		visibleRobots.map[id -> coord.computeConeCoveredByBot]
-	}
 	
 	@StepCached
 	override escapeCrowdVector() {
 		visibleRobots.map[coord].computeCrowdVector
-	}
-	
-		// take the perpendicular in the middle of the vector
-	// and return the start and the end of the arc of desired radius
-	// intersecting with this perpendicular and of center 0,0
-	@Pure
-	private def computeConeCoveredByBot(Double2D c) {
-		val half = c/2.0
-		val hlSq = half.lengthSq
-		val l = if (hlSq > 0) {
-			if (hlSq < Constants.VISION_RANGE_SQUARED) {
-				Math.sqrt(Constants.VISION_RANGE_SQUARED - hlSq)
-			} else {
-				1
-			}
-		} else {
-			0.0
-		}
-		val m = l/c.length
-		// from http://stackoverflow.com/a/3349134
-		val rotRight = new Double2D(c.y*m, -c.x*m)
-		val start = half + rotRight // compute start of its covered area for us
-		val end = half - rotRight // compute start of its covered area for us
-		start -> end
 	}
 	
 	// inspired from http://buildnewgames.com/vector-field-collision-avoidance/

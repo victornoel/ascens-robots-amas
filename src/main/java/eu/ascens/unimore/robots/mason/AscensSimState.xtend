@@ -29,6 +29,7 @@ import sim.util.TableLoader
 import sim.util.gui.SimpleColorMap
 
 import static extension eu.ascens.unimore.xtend.extensions.JavaExtensions.*
+import eu.ascens.unimore.robots.beh.datatypes.Victim
 
 abstract class AscensSimState extends SimState {
 
@@ -341,7 +342,12 @@ class BotPortrayal2D extends OvalPortrayal2D {
 		graphics.setPaint(Color.GREEN)
 		graphics.drawArrow(botFPos.x as int, botFPos.y as int, spos.x as int, spos.y as int)
 		//graphics.fillOval(spos.x as int, spos.y as int, w/2, h/2)
-		printLabel(e.criticality.toShortString+"/"+e.howMuch, graphics, info, spos.x as int, spos.y as int)
+		val toPrint = e.criticality.toShortString + {
+			if (e instanceof Victim) "/"+e.howMuch
+			else ""
+		}
+		
+		printLabel(toPrint, graphics, info, spos.x as int, spos.y as int)
 	}
 	
 	val static FONT = new Font("SansSerif",Font.PLAIN, 10)

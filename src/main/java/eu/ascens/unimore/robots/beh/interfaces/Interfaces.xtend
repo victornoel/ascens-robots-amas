@@ -2,10 +2,10 @@ package eu.ascens.unimore.robots.beh.interfaces
 
 import eu.ascens.unimore.robots.beh.datatypes.AgentSig
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
+import eu.ascens.unimore.robots.beh.datatypes.ReceivedExplorable
 import eu.ascens.unimore.robots.mason.datatypes.RBEmitter
 import eu.ascens.unimore.robots.mason.datatypes.SensorReading
 import fj.data.List
-import org.eclipse.xtext.xbase.lib.Pair
 import sim.util.Double2D
 
 interface IActions {
@@ -48,8 +48,6 @@ interface IPerceptions {
 	
 	def String myId()
 	
-	def List<Pair<String, Pair<Double2D, Double2D>>> visionConesCoveredByVisibleRobots()
-	
 	def List<SensorReading> visibleFreeAreas()
 	
 	def List<Double2D> visibleVictims()
@@ -72,7 +70,7 @@ interface IPerceptionsExtra extends IPerceptions {
 
 interface IMessaging {
 	
-	def List<Pair<RBEmitter, List<Explorable>>> explorationMessages()
+	def List<ReceivedExplorable> explorationMessages()
 	
 	def AgentSig currentSig()
 	
