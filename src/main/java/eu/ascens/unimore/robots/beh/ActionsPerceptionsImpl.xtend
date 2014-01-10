@@ -5,7 +5,6 @@ import eu.ascens.unimore.robots.beh.datatypes.Explorable
 import eu.ascens.unimore.robots.beh.datatypes.ExplorableMessage
 import eu.ascens.unimore.robots.beh.interfaces.IActionsExtra
 import eu.ascens.unimore.robots.beh.interfaces.IPerceptionsExtra
-import eu.ascens.unimore.robots.mason.datatypes.SensorReading
 import eu.ascens.unimore.xtend.macros.Step
 import eu.ascens.unimore.xtend.macros.StepCached
 import fj.Ord
@@ -75,7 +74,15 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	// taken from http://link.springer.com/chapter/10.1007%2F978-3-642-22907-7_7
 	private def computeDirectionWithAvoidance(Double2D to) {
 		
-		val sensorsReadingsWithLengthSq = sensorReadings.map[it -> it.dir.lengthSq]
+		val sensorsReadingsWithLengthSq = sensorReadings.map[r|
+//			val vs = visibleVictims.filter[between(r.cone)].map[
+//				new SensorReading(it, r.cone, true) -> it.lengthSq
+//			]
+//			if (vs.notEmpty) vs.minimum(Ord.doubleOrd.comap[value])
+//			else 
+// TODO that does'nt when we want to go there exactly!
+			r -> r.dir.lengthSq
+		]
 		// this is the best I can get
 		val maxSq = sensorsReadingsWithLengthSq.map[value].maximum(Ord.doubleOrd)-0.1
 		
@@ -100,7 +107,7 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 		return desiredDirection.focus.key
 	}
 	
-	private def chooseBest(Zipper<Pair<SensorReading, Double>> z, double maxSq, boolean inverse) {
+	private def <A> chooseBest(Zipper<Pair<A, Double>> z, double maxSq, boolean inverse) {
 		val prev = z.cyclePrevious(inverse)
 		val prevprev = prev.cyclePrevious(inverse)
 		val next = z.cycleNext(inverse)
@@ -124,12 +131,12 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 		return z.focus.key
 	}
 	
-	def <A> cycleNext(Zipper<A> z, boolean inverse) {
+	private def <A> cycleNext(Zipper<A> z, boolean inverse) {
 		if (inverse) z.cyclePrevious
 		else z.cycleNext
 	}
 	
-	def <A> cyclePrevious(Zipper<A> z, boolean inverse) {
+	private def <A> cyclePrevious(Zipper<A> z, boolean inverse) {
 		if (inverse) z.cycleNext
 		else z.cyclePrevious
 	}

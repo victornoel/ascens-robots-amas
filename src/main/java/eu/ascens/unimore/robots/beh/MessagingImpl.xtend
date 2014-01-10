@@ -39,7 +39,9 @@ class MessagingImpl extends Messaging implements IMessagingExtra {
 		// most certainly because of the howmuch information...!!
 		// but only for victims!
 		// if we say that distance is still used, but not the timestamp
-		// that could be alright?
+		// that could be alright? -> no because it wouldn't prevent
+		// msg to be ignored when looping between agents when nothing new is coming from the
+		// origin -> or we need to remember distance? beurk
 		
 		val msgs = requires.perceptions.visibleRobots.map[vb|
 			switch vb.message {
@@ -72,12 +74,12 @@ class MessagingImpl extends Messaging implements IMessagingExtra {
 			
 			if (explorable.origin.time > bT) {
 				bestTimesByOrigin.put(originId, explorable.origin.time)
-				bestReceivedExplorableByOrigin.put(originId, new ReceivedExplorable(fromId, fromCoord, explorable, 1))
+				bestReceivedExplorableByOrigin.put(originId, it)
 			} else if (explorable.origin.time == bT) {
 				val bE = bestReceivedExplorableByOrigin.getSafe(originId)
 				if (explorable.distance < bE.explorable.distance
 					|| (explorable.distance == bE.explorable.distance && fromId < bE.fromId)) {
-					bestReceivedExplorableByOrigin.put(originId, new ReceivedExplorable(fromId, fromCoord, explorable, bE.fromHowMany+1))
+					bestReceivedExplorableByOrigin.put(originId, it.withHowManyMore(bE.fromHowMany))
 				}
 			}
 		}

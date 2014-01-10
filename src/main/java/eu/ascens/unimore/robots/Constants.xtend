@@ -31,7 +31,7 @@ class Constants {
 	public static val AVOID_VERY_CLOSE_WALL_DISTANCE = 3.0
 	public static val STOP_AS_RESP_NEXT_TO_VICTIM_DISTANCE = 1.0
 	public static val STOP_NEXT_TO_VICTIM_DISTANCE = 2.0
-	public static val HOW_MUCH_PER_VICTIM = 5
+	public static val HOW_MUCH_PER_VICTIM = 2
 	
 	// for this one, several agents relies on the fact
 	// they use the same!

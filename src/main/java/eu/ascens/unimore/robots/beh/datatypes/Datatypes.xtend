@@ -68,6 +68,10 @@ import static extension eu.ascens.unimore.xtend.extensions.JavaExtensions.*
 	Explorable explorable
 	int fromHowMany
 	
+	def withHowManyMore(int howManyMore) {
+		new ReceivedExplorable(fromId, fromCoord, explorable, fromHowMany+howManyMore)
+	}
+	
 	def toExplorable(Double2D newDir) {
 		explorable.via(newDir, fromId, fromCoord)
 	}

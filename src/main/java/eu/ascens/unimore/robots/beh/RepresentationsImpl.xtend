@@ -12,6 +12,8 @@ import sim.util.Double2D
 
 import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
 import static extension eu.ascens.unimore.xtend.extensions.MasonExtensions.*
+import fj.Equal
+import fj.Ord
 
 class RepresentationsImpl extends Representations implements IRepresentationsExtra {
 	
@@ -57,8 +59,14 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 					null,
 					Constants.HOW_MUCH_PER_VICTIM
 						// remove other bots close enough to victim
-						- requires.perceptions.visibleRobots.count[
-							coord.distance(v) <= Constants.CONSIDERED_NEXT_TO_VICTIM_DISTANCE
+						// but not closer to another victim
+						- requires.perceptions.visibleRobots.count[b|
+							val distToVict = b.coord.distance(v)
+							distToVict <= Constants.CONSIDERED_NEXT_TO_VICTIM_DISTANCE
+							// TODO this has to be done in concordance with others behaviours...
+//							&& !requires.perceptions.visibleVictims.exists[ov|
+//								ov.distance(b.coord) < distToVict
+//							]
 						]
 						// remove myself if I'm close enough too
 						- (if (dist <= Constants.CONSIDERED_NEXT_TO_VICTIM_DISTANCE) 1 else 0)
@@ -114,11 +122,15 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 	
 	@StepCached
 	override explorables() {
-		responsibleSeen
-		+ responsibleVictims
-		+ explorableFromOthers.removeUninterestingVictims
+		explorableFromOthers.removeUninterestingVictims
+		+ responsibleSeen.vary
+		+ responsibleVictims.keepMostInNeedVictims.vary
 	}
-		
+	
+	private def keepMostInNeedVictims(List<Victim> es) {
+		es.maximums(Equal.intEqual.comap[Victim e|e.howMuch], Ord.intOrd.comap[e|e.howMuch])
+	}
+	
 	private def removeUninterestingVictims(List<Explorable> es) {
 		es.filter[e|
 			switch e {

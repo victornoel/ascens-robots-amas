@@ -83,8 +83,6 @@ class DecisionsImpl extends Decisions implements IDecisionsExtra {
 	
 	private def chooseBetweenEquivalentDirections(List<Explorable> in) {
 		in
-			// TODO instead of that, go in the direction when
-			// no other is going, or less people is going
 			.map[e|P.p(e,e.distanceToCrowd)]
 			.maximums(crowdEq.comap(P2.__2), crowdOrd.comap(P2.__2))
 			.map[_1]

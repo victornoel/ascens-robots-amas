@@ -1,8 +1,10 @@
 package eu.ascens.unimore.robots.beh.interfaces
 
 import eu.ascens.unimore.robots.beh.datatypes.AgentSig
+import eu.ascens.unimore.robots.beh.datatypes.Area
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
 import eu.ascens.unimore.robots.beh.datatypes.ReceivedExplorable
+import eu.ascens.unimore.robots.beh.datatypes.Victim
 import eu.ascens.unimore.robots.mason.datatypes.RBEmitter
 import eu.ascens.unimore.robots.mason.datatypes.SensorReading
 import fj.data.List
@@ -37,9 +39,9 @@ interface IRepresentations {
 
 interface IRepresentationsExtra extends IRepresentations {
 	
-	def List<Explorable> responsibleVictims()
+	def List<Victim> responsibleVictims()
 	
-	def List<Explorable> responsibleSeen()
+	def List<Area> responsibleSeen()
 	
 	def List<Explorable> explorableFromOthers()
 }
