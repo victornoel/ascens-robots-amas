@@ -1,5 +1,6 @@
 package eu.ascens.unimore.robots.mason
 
+import de.oehme.xtend.contrib.Cached
 import eu.ascens.unimore.robots.Constants
 import eu.ascens.unimore.robots.mason.datatypes.SensorReading
 import eu.ascens.unimore.xtend.macros.Step
@@ -168,7 +169,7 @@ class Surroundings implements ILosBoard {
 		}
 	}
 	
-	@StepCached(warnNoStep = false)
+	@Cached
 	def wallCones() {
 		val meD = me.state.agents.discretize(me.position)
 		wallCoords.map[
@@ -177,7 +178,7 @@ class Surroundings implements ILosBoard {
 		]
 	}
 	
-	@StepCached(warnNoStep = false)
+	@Cached
 	def getSensorReadings() {
 		
 		SENSORS_DIRECTIONS_CONES.map[d|
@@ -195,12 +196,12 @@ class Surroundings implements ILosBoard {
 		]
 	}
 	
-	@StepCached(warnNoStep = false)
+	@Cached
 	def getVisibleVictims() {
 		victims.map[relativeVectorFor]
 	}
 	
-	@StepCached(warnNoStep = false)
+	@Cached
 	def getRBVisibleBotsWithCoordinate() {
 		foundBots.remove(me)
 		List.iterableList(foundBots as Iterable<MasonRobot>).map[b|
