@@ -3,7 +3,6 @@ package eu.ascens.unimore.robots.mason
 import de.oehme.xtend.contrib.Cached
 import eu.ascens.unimore.robots.Constants
 import eu.ascens.unimore.robots.mason.datatypes.SensorReading
-import eu.ascens.unimore.xtend.macros.Step
 import eu.ascens.unimore.xtend.macros.StepCached
 import fj.data.List
 import org.slf4j.LoggerFactory
@@ -34,7 +33,7 @@ abstract class MasonRobot implements Steppable {
 		this.position = this.state.add(this)
 	}
 	
-	@Step
+	@StepCached
 	override step(SimState state) {
 	}
 
@@ -61,8 +60,8 @@ abstract class MasonRobot implements Steppable {
 		surroundings.visibleVictims
 	}
 	
-	@StepCached
-	def surroundings() {
+	@Cached
+	def Surroundings surroundings() {
 		val discrPos = state.agents.discretize(position)
 		val dist = Math.max(state.rbRange, state.visionRange) as int
 		new Surroundings(this) => [s|

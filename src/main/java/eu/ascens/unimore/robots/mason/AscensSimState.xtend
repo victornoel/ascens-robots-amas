@@ -2,12 +2,12 @@ package eu.ascens.unimore.robots.mason
 
 import eu.ascens.unimore.robots.Constants
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
+import eu.ascens.unimore.robots.beh.datatypes.Victim
 import java.awt.Color
 import java.awt.Font
 import java.awt.Graphics2D
 import java.awt.geom.AffineTransform
 import java.awt.geom.Point2D
-import java.io.IOException
 import java.util.List
 import javax.swing.JFrame
 import sim.display.Controller
@@ -29,11 +29,10 @@ import sim.util.TableLoader
 import sim.util.gui.SimpleColorMap
 
 import static extension eu.ascens.unimore.xtend.extensions.JavaExtensions.*
-import eu.ascens.unimore.robots.beh.datatypes.Victim
 
 abstract class AscensSimState extends SimState {
 
-	package val IntGrid2D maze
+	package var IntGrid2D maze
 	package var Continuous2D agents
 
 	package val double radioRange = Constants.RADIO_RANGE
@@ -44,11 +43,18 @@ abstract class AscensSimState extends SimState {
 	val List<Int2D> availStartingAreas = newArrayList()
 	val List<Int2D> usedStartingAreas = newArrayList()
 	
-	new() throws IOException {
+	new() {
 		super(Constants.SEED)
+	}
 
+	abstract def void populate()
+
+	override start() {
+
+		super.start()
+		
 		maze = new IntGrid2D(0, 0)
-		val grid = TableLoader.loadPNGFile(this.class.getResourceAsStream(Constants.MAZE))
+		val grid = TableLoader.loadPNGFile(this.class.getResourceAsStream(Constants.MAZES.last))
 		maze.setTo(grid)
 		
 		for(i: 0..<maze.width) {
@@ -58,13 +64,6 @@ abstract class AscensSimState extends SimState {
 				}
 			}
 		}
-	}
-
-	abstract def void populate()
-
-	override start() {
-
-		super.start()
 		
 		availStartingAreas += usedStartingAreas
 		usedStartingAreas.clear
@@ -116,6 +115,10 @@ abstract class AscensSimState extends SimState {
 		
 	}
 	
+//	@Property int map = Constants.MAZES.length-1
+//	def Object domMap() {
+//		Constants.MAZES
+//	}
 	@Property boolean showSensorReadings = false
 	@Property boolean showSensorReadingsForAll = false
 	@Property boolean showWalls = false
@@ -137,10 +140,8 @@ class NoStartingAreaAvailable extends RuntimeException {}
 
 class AscensGUIState extends GUIState {
 
-	val FastValueGridPortrayal2D mazePortrayal = new FastValueGridPortrayal2D();
-	val ContinuousPortrayal2D agentPortrayal = new ContinuousPortrayal2D();
-	val FastValueGridPortrayal2D homePheromonePortrayal = new FastValueGridPortrayal2D("Home Pheromone");
-	val FastValueGridPortrayal2D foodPheromonePortrayal = new FastValueGridPortrayal2D("Food Pheromone");
+	var FastValueGridPortrayal2D mazePortrayal
+	var ContinuousPortrayal2D agentPortrayal
 
 	// initialised in init
 	var Display2D display
@@ -156,7 +157,10 @@ class AscensGUIState extends GUIState {
 
 	def setupPortrayals() {
 		val state = (state as AscensSimState)
-
+		
+		mazePortrayal = new FastValueGridPortrayal2D()
+		agentPortrayal = new ContinuousPortrayal2D()
+		
 		// TODO
 		agentPortrayal.setField(state.agents)
 		agentPortrayal.setPortrayalForClass(AscensMasonImpl.RobotImpl.MyMasonRobot, new BotPortrayal2D(agentPortrayal, state))
@@ -165,6 +169,13 @@ class AscensGUIState extends GUIState {
 		//mazePortrayal.setPortrayalForAll(new MazeCellPortrayal(state.maze));
 		mazePortrayal.setMap(new SimpleColorMap(0,3,Color.LIGHT_GRAY,Color.WHITE))
 		mazePortrayal.setField(state.maze);
+
+		// attach the portrayals
+		display.detatchAll
+		display.attach(mazePortrayal, "Maze");
+		display.attach(agentPortrayal, "Agents");
+
+		display.setBackdrop(Color.white);
 
 		//robotsPortrayal.setPortrayalForClass(ObstacleObject, new GeomPortrayal(Color.YELLOW,1.0,true))
 		//robotsPortrayal.setPortrayalForClass(VictimObject, new GeomPortrayal(Color.RED,1.0,true))
@@ -186,21 +197,12 @@ class AscensGUIState extends GUIState {
 		super.init(controller)
 
 		// Make the Display2D.  We'll have it display stuff later
-		val s = state as AscensSimState
-		display = new Display2D(s.maze.width * 8, s.maze.height * 8, this)
+		display = new Display2D(800, 800, this)
 
 		// register the frame so it appears in the "Display" list
 		displayFrame = display.createFrame();
 		controller.registerFrame(displayFrame);
 		displayFrame.setVisible(true);
-
-		// attach the portrayals
-		display.attach(homePheromonePortrayal, "Pheromones To Home");
-		display.attach(foodPheromonePortrayal, "Pheromones To Food");
-		display.attach(mazePortrayal, "Maze");
-		display.attach(agentPortrayal, "Agents");
-
-		display.setBackdrop(Color.white);
 	}
 
 	override quit() {

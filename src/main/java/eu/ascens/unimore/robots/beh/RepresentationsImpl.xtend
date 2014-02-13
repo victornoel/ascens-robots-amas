@@ -1,19 +1,19 @@
 package eu.ascens.unimore.robots.beh
 
+import de.oehme.xtend.contrib.Cached
 import eu.ascens.unimore.robots.Constants
 import eu.ascens.unimore.robots.beh.datatypes.Area
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
 import eu.ascens.unimore.robots.beh.datatypes.Victim
 import eu.ascens.unimore.robots.beh.interfaces.IRepresentationsExtra
-import eu.ascens.unimore.xtend.macros.Step
 import eu.ascens.unimore.xtend.macros.StepCached
+import fj.Equal
+import fj.Ord
 import fj.data.List
 import sim.util.Double2D
 
 import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
 import static extension eu.ascens.unimore.xtend.extensions.MasonExtensions.*
-import fj.Equal
-import fj.Ord
 
 class RepresentationsImpl extends Representations implements IRepresentationsExtra {
 	
@@ -25,7 +25,7 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 		this
 	}
 	
-	@Step
+	@StepCached
 	def preStep() {
 	}
 	
@@ -33,9 +33,9 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 		val distToV = c.lengthSq
 		requires.perceptions.visibleRobots.exists[b|
 			val d = b.coord.distanceSq(c)
-			d < distToV
+			d < distToV - 0.5
 			// in case the distance is the same…
-			|| (d == distToV && requires.perceptions.myId < b.id)
+			|| (d == (distToV- 0.5) && requires.perceptions.myId < b.id)
 		]
 	}
 	
@@ -43,7 +43,7 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 		requires.perceptions.visibleWalls.exists[w|c.between(w.cone)]
 	}
 	
-	@StepCached
+	@Cached
 	override responsibleVictims() {
 		requires.perceptions.visibleVictims
 			// do not consider it if there is another robot closer
@@ -83,7 +83,7 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 			// over those about other victims behind... 
 	}
 	
-	@StepCached
+	@Cached
 	override responsibleSeen() {
 		requires.perceptions.visibleFreeAreas
 			.map[dir]
@@ -100,7 +100,7 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 			]
 	}
 	
-	@StepCached
+	@Cached
 	override explorableFromOthers() {
 		requires.messaging.explorationMessages.map[p|
 			val nc = p.explorable.direction+p.fromCoord
@@ -120,11 +120,11 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 		]
 	}
 	
-	@StepCached
+	@Cached
 	override explorables() {
-		explorableFromOthers.removeUninterestingVictims
-		+ responsibleSeen.vary
-		+ responsibleVictims.keepMostInNeedVictims.vary
+		responsibleSeen.<Explorable>vary
+		+ responsibleVictims.keepMostInNeedVictims.<Explorable>vary
+		+ explorableFromOthers.removeUninterestingVictims.<Explorable>vary
 	}
 	
 	private def keepMostInNeedVictims(List<Victim> es) {

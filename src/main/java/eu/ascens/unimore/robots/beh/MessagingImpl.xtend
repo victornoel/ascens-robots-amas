@@ -1,10 +1,10 @@
 package eu.ascens.unimore.robots.beh
 
+import de.oehme.xtend.contrib.Cached
 import eu.ascens.unimore.robots.beh.datatypes.AgentSig
 import eu.ascens.unimore.robots.beh.datatypes.ExplorableMessage
 import eu.ascens.unimore.robots.beh.datatypes.ReceivedExplorable
 import eu.ascens.unimore.robots.beh.interfaces.IMessagingExtra
-import eu.ascens.unimore.xtend.macros.Step
 import eu.ascens.unimore.xtend.macros.StepCached
 import fj.data.List
 import java.util.Map
@@ -24,7 +24,7 @@ class MessagingImpl extends Messaging implements IMessagingExtra {
 	
 	var int timestamp = 0
 	
-	@Step
+	@StepCached
 	def preStep() {
 		timestamp = timestamp + 1
 	}
@@ -32,7 +32,7 @@ class MessagingImpl extends Messaging implements IMessagingExtra {
 	val Map<String, Integer> times = newHashMap
 	var Map<String, Integer> previousTimes = newHashMap
 	
-	@StepCached(forceEnable=true)
+	@Cached
 	override explorationMessages() {
 		
 		// TODO is all of this really useful? If disabled it still works...

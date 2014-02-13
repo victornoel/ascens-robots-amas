@@ -4,7 +4,7 @@ import eu.ascens.unimore.robots.Constants
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
 import eu.ascens.unimore.robots.beh.datatypes.Victim
 import eu.ascens.unimore.robots.beh.interfaces.IDecisionsExtra
-import eu.ascens.unimore.xtend.macros.Step
+import eu.ascens.unimore.xtend.macros.StepCached
 import fj.Ord
 import fj.P
 import fj.P2
@@ -32,7 +32,7 @@ class DecisionsImpl extends Decisions implements IDecisionsExtra {
 		lastChoice
 	}
 	
-	@Step
+	@StepCached
 	private def void step() {
 		
 		val explorables = requires.representations.explorables

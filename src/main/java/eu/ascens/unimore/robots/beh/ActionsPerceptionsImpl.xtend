@@ -1,11 +1,11 @@
 package eu.ascens.unimore.robots.beh
 
+import de.oehme.xtend.contrib.Cached
 import eu.ascens.unimore.robots.Constants
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
 import eu.ascens.unimore.robots.beh.datatypes.ExplorableMessage
 import eu.ascens.unimore.robots.beh.interfaces.IActionsExtra
 import eu.ascens.unimore.robots.beh.interfaces.IPerceptionsExtra
-import eu.ascens.unimore.xtend.macros.Step
 import eu.ascens.unimore.xtend.macros.StepCached
 import fj.Ord
 import fj.data.List
@@ -27,7 +27,7 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 		[|preStep]
 	}
 	
-	@Step
+	@StepCached
 	def preStep() {}
 	
 	override protected make_actions() {
@@ -145,37 +145,37 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 		requires.id.pull
 	}
 	
-	@StepCached
+	@Cached
 	override visibleFreeAreas() {
 		sensorReadings
 			.filter[!hasWall]
 	}
 	
-	@StepCached
+	@Cached
 	override visibleWalls() {
 		sensorReadings
 			.filter[hasWall]
 	}
 
-	@StepCached
+	@Cached
 	private def sensorReadings() {
 		requires.see.sensorReadings
 			=> [logger.info("sensorReadings: {}", it)]
 	}
 	
-	@StepCached
+	@Cached
 	override visibleRobots() {
 		requires.see.RBVisibleRobots
 			=> [logger.info("visibleRobots: {}", it)]
 	}
 	
-	@StepCached
+	@Cached
 	override visibleVictims() {
 		requires.see.visibleVictims
 			=> [logger.info("visibleVictims: {}", it)]
 	}
 	
-	@StepCached
+	@Cached
 	override escapeCrowdVector() {
 		visibleRobots.map[coord].computeCrowdVector
 	}

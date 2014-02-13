@@ -1,6 +1,5 @@
 package eu.ascens.unimore.robots.mason;
 
-import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eclipse.xtext.xbase.lib.Pair;
@@ -28,16 +27,12 @@ public class AscensMasonImpl extends AscensMason {
 	
 	@SuppressWarnings("serial")
 	public AscensMasonImpl() {
-		try {
-			simState = new AscensSimState() {
-				@Override
-				public void populate() {
-					requires().populateWorld().doIt();
-				}
-			};
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+		simState = new AscensSimState() {
+			@Override
+			public void populate() {
+				requires().populateWorld().doIt();
+			}
+		};
 	}
 	
 	@Override
