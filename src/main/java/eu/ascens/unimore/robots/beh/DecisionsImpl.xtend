@@ -72,7 +72,7 @@ class DecisionsImpl extends Decisions implements IDecisionsExtra {
 	private def handleSend(Explorable to) {
 		val toSend = switch to {
 			Victim case to.distance > Constants.CONSIDERED_NEXT_TO_VICTIM_DISTANCE: {
-				// I'm going there and I'm not counted in the howMuch
+				// I'm going there but I'm not counted in the howMuch yet
 				to.withHowMuch(to.howMuch-1)
 			}
 			default: to

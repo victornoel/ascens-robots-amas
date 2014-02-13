@@ -41,8 +41,7 @@ abstract class AscensSimState extends SimState {
 	package val double rbRange = Constants.RB_RANGE
 	
 	val List<Int2D> availStartingAreas = newArrayList()
-	val List<Int2D> usedStartingAreas = newArrayList()
-	
+
 	new() {
 		super(Constants.SEED)
 	}
@@ -54,9 +53,11 @@ abstract class AscensSimState extends SimState {
 		super.start()
 		
 		maze = new IntGrid2D(0, 0)
-		val grid = TableLoader.loadPNGFile(this.class.getResourceAsStream(Constants.MAZES.last))
+		
+		val grid = TableLoader.loadPNGFile(this.class.getResourceAsStream(Constants.MAZES.get(map)))
 		maze.setTo(grid)
 		
+		availStartingAreas.clear
 		for(i: 0..<maze.width) {
 			for(j: 0..<maze.height) {
 				if (maze.get(i,j) == 2) {
@@ -65,12 +66,14 @@ abstract class AscensSimState extends SimState {
 			}
 		}
 		
-		availStartingAreas += usedStartingAreas
-		usedStartingAreas.clear
-		
 		agents = new Continuous2D(1, maze.width, maze.height)
 
 		populate()
+	}
+	
+	override finish() {
+		maze = null
+		agents = null
 	}
 	
 	def isInMaze(Double2D loc) {
@@ -104,7 +107,6 @@ abstract class AscensSimState extends SimState {
 	def add(Steppable r) {
 		if (!availStartingAreas.empty) {
 			val iPos = availStartingAreas.remove(random.nextInt(availStartingAreas.size))
-			usedStartingAreas += iPos
 			val pos = new Double2D(iPos.x+0.5, iPos.y+0.5)
 			agents.setObjectLocation(r, pos)
 			schedule.scheduleRepeating(Schedule.EPOCH, 0, r, 1)
@@ -115,10 +117,10 @@ abstract class AscensSimState extends SimState {
 		
 	}
 	
-//	@Property int map = Constants.MAZES.length-1
-//	def Object domMap() {
-//		Constants.MAZES
-//	}
+	@Property int map = Constants.MAZES.length-1
+	def Object domMap() {
+		Constants.MAZES
+	}
 	@Property boolean showSensorReadings = false
 	@Property boolean showSensorReadingsForAll = false
 	@Property boolean showWalls = false
@@ -158,37 +160,37 @@ class AscensGUIState extends GUIState {
 	def setupPortrayals() {
 		val state = (state as AscensSimState)
 		
-		mazePortrayal = new FastValueGridPortrayal2D()
-		agentPortrayal = new ContinuousPortrayal2D()
-		
-		// TODO
-		agentPortrayal.setField(state.agents)
 		agentPortrayal.setPortrayalForClass(AscensMasonImpl.RobotImpl.MyMasonRobot, new BotPortrayal2D(agentPortrayal, state))
 
 		// set up the maze portrayal
-		//mazePortrayal.setPortrayalForAll(new MazeCellPortrayal(state.maze));
 		mazePortrayal.setMap(new SimpleColorMap(0,3,Color.LIGHT_GRAY,Color.WHITE))
-		mazePortrayal.setField(state.maze);
 
 		// attach the portrayals
 		display.detatchAll
-		display.attach(mazePortrayal, "Maze");
-		display.attach(agentPortrayal, "Agents");
-
-		display.setBackdrop(Color.white);
-
+		display.attach(mazePortrayal, "Maze")
+		display.attach(agentPortrayal, "Agents")
+		display.setBackdrop(Color.white)
+		
 		//robotsPortrayal.setPortrayalForClass(ObstacleObject, new GeomPortrayal(Color.YELLOW,1.0,true))
 		//robotsPortrayal.setPortrayalForClass(VictimObject, new GeomPortrayal(Color.RED,1.0,true))
 		// reschedule the displayer
-		display.reset();
+		display.reset()
 
 		// redraw the display
-		display.repaint();
+		display.repaint()
 	}
 
 	override start() {
 		super.start()
-
+		
+		val state = (state as AscensSimState)
+		
+		mazePortrayal = new FastValueGridPortrayal2D()
+		agentPortrayal = new ContinuousPortrayal2D()
+	
+		agentPortrayal.setField(state.agents)
+		mazePortrayal.setField(state.maze)
+		
 		setupPortrayals()
 	}
 

@@ -29,6 +29,7 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 	def preStep() {
 	}
 	
+	// Could be cached but need to support cache with parameter in StepCached!
 	private def existsCloserBot(Double2D c) {
 		val distToV = c.lengthSq
 		requires.perceptions.visibleRobots.exists[b|
