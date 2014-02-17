@@ -3,8 +3,6 @@ package eu.ascens.unimore.robots.beh
 import eu.ascens.unimore.robots.mason.interfaces.RobotVisu
 import org.slf4j.LoggerFactory
 
-import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
-
 /*
  * Note
  * 
@@ -88,8 +86,12 @@ class BehaviourImpl extends ComposedBehaviour implements RobotVisu {
 		parts.r.representations.explorables
 	}
 	
-	override explorablesOnlyFromMe() {
-		parts.r.representations.responsibleSeen.vary
+	override areasOnlyFromMe() {
+		parts.r.representations.responsibleSeen
+	}
+	
+	override victimsOnlyFromMe() {
+		parts.r.representations.responsibleVictims
 	}
 	
 	override explorablesFromOthers() {

@@ -3,13 +3,10 @@ package eu.ascens.unimore.robots.beh
 import de.oehme.xtend.contrib.Cached
 import eu.ascens.unimore.robots.Constants
 import eu.ascens.unimore.robots.beh.datatypes.Area
-import eu.ascens.unimore.robots.beh.datatypes.Explorable
 import eu.ascens.unimore.robots.beh.datatypes.Victim
 import eu.ascens.unimore.robots.beh.interfaces.IRepresentationsExtra
+import eu.ascens.unimore.robots.mason.datatypes.RBEmitter
 import eu.ascens.unimore.xtend.macros.StepCached
-import fj.Equal
-import fj.Ord
-import fj.data.List
 import sim.util.Double2D
 
 import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
@@ -29,48 +26,39 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 	def preStep() {
 	}
 	
-	// Could be cached but need to support cache with parameter in StepCached!
-	private def existsCloserBot(Double2D c) {
-		val distToV = c.lengthSq
-		requires.perceptions.visibleRobots.exists[b|
-			val d = b.coord.distanceSq(c)
-			d < distToV - 0.5
-			// in case the distance is the same…
-			|| (d == (distToV- 0.5) && requires.perceptions.myId < b.id)
-		]
-	}
-	
-	private def existsVisibleWall(Double2D c) {
-		requires.perceptions.visibleWalls.exists[w|c.between(w.cone)]
+	private def closerThanMe(RBEmitter who, Double2D what, double myDistanceSq) {
+		val dSq = who.coord.distanceSq(what)
+		dSq < myDistanceSq
+		// in case the distance is the same…
+		|| (dSq == myDistanceSq && requires.perceptions.myId < who.id)
 	}
 	
 	@Cached
 	override responsibleVictims() {
 		requires.perceptions.visibleVictims
-			// do not consider it if there is another robot closer
-			.filter[!existsCloserBot]
-			.map[v|
+			// do not consider it if there is enough robot closer 
+			.filter[c|
+				val distToV = c.lengthSq
+				!requires.perceptions.visibleRobots.exists[closerThanMe(c, distToV)]
+			].map[v|
 				val dist = v.length
 				new Victim(
 					v,
 					dist,
 					requires.messaging.currentSig,
-					null,
 					Constants.STARTING_VICTIM_CRITICALITY,
-					null,
-					Constants.HOW_MUCH_PER_VICTIM
-						// remove other bots close enough to victim
-						// but not closer to another victim
-						- requires.perceptions.visibleRobots.count[b|
-							val distToVict = b.coord.distance(v)
-							distToVict <= Constants.CONSIDERED_NEXT_TO_VICTIM_DISTANCE
-							// TODO this has to be done in concordance with others behaviours...
-//							&& !requires.perceptions.visibleVictims.exists[ov|
-//								ov.distance(b.coord) < distToVict
-//							]
+					// count other bots close enough to victim
+					// but not closer to another victim
+					requires.perceptions.visibleRobots.count[b|
+						val distToVict = b.coord.distance(v)
+						distToVict <= Constants.CONSIDERED_NEXT_TO_VICTIM_DISTANCE
+						// TODO this has to be done in concordance with others behaviours...
+						&& !requires.perceptions.visibleVictims.exists[ov|
+							ov.distance(b.coord) < distToVict
 						]
-						// remove myself if I'm close enough too
-						- (if (dist <= Constants.CONSIDERED_NEXT_TO_VICTIM_DISTANCE) 1 else 0)
+					]
+					// add myself if I'm close enough too
+					+ (if (dist <= Constants.CONSIDERED_NEXT_TO_VICTIM_DISTANCE) 1 else 0)
 				)
 			]
 			// TODO merge all the victims as one (since we are responsible for all of them
@@ -88,66 +76,60 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 	override responsibleSeen() {
 		requires.perceptions.visibleFreeAreas
 			.map[dir]
-			.filter[!existsCloserBot]
+			.filter[c|
+				val distToV = c.lengthSq
+				// -0.5 in order to not get problems when bots are at the same distance
+				// and some glitch make them both see the other as closer
+				// there will be duplicate just for the time of one turn normally
+				!requires.perceptions.visibleRobots.exists[closerThanMe(c, distToV - 0.5)]
+			]
 			.map[d|
 				new Area(
 					d,
-					0,
+					d.length,
 					requires.messaging.currentSig,
-					null,
-					Constants.STARTING_EXPLORABLE_CRITICALITY,
-					null
+					Constants.STARTING_EXPLORABLE_CRITICALITY
 				)
 			]
 	}
 	
 	@Cached
 	override explorableFromOthers() {
-		requires.messaging.explorationMessages.map[p|
+		requires.messaging.explorationMessages
+		.map[p|
 			val nc = p.explorable.direction+p.fromCoord
 			val viaLengthSq = p.fromCoord.lengthSq
 			val ncLengthSq = nc.lengthSq
 			// follow directly the sender if
 			val dir = if (
-				// the information is useless
-				// or he points to something too far from me
-				// to correctly assess the direction (it's a sum of vector, length matters)
-				ncLengthSq == 0 || ncLengthSq > viaLengthSq
-				// or it's facing a wall
-				|| existsVisibleWall(nc)
+					// the information is useless
+					// or he points to something too far from me
+					// to correctly assess the direction (because it's a sum of vector, so length is fuzzy)
+					ncLengthSq == 0 || ncLengthSq > viaLengthSq
+					// or it's facing a wall
+					//|| requires.perceptions.visibleWalls.exists[w|nc.between(w.cone)]
 				) p.fromCoord
 				else nc
 			p.toExplorable(dir)
+		].filter[e|
+			switch e {
+				// if it's a victim, only consider it if there is not enough people
+				Victim: {
+					if (e.direction.length < Constants.CONSIDERED_NEXT_TO_VICTIM_DISTANCE) {
+						e.howMuch <= Constants.HOW_MUCH_PER_VICTIM
+					} else {
+						e.howMuch < Constants.HOW_MUCH_PER_VICTIM
+					}
+				}
+				default: true
+			}
 		]
 	}
 	
 	@Cached
 	override explorables() {
-		responsibleSeen.<Explorable>vary
-		+ responsibleVictims.keepMostInNeedVictims.<Explorable>vary
-		+ explorableFromOthers.removeUninterestingVictims.<Explorable>vary
-	}
-	
-	private def keepMostInNeedVictims(List<Victim> es) {
-		es.maximums(Equal.intEqual.comap[Victim e|e.howMuch], Ord.intOrd.comap[e|e.howMuch])
-	}
-	
-	private def removeUninterestingVictims(List<Explorable> es) {
-		es.filter[e|
-			switch e {
-				// for a victim, I keep it if...
-				Victim: {
-					// I'm close enough to be considered around the victim and we are not too much
-					(e.distance <= Constants.CONSIDERED_NEXT_TO_VICTIM_DISTANCE && e.howMuch >= 0)
-					// or I'm not considered around the victim and they still need someone
-					|| (e.distance > Constants.CONSIDERED_NEXT_TO_VICTIM_DISTANCE && e.howMuch > 0)
-				}
-				// TODO would be best if CONSIDERED_NEXT_TO_VICTIM_DISTANCE is not an
-				// information pre-shared by agent... maybe could be done exploiting only howMuch?
-				// or sharing id of considered in?
-				// also, it's not so good because distance is not very reliable
-				default: true
-			}
-		]
+		explorableFromOthers +
+		responsibleSeen.vary +
+		responsibleVictims.vary
 	}
 }

@@ -42,7 +42,19 @@ import static extension eu.ascens.unimore.xtend.extensions.JavaExtensions.*
 
 @Data class Victim extends Explorable {
 	
+	/**
+	 * how much people around it
+	 */
 	val int howMuch
+	
+	new(Double2D direction, double distance, AgentSig origin, String sender, double criticality, Double2D via, int howMuch) {
+		super(direction, distance, origin, sender, criticality, via)
+		this._howMuch = howMuch
+	}
+	
+	new(Double2D direction, double distance, AgentSig origin, double criticality, int howMuch) {
+		this(direction, distance, origin, null, criticality, null, howMuch)
+	}
 	
 	override via(Double2D newDir, String fromId, Double2D fromCoord) {
 		new Victim(newDir, distance+fromCoord.length, origin, fromId, criticality, fromCoord, howMuch)
@@ -55,7 +67,15 @@ import static extension eu.ascens.unimore.xtend.extensions.JavaExtensions.*
 }
 
 @Data class Area extends Explorable {
-		
+	
+	new(Double2D direction, double distance, AgentSig origin, String sender, double criticality, Double2D via) {
+		super(direction, distance, origin, sender, criticality, via)
+	}
+	
+	new(Double2D direction, double distance, AgentSig origin, double criticality) {
+		this(direction, distance, origin, null, criticality, null)
+	}
+	
 	override via(Double2D newDir, String fromId, Double2D fromCoord) {
 		new Area(newDir, distance+fromCoord.length, origin, fromId, criticality, fromCoord)
 	}

@@ -28,4 +28,14 @@ class Utils {
 	static def <E extends Explorable> maxEquivalentCriticalities(List<E> l) {
 		l.maximums(explorableCriticalityEq,	explorableCriticalityOrd)
 	}
+	
+	@Pure
+	static def <E extends Explorable> keepEquivalent(List<E> l) {
+		l.takeWhile[explorableCriticalityEq.eq(l.head,it)]
+	}
+	
+	@Pure
+	static def <E extends Explorable> orderByDescendingCriticality(List<E> l) {
+		l.sort(explorableCriticalityOrd.inverse)
+	}
 }

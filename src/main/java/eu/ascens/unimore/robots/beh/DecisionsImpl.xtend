@@ -26,8 +26,8 @@ class DecisionsImpl extends Decisions implements IDecisionsExtra {
 		this
 	}
 	
+	// this should not be used to take a decision!
 	var Explorable lastChoice
-	
 	override lastChoice() {
 		lastChoice
 	}
@@ -48,8 +48,11 @@ class DecisionsImpl extends Decisions implements IDecisionsExtra {
 								.chooseBetweenEquivalentDirections
 				
 				// act
+				// TODO maybe we should advertise on the other interesting thing
+				// if the choice is about a victim that we are close to with enough people
 				handleGoTo(choice)
 				handleSend(choice)
+				// this should not be used by decision!
 				lastChoice = choice
 			}
 		}
@@ -61,7 +64,7 @@ class DecisionsImpl extends Decisions implements IDecisionsExtra {
 	private def handleGoTo(Explorable to) {
 		switch to {
 			Victim case (to.sawMyself && to.distance < Constants.STOP_AS_RESP_NEXT_TO_VICTIM_DISTANCE)
-						|| (!to.sawMyself && to.distance < Constants.STOP_NEXT_TO_VICTIM_DISTANCE): {
+						|| (!to.sawMyself && to.direction.length < Constants.STOP_NEXT_TO_VICTIM_DISTANCE): {
 				// in that case do nothing, no need to go crazily around
 				// but stop closer if you are the one that saw it
 			}
@@ -73,7 +76,7 @@ class DecisionsImpl extends Decisions implements IDecisionsExtra {
 		val toSend = switch to {
 			Victim case to.distance > Constants.CONSIDERED_NEXT_TO_VICTIM_DISTANCE: {
 				// I'm going there but I'm not counted in the howMuch yet
-				to.withHowMuch(to.howMuch-1)
+				to.withHowMuch(to.howMuch+1)
 			}
 			default: to
 		}

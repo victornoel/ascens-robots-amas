@@ -9,8 +9,8 @@ class Constants {
 	// Environment
 	
 	// use mtpaint to draw it: 0 for walls, 1 for victims, 2 for starting area, rest for nothing
-	public static val String[] MAZES = #[ "/maze1.png", "/maze2.png", "/maze3.png", "/maze4.png", "/maze5.png" ]
-	public static val NB_BOTS = 800
+	public static val String[] MAZES = #[ "maze1", "maze2", "maze3", "maze4", "maze5" ]
+	public static val NB_BOTS = 10
 	
 	// Robots characteristics, in meters or meters/step
 	

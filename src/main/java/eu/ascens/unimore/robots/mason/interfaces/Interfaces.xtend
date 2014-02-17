@@ -1,6 +1,8 @@
 package eu.ascens.unimore.robots.mason.interfaces
 
+import eu.ascens.unimore.robots.beh.datatypes.Area
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
+import eu.ascens.unimore.robots.beh.datatypes.Victim
 import eu.ascens.unimore.robots.mason.datatypes.RBEmitter
 import eu.ascens.unimore.robots.mason.datatypes.SensorReading
 import fj.data.List
@@ -32,7 +34,9 @@ interface RobotVisu {
 	
 	def Iterable<Explorable> explorables()
 	
-	def Iterable<Explorable> explorablesOnlyFromMe()
+	def Iterable<Victim> victimsOnlyFromMe()
+	
+	def Iterable<Area> areasOnlyFromMe()
 	
 	def Iterable<Explorable> explorablesFromOthers()
 }

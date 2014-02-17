@@ -54,7 +54,7 @@ abstract class AscensSimState extends SimState {
 		
 		maze = new IntGrid2D(0, 0)
 		
-		val grid = TableLoader.loadPNGFile(this.class.getResourceAsStream(Constants.MAZES.get(map)))
+		val grid = TableLoader.loadPNGFile(this.class.getResourceAsStream("/"+Constants.MAZES.get(map)+".png"))
 		maze.setTo(grid)
 		
 		availStartingAreas.clear
@@ -117,7 +117,7 @@ abstract class AscensSimState extends SimState {
 		
 	}
 	
-	@Property int map = Constants.MAZES.length-1
+	@Property int map = 0
 	def Object domMap() {
 		Constants.MAZES
 	}
@@ -127,8 +127,10 @@ abstract class AscensSimState extends SimState {
 	@Property boolean showWallsForAlls = false
 	@Property boolean showVisible = false
 	@Property boolean showVisibleForAlls = false
-	@Property boolean showExplorableOnlyFromMe = false
-	@Property boolean showExplorableOnlyFromMeForAll = false
+	@Property boolean showAreasOnlyFromMe = false
+	@Property boolean showAreasOnlyFromMeForAll = false
+	@Property boolean showVictimsOnlyFromMe = false
+	@Property boolean showVictimsOnlyFromMeForAll = false
 	@Property boolean showExplorableFromOthers = false
 	@Property boolean showExplorableFromOthersForAll = false
 	@Property boolean showExplorable = false
@@ -280,11 +282,18 @@ class BotPortrayal2D extends OvalPortrayal2D {
 					}
 				}
 				
-				if (state.showExplorableOnlyFromMeForAll || (info.selected && state.showExplorableOnlyFromMe)) {
-					for(c: object.visu.explorablesOnlyFromMe) {
+				if (state.showAreasOnlyFromMeForAll || (info.selected && state.showAreasOnlyFromMe)) {
+					for(c: object.visu.areasOnlyFromMe) {
 						graphics.printExplorable(c, botPos, botFPos, info)
 					}
 				}
+				
+				if (state.showVictimsOnlyFromMeForAll || (info.selected && state.showVictimsOnlyFromMe)) {
+					for(c: object.visu.victimsOnlyFromMe) {
+						graphics.printExplorable(c, botPos, botFPos, info)
+					}
+				}
+				
 				
 				if (state.showExplorableForAll || (info.selected && state.showExplorable)) {
 					for(c: object.visu.explorables) {
