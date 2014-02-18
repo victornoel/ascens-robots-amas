@@ -75,6 +75,11 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	private def computeDirectionWithAvoidance(Double2D to) {
 		
 		val sensorsReadingsWithLengthSq = sensorReadings.map[r|
+//			val rs = visibleRobots.filter[coord.between(r.cone)].map[
+//				new SensorReading(coord, r.cone, true) -> coord.lengthSq
+//			]
+//			if (rs.notEmpty) rs.minimum(Ord.doubleOrd.comap[value])
+//			else
 //			val vs = visibleVictims.filter[between(r.cone)].map[
 //				new SensorReading(it, r.cone, true) -> it.lengthSq
 //			]

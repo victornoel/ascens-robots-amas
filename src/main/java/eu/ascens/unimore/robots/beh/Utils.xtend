@@ -8,6 +8,7 @@ import fj.data.List
 import org.eclipse.xtext.xbase.lib.Pure
 
 import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
+import eu.ascens.unimore.robots.beh.datatypes.Victim
 
 class Utils {
 	
@@ -31,11 +32,24 @@ class Utils {
 	
 	@Pure
 	static def <E extends Explorable> keepEquivalent(List<E> l) {
-		l.takeWhile[explorableCriticalityEq.eq(l.head,it)]
+		l.takeWhile[e|
+			explorableCriticalityEq.eq(l.head,e)
+			&& switch e {
+				Victim: {
+					Ord.booleanOrd.eq(l.head.sawMyself,e.sawMyself)
+					&& Ord.doubleOrd.eq(l.head.distance,e.distance)
+				}
+				default: true
+			}
+		]
 	}
 	
 	@Pure
 	static def <E extends Explorable> orderByDescendingCriticality(List<E> l) {
-		l.sort(explorableCriticalityOrd.inverse)
+		l.sort(
+			explorableCriticalityOrd.inverse
+			.orThen(Ord.booleanOrd.comap[E e|!e.sawMyself])
+			.orThen(Ord.doubleOrd.comap[E e|e.distance])
+		)
 	}
 }

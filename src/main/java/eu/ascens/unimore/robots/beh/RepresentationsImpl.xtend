@@ -26,38 +26,59 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 	def preStep() {
 	}
 	
-	private def closerThanMe(RBEmitter who, Double2D what, double myDistanceSq) {
-		val dSq = who.coord.distanceSq(what)
-		dSq < myDistanceSq
-		// in case the distance is the same…
-		|| (dSq == myDistanceSq && requires.perceptions.myId < who.id)
+	private def isCloserThanMe(RBEmitter who, double hisDistanceSq, double myDistanceSq) {
+		hisDistanceSq < myDistanceSq
+		// in case the distance is the same… rare but possible
+		|| (hisDistanceSq == myDistanceSq && requires.perceptions.myId < who.id)
+	}
+	
+	private def isConsideredNextTo(Double2D who, Double2D victim) {
+		val distToVictSq = who.distanceSq(victim)
+		// bot is close enough to victim
+		distToVictSq <= Constants.CONSIDERED_NEXT_TO_VICTIM_DISTANCE_SQUARED
+			// but not closer to another victim
+			&& who.isConsideredCloserTo(distToVictSq)
+	}
+	
+	private def ImConsideredCloserTo(double distToWhatSq) {
+		!requires.perceptions.visibleVictims.exists[ov|
+			ov.lengthSq < distToWhatSq
+		]
+	}
+	
+	private def isConsideredCloserTo(Double2D who, double distToWhatSq) {
+		!requires.perceptions.visibleVictims.exists[ov|
+			who.distanceSq(ov) < distToWhatSq
+		]
+	}
+	
+	private def shouldBeResponsibleOfVictim(Double2D victim) {
+		val distToVictSq = victim.lengthSq
+		// this is the victim I'm closest to (i.e. I will keep only one?!)
+		ImConsideredCloserTo(distToVictSq)
+		&& !requires.perceptions.visibleRobots.exists[b|
+			val hisDistToVictSq = b.coord.distanceSq(victim)
+			// i.e. there is a robot closer than me
+			b.isCloserThanMe(hisDistToVictSq, distToVictSq)
+				// and he is not already focused on another victim
+				&& b.coord.isConsideredCloserTo(hisDistToVictSq)
+		]
 	}
 	
 	@Cached
 	override responsibleVictims() {
 		requires.perceptions.visibleVictims
-			// do not consider it if there is enough robot closer 
-			.filter[c|
-				val distToV = c.lengthSq
-				!requires.perceptions.visibleRobots.exists[closerThanMe(c, distToV)]
-			].map[v|
+			// do not consider it if there is enough robots closer 
+			.filter[shouldBeResponsibleOfVictim]
+			.map[v|
 				val dist = v.length
 				new Victim(
 					v,
 					dist,
 					requires.messaging.currentSig,
 					Constants.STARTING_VICTIM_CRITICALITY,
-					// count other bots close enough to victim
-					// but not closer to another victim
-					requires.perceptions.visibleRobots.count[b|
-						val distToVict = b.coord.distance(v)
-						distToVict <= Constants.CONSIDERED_NEXT_TO_VICTIM_DISTANCE
-						// TODO this has to be done in concordance with others behaviours...
-						&& !requires.perceptions.visibleVictims.exists[ov|
-							ov.distance(b.coord) < distToVict
-						]
-					]
-					// add myself if I'm close enough too
+					// count both that I consider as being focused on this victim
+					requires.perceptions.visibleRobots.count[coord.isConsideredNextTo(v)]
 					+ (if (dist <= Constants.CONSIDERED_NEXT_TO_VICTIM_DISTANCE) 1 else 0)
 				)
 			]
@@ -72,17 +93,22 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 			// over those about other victims behind... 
 	}
 	
+	private def shouldBeResponsibleOfArea(Double2D dir) {
+		val myDistToVictSq = dir.lengthSq
+		!requires.perceptions.visibleRobots.exists[b|
+			val histDistToVictSq = b.coord.distanceSq(dir)
+			// -0.1 in order to not get problems when bots are at the same distance
+			// and some glitch make them both see the other as closer
+			// there will be duplicate just for the time of one turn normally
+			b.isCloserThanMe(histDistToVictSq, myDistToVictSq - 0.1)
+		]
+	}
+	
 	@Cached
 	override responsibleSeen() {
 		requires.perceptions.visibleFreeAreas
 			.map[dir]
-			.filter[c|
-				val distToV = c.lengthSq
-				// -0.5 in order to not get problems when bots are at the same distance
-				// and some glitch make them both see the other as closer
-				// there will be duplicate just for the time of one turn normally
-				!requires.perceptions.visibleRobots.exists[closerThanMe(c, distToV - 0.5)]
-			]
+			.filter[shouldBeResponsibleOfArea]
 			.map[d|
 				new Area(
 					d,
@@ -98,24 +124,35 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 		requires.messaging.explorationMessages
 		.map[p|
 			val nc = p.explorable.direction+p.fromCoord
-			val viaLengthSq = p.fromCoord.lengthSq
 			val ncLengthSq = nc.lengthSq
 			// follow directly the sender if
 			val dir = if (
 					// the information is useless
 					// or he points to something too far from me
 					// to correctly assess the direction (because it's a sum of vector, so length is fuzzy)
-					ncLengthSq == 0 || ncLengthSq > viaLengthSq
+					ncLengthSq <= 0 || ncLengthSq > Constants.VISION_RANGE_SQUARED
 					// or it's facing a wall
 					//|| requires.perceptions.visibleWalls.exists[w|nc.between(w.cone)]
 				) p.fromCoord
 				else nc
 			p.toExplorable(dir)
-		].filter[e|
+		]
+		.map[e|
+			switch e {
+				// TODO that is not the best for knowing if we see the victim, distance should be also used...
+				// or maybe directly the victims themselves...
+				Victim case e.direction.lengthSq <= Constants.CONSIDERED_NEXT_TO_VICTIM_DISTANCE_SQUARED: {
+					val howMuch = requires.perceptions.visibleRobots.count[coord.isConsideredNextTo(e.direction)]
+					e.withHowMuch(howMuch + 1)
+				}
+				default: e
+			}
+		]
+		.filter[e|
 			switch e {
 				// if it's a victim, only consider it if there is not enough people
 				Victim: {
-					if (e.direction.length < Constants.CONSIDERED_NEXT_TO_VICTIM_DISTANCE) {
+					if (e.direction.lengthSq < Constants.CONSIDERED_NEXT_TO_VICTIM_DISTANCE_SQUARED) {
 						e.howMuch <= Constants.HOW_MUCH_PER_VICTIM
 					} else {
 						e.howMuch < Constants.HOW_MUCH_PER_VICTIM

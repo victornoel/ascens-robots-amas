@@ -10,7 +10,7 @@ class Constants {
 	
 	// use mtpaint to draw it: 0 for walls, 1 for victims, 2 for starting area, rest for nothing
 	public static val String[] MAZES = #[ "maze1", "maze2", "maze3", "maze4", "maze5" ]
-	public static val NB_BOTS = 10
+	public static val NB_BOTS = 800
 	
 	// Robots characteristics, in meters or meters/step
 	
@@ -42,4 +42,5 @@ class Constants {
 	public static val AVOID_VERY_CLOSE_WALL_DISTANCE_SQUARED = AVOID_VERY_CLOSE_WALL_DISTANCE*AVOID_VERY_CLOSE_WALL_DISTANCE
 	public static val VISION_RANGE_SQUARED = Constants.VISION_RANGE*Constants.VISION_RANGE
 	public static val RB_RANGE_SQUARED = Constants.RB_RANGE*Constants.RB_RANGE
+	public static val CONSIDERED_NEXT_TO_VICTIM_DISTANCE_SQUARED = CONSIDERED_NEXT_TO_VICTIM_DISTANCE*CONSIDERED_NEXT_TO_VICTIM_DISTANCE
 }
