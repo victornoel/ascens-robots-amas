@@ -11,6 +11,7 @@ import sim.util.Double2D
 
 import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
 import static extension eu.ascens.unimore.xtend.extensions.MasonExtensions.*
+import fj.data.List
 
 class RepresentationsImpl extends Representations implements IRepresentationsExtra {
 	
@@ -108,7 +109,7 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 	override responsibleSeen() {
 		requires.perceptions.visibleFreeAreas
 			.map[dir]
-			.filter[shouldBeResponsibleOfArea]
+			.filter[!Constants.COOPERATION || shouldBeResponsibleOfArea]
 			.map[d|
 				new Area(
 					d,
@@ -165,7 +166,7 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 	
 	@Cached
 	override explorables() {
-		explorableFromOthers +
+		(if (Constants.COOPERATION) explorableFromOthers else List.nil) +
 		responsibleSeen.vary +
 		responsibleVictims.vary
 	}

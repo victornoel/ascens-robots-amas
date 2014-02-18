@@ -6,9 +6,14 @@ class Constants {
 	
 	public static val SEED = 12345L
 	
+	// this one takes over all the other
+	public static val COOPERATION = false
+	// this one is related to choosing a direction with respect to other bots position and last choice	
+	public static val COOPERATION1 = true
+	
 	// Environment
 	
-	// use mtpaint to draw it: 0 for walls, 1 for victims, 2 for starting area, rest for nothing
+	// use mtpaint to draw it: color index 0 for walls, 1 for victims, 2 for starting area, rest for nothing
 	public static val String[] MAZES = #[ "maze1", "maze2", "maze3", "maze4", "maze5" ]
 	public static val NB_BOTS = 800
 	

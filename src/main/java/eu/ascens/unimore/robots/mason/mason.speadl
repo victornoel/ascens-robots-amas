@@ -1,3 +1,4 @@
+import ec.util.MersenneTwisterFast
 import eu.ascens.unimore.robots.mason.datatypes.Message
 import eu.ascens.unimore.robots.mason.interfaces.RobotMovements
 import eu.ascens.unimore.robots.mason.interfaces.RobotPerceptions
@@ -29,6 +30,8 @@ namespace eu.ascens.unimore.robots.mason {
 			provides radioBroadcast: Push[Message]
 
 			requires visu: RobotVisu
+			
+			provides random: Pull[MersenneTwisterFast]
 		}
 	}
 

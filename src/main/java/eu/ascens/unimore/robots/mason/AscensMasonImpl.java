@@ -7,6 +7,7 @@ import org.slf4j.MDC;
 
 import sim.engine.SimState;
 import sim.util.Double2D;
+import ec.util.MersenneTwisterFast;
 import eu.ascens.unimore.robots.mason.datatypes.Message;
 import eu.ascens.unimore.robots.mason.datatypes.RBEmitter;
 import eu.ascens.unimore.robots.mason.datatypes.SensorReading;
@@ -52,6 +53,16 @@ public class AscensMasonImpl extends AscensMason {
 		private Double2D nextMove = null;
 		
 		private MyMasonRobot bot;
+		
+		@Override
+		protected Pull<MersenneTwisterFast> make_random() {
+			return new Pull<MersenneTwisterFast>() {
+				@Override
+				public MersenneTwisterFast pull() {
+					return simState.random;
+				}
+			};
+		}
 		
 		@Override
 		protected RobotMovements make_move() {

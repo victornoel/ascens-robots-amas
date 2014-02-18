@@ -1,3 +1,4 @@
+import ec.util.MersenneTwisterFast
 import eu.ascens.unimore.robots.mason.AscensMason
 import eu.ascens.unimore.robots.mason.datatypes.Message
 import eu.ascens.unimore.robots.mason.interfaces.RobotMovements
@@ -22,6 +23,8 @@ namespace eu.ascens.unimore.robots {
 		requires rbPublish: Push[Message]
 		requires radioBroadcast: Push[Message]
 		requires getRadioMessages: Pull[Collection[Message]]
+		
+		requires random: Pull[MersenneTwisterFast]
 	}
 	
 	ecosystem AscensRobots {
@@ -43,6 +46,7 @@ namespace eu.ascens.unimore.robots {
 				bind rbPublish to robot.rbPublish
 				bind getRadioMessages to mbox.getAll
 				bind id to robot.id
+				bind random to robot.random
 			}
 			
 			use robot: env.Robot {

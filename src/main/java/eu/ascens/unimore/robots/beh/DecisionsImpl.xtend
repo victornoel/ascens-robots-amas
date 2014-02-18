@@ -45,15 +45,20 @@ class DecisionsImpl extends Decisions implements IDecisionsExtra {
 				// decide
 				val sortedExplorables = explorables.orderByDescendingCriticality
 				
-				val choice = sortedExplorables
-								.keepEquivalent
-								.chooseBetweenEquivalentDirections
+				val equivalentExplorables = sortedExplorables
+												.keepEquivalent
+				
+				val choice = if (Constants.COOPERATION || Constants.COOPERATION1)
+								equivalentExplorables.chooseBetweenEquivalentDirections
+								else equivalentExplorables.chooseBetweenEquivalentDirectionsRandom
 				
 				// act
 				// TODO maybe we should advertise on the other interesting thing
 				// if the choice is about a victim that we are close to with enough people
 				handleGoTo(choice)
-				handleSend(choice, sortedExplorables)
+				if (Constants.COOPERATION) {
+					handleSend(choice, sortedExplorables)
+				}
 				// this should not be used by decision!
 				lastChoice = choice
 			}
@@ -86,6 +91,11 @@ class DecisionsImpl extends Decisions implements IDecisionsExtra {
 		val others = List.nil //sortedExplorables.filter[to !== it].keepEquivalent
 		
 		requires.actions.broadcastExplorables(toSend + others)
+	}
+	
+	private def chooseBetweenEquivalentDirectionsRandom(List<Explorable> in) {
+		val i = requires.random.pull.nextInt(in.length)
+		in.index(i)
 	}
 	
 	private def chooseBetweenEquivalentDirections(List<Explorable> in) {

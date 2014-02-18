@@ -1,3 +1,4 @@
+import ec.util.MersenneTwisterFast
 import eu.ascens.unimore.robots.Behaviour
 import eu.ascens.unimore.robots.beh.interfaces.IActions
 import eu.ascens.unimore.robots.beh.interfaces.IActionsExtra
@@ -24,6 +25,7 @@ namespace eu.ascens.unimore.robots.beh {
 			bind actions to ap.actions
 			bind perceptions to ap.perceptions
 			bind representations to r.representations
+			bind random to random
 		}
 		
 		part r: Representations {
@@ -74,6 +76,8 @@ namespace eu.ascens.unimore.robots.beh {
 		requires actions: IActions
 		requires perceptions: IPerceptions
 		requires representations: IRepresentations
+		
+		requires random: Pull[MersenneTwisterFast]
 	}
 	
 	component ActionsPerceptions {
