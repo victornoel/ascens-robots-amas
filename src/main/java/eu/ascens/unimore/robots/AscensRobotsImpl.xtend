@@ -4,17 +4,33 @@ import eu.ascens.unimore.robots.beh.BehaviourImpl
 import eu.ascens.unimore.robots.mason.AscensMasonImpl
 import eu.ascens.unimore.robots.mason.NoStartingAreaAvailable
 import fr.irit.smac.may.lib.components.collections.ConcurrentQueueImpl
+import eu.ascens.unimore.robots.mason.InitialisationParemeters
 
 class AscensRobotsImpl extends AscensRobots {
 	
+	val InitialisationParemeters parameters
+	
+	new(InitialisationParemeters parameters) {
+		this.parameters = parameters
+	}
+	
 	def static void main(String[] args) {
-		new AscensRobotsImpl().newComponent
+		val parameters = new InitialisationParemeters(
+			Constants.RADIO_RANGE,
+			Constants.VISION_RANGE,
+			Constants.SPEED,
+			Constants.RB_RANGE,
+			Constants.DEFAULT_MAZE,
+			Constants.SEED,
+			Constants.NB_BOTS
+		)
+		new AscensRobotsImpl(parameters).newComponent
 	}
 	
 	override protected make_populate() {[|
 		var nbCreated = 0
 		try {
-			for(i: 1..Constants.NB_BOTS) {
+			for(i: 1..this.parameters.nbBots) {
 				newRobotAgent()
 				nbCreated = i
 			}
@@ -24,7 +40,7 @@ class AscensRobotsImpl extends AscensRobots {
 	]}
 	
 	override protected make_env() {
-		new AscensMasonImpl
+		new AscensMasonImpl(parameters)
 	}
 	
 	override protected make_RobotAgent() {

@@ -8,8 +8,8 @@ import org.eclipse.xtext.xbase.lib.Pair
 import org.eclipse.xtext.xbase.lib.Pure
 import sim.util.Double2D
 
-import static extension eu.ascens.unimore.xtend.extensions.MasonExtensions.*
 import static extension eu.ascens.unimore.xtend.extensions.JavaExtensions.*
+import static extension eu.ascens.unimore.xtend.extensions.MasonExtensions.*
 
 class GeometryExtensions {
 	

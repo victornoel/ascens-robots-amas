@@ -27,8 +27,8 @@ public class AscensMasonImpl extends AscensMason {
 	private final AtomicInteger nextId = new AtomicInteger();
 	
 	@SuppressWarnings("serial")
-	public AscensMasonImpl() {
-		simState = new AscensSimState() {
+	public AscensMasonImpl(InitialisationParemeters parameters) {
+		simState = new AscensSimState(parameters) {
 			@Override
 			public void populate() {
 				requires().populateWorld().doIt();
@@ -96,6 +96,11 @@ public class AscensMasonImpl extends AscensMason {
 				@Override
 				public List<Double2D> getVisibleVictims() {
 					return bot.getVisibleVictims();
+				}
+				
+				@Override
+				public boolean isOutOfNest() {
+					return bot.isOutOfNest();
 				}
 			};
 		}

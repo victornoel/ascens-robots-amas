@@ -48,7 +48,7 @@ class MessagingImpl extends Messaging implements IMessagingExtra {
 				case vb.message.isSome && vb.coord.lengthSq > 0: {
 					switch m: vb.message.some(){
 						ExplorableMessage: m.worthExplorable.map[
-							new ReceivedExplorable(vb.id, vb.coord, it, 1)
+							new ReceivedExplorable(vb, it, 1)
 						]
 						default: List.nil
 					}
@@ -77,8 +77,7 @@ class MessagingImpl extends Messaging implements IMessagingExtra {
 				bestReceivedExplorableByOrigin.put(originId, it)
 			} else if (explorable.origin.time == bT) {
 				val bE = bestReceivedExplorableByOrigin.getSafe(originId)
-				if (explorable.distance < bE.explorable.distance
-					|| (explorable.distance == bE.explorable.distance && fromId < bE.fromId)) {
+				if (isBestThan(bE)) {
 					bestReceivedExplorableByOrigin.put(originId, it.withHowManyMore(bE.fromHowMany))
 				}
 			}
@@ -109,6 +108,11 @@ class MessagingImpl extends Messaging implements IMessagingExtra {
 		previousTimes = bestTimesByOrigin
 		
 		res
+	}
+	
+	private def isBestThan(ReceivedExplorable what, ReceivedExplorable than) {
+		what.explorable.distance < than.explorable.distance
+		|| (what.explorable.distance == than.explorable.distance && what.from.id < than.from.id)
 	}
 	
 	override currentSig() {

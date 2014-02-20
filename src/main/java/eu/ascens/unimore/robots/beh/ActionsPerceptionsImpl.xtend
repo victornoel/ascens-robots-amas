@@ -1,7 +1,6 @@
 package eu.ascens.unimore.robots.beh
 
 import de.oehme.xtend.contrib.Cached
-import eu.ascens.unimore.robots.Constants
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
 import eu.ascens.unimore.robots.beh.datatypes.ExplorableMessage
 import eu.ascens.unimore.robots.beh.interfaces.IActionsExtra
@@ -44,8 +43,8 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	
 	var lastMove = new Double2D(0,0)
 	
-	override broadcastExplorables(List<Explorable> explorables) {
-		requires.rbPublish.push(new ExplorableMessage(explorables))
+	override broadcastExplorables(List<Explorable> explorables, boolean onVictim) {
+		requires.rbPublish.push(new ExplorableMessage(explorables, onVictim))
 	}
 	
 	override previousDirection() {
@@ -57,18 +56,12 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	}
 	
 	override goTo(Double2D to) {
-//		if (to.lengthSq > 0) {
-			
-			// TODO maybe differentiate speed and directions? smooth only on speed!
-			val realTo = lastMove*0.6+to.resize(Math.min(to.length, Constants.SPEED))*0.4
-			
-			// TODO: smooth things using prevDirs? like not moving if it's useless
-			val move = realTo.computeDirectionWithAvoidance.dir.resize(realTo.length)
-			lastMove = realTo
-			
-			logger.info("going to {} targetting {}.", move, realTo)
-			requires.move.setNextMove(move)
-//		}
+		// TODO: smooth things using prevDirs? like not moving if it's useless
+		val move = to.computeDirectionWithAvoidance.dir.resize(to.length)
+		lastMove = to
+		
+		logger.info("going to {} targetting {}.", move, to)
+		requires.move.setNextMove(move)
 	}
 	
 	// taken from http://link.springer.com/chapter/10.1007%2F978-3-642-22907-7_7
@@ -117,7 +110,7 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 		val prevprev = prev.cyclePrevious(inverse)
 		val next = z.cycleNext(inverse)
 		val nextnext = next.cycleNext(inverse)
-		if (prev.focus.value < Constants.AVOID_VERY_CLOSE_WALL_DISTANCE_SQUARED || prevprev.focus.value < Constants.AVOID_VERY_CLOSE_WALL_DISTANCE_SQUARED) {
+		if (prev.focus.value < CoopConstants.AVOID_VERY_CLOSE_WALL_DISTANCE_SQUARED || prevprev.focus.value < CoopConstants.AVOID_VERY_CLOSE_WALL_DISTANCE_SQUARED) {
 			if (next.focus.value >= maxSq) {
 				if (nextnext.focus.value >= maxSq) {
 					return nextnext.focus.key
@@ -125,7 +118,7 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 				return next.focus.key
 			}
 		}
-		if (next.focus.value < Constants.AVOID_VERY_CLOSE_WALL_DISTANCE_SQUARED || nextnext.focus.value < Constants.AVOID_VERY_CLOSE_WALL_DISTANCE_SQUARED) {
+		if (next.focus.value < CoopConstants.AVOID_VERY_CLOSE_WALL_DISTANCE_SQUARED || nextnext.focus.value < CoopConstants.AVOID_VERY_CLOSE_WALL_DISTANCE_SQUARED) {
 			if (prev.focus.value >= maxSq) {
 				if (prevprev.focus.value >= maxSq) {
 					return prevprev.focus.key
@@ -163,7 +156,7 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	}
 
 	@Cached
-	private def sensorReadings() {
+	override sensorReadings() {
 		requires.see.sensorReadings
 			=> [logger.info("sensorReadings: {}", it)]
 	}
@@ -182,7 +175,19 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	
 	@Cached
 	override escapeCrowdVector() {
-		visibleRobots.map[coord].computeCrowdVector
+		visibleRobots
+		.filter[
+			message.isNone
+			|| !(message.some() instanceof ExplorableMessage)
+			|| !(message.some() as ExplorableMessage).onVictim
+		]
+		.map[coord]
+		.filter[r|
+			!visibleVictims.exists[v|
+				r.distanceSq(v) <= CoopConstants.CONSIDERED_NEXT_TO_VICTIM_DISTANCE_SQUARED
+			]
+		]
+		.computeCrowdVector
 	}
 	
 	// inspired from http://buildnewgames.com/vector-field-collision-avoidance/

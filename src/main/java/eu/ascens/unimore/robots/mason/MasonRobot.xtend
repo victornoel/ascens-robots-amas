@@ -1,7 +1,6 @@
 package eu.ascens.unimore.robots.mason
 
 import de.oehme.xtend.contrib.Cached
-import eu.ascens.unimore.robots.Constants
 import eu.ascens.unimore.robots.mason.datatypes.SensorReading
 import eu.ascens.unimore.xtend.macros.StepCached
 import fj.data.List
@@ -38,7 +37,7 @@ abstract class MasonRobot implements Steppable {
 	}
 
 	def void applyMove(Double2D to) {
-		val s = Math.min(state.speed, to.length)
+		val s = Math.min(state.parameters.speed, to.length)
 		val newLoc = new Double2D(new MutableDouble2D(to).resize(s).addIn(position))
 		if (state.isInMaze(newLoc) && !state.isWall(newLoc)) {
 			position = newLoc
@@ -52,7 +51,7 @@ abstract class MasonRobot implements Steppable {
 		// uses allObjects since the number of bot is limited and the distance is big
 		// will be more efficient than getNeighborsWithinDistance
 		List.iterableList(state.agents.allObjects as Iterable<MasonRobot>).filter[b|
-			b !== this && b.position.distance(position) < state.radioRange
+			b !== this && b.position.distance(position) < state.parameters.radioRange
 		]
 	}
 	
@@ -63,7 +62,7 @@ abstract class MasonRobot implements Steppable {
 	@Cached
 	def Surroundings surroundings() {
 		val discrPos = state.agents.discretize(position)
-		val dist = Math.max(state.rbRange, state.visionRange) as int
+		val dist = Math.max(state.parameters.rbRange, state.parameters.visionRange) as int
 		new Surroundings(this) => [s|
 			// shadow casting just sucks... this one is symmetric so it's better...
 			new PrecisePermissive().visitFieldOfView(s, discrPos.x, discrPos.y, dist)
@@ -76,6 +75,10 @@ abstract class MasonRobot implements Steppable {
 	
 	def getSensorReadings() {
 		surroundings.sensorReadings
+	}
+	
+	def isOutOfNest() {
+		!state.isInNest(position)
 	}
 
 	override toString() {
@@ -117,21 +120,21 @@ class Surroundings implements ILosBoard {
 		val pos = new Int2D(x,y)
 		val dist = me.position.distance(pos)
 		
-		if (!ob && dist < me.state.rbRange) {
+		if (!ob && dist < me.state.parameters.rbRange) {
 			val r = me.state.agents.getObjectsAtDiscretizedLocation(pos)
 			if (r != null) {
 				foundBots.addAll(r)
 			}
 		}
-		if (!ob && dist < me.state.visionRange) {
+		if (!ob && dist < me.state.parameters.visionRange) {
 			if (me.state.isVictim(x,y)) {
 				victims = pos + victims
 			}
 		}
-		if (!ob && dist < me.state.visionRange) {
+		if (!ob && dist < me.state.parameters.visionRange) {
 			noWallCoords = pos + noWallCoords
 		}
-		if (ob && dist < me.state.visionRange) {
+		if (ob && dist < me.state.parameters.visionRange) {
 			wallCoords = pos + wallCoords
 		}
 	}
@@ -185,12 +188,12 @@ class Surroundings implements ILosBoard {
 			// but when we get closer we would see it anyway
 			val ws = wallCones.filter[d.key.between(it)]
 			val l = if (ws.empty) {
-				Constants.VISION_RANGE
+				me.state.parameters.visionRange
 			} else {
 				// the mean of the distances of the wall in this cone
 				ws.foldLeft([s,e|s+e.key.length+e.value.length], 0.0)/(ws.length*2)
 			}
-			val dist = Math.min(Constants.VISION_RANGE, l)
+			val dist = Math.min(me.state.parameters.visionRange, l)
 			new SensorReading(d.key*dist, d.value, !ws.empty)
 		]
 	}

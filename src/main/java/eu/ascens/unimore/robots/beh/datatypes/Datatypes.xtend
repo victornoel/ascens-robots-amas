@@ -1,25 +1,47 @@
 package eu.ascens.unimore.robots.beh.datatypes
 
 import eu.ascens.unimore.robots.mason.datatypes.Message
+import eu.ascens.unimore.robots.mason.datatypes.RBEmitter
 import fj.data.List
 import sim.util.Double2D
 
 import static extension eu.ascens.unimore.robots.geometry.GeometryExtensions.*
 import static extension eu.ascens.unimore.xtend.extensions.JavaExtensions.*
 
-@Data abstract class Explorable {
+@Data abstract class Choice {
 	
 	val Double2D direction
+	
+}
+
+@Data class Explorable extends Choice {
+	
+	// used by messaging
+	// it is the distance the message has travelled
 	val double distance
 	
+	// used by messaging
 	val AgentSig origin
-	
 	val String sender
 	
+	// used by decision
 	val double criticality
 	
 	// used by visu
 	val Double2D via
+	
+	new(Double2D direction, double distance, AgentSig origin, String sender, double criticality, Double2D via) {
+		super(direction)
+		_distance = distance
+		_origin = origin
+		_sender = sender
+		_criticality = criticality
+		_via = via
+	}
+	
+	new(Double2D direction, AgentSig origin, double criticality) {
+		this(direction, 0, origin, null, criticality, null)
+	}
 	
 	def hasSender(String sender) {
 		this.sender == sender
@@ -33,67 +55,50 @@ import static extension eu.ascens.unimore.xtend.extensions.JavaExtensions.*
 		this.via == null
 	}
 	
-	abstract def Explorable via(Double2D newDir, String fromId, Double2D fromCoord)
+	def Explorable via(Double2D newDir, RBEmitter from) {
+		via(newDir, from, criticality)
+	}
+	
+	def Explorable via(Double2D newDir, RBEmitter from, double newCriticality) {
+		new Explorable(newDir, distance+from.coord.length, origin, from.id, newCriticality, from.coord)
+	}
+	
+	def Explorable withCriticality(double newCriticality) {
+		new Explorable(direction, distance, origin, sender, newCriticality, via)
+	}
 	
 	override def toString() {
 		"Expl["+criticality.toShortString+","+distance.toShortString+","+direction.toShortString+"]"
 	}
 }
 
-@Data class Victim extends Explorable {
+@Data class VisibleVictim extends Choice {
 	
 	/**
-	 * how much people around it
+	 * How much people are around this victim (myself included)
 	 */
 	val int howMuch
 	
-	new(Double2D direction, double distance, AgentSig origin, String sender, double criticality, Double2D via, int howMuch) {
-		super(direction, distance, origin, sender, criticality, via)
-		this._howMuch = howMuch
-	}
+	val boolean ImNext
 	
-	new(Double2D direction, double distance, AgentSig origin, double criticality, int howMuch) {
-		this(direction, distance, origin, null, criticality, null, howMuch)
-	}
-	
-	override via(Double2D newDir, String fromId, Double2D fromCoord) {
-		new Victim(newDir, distance+fromCoord.length, origin, fromId, criticality, fromCoord, howMuch)
-	}
-	
-	def withHowMuch(int howMuch) {
-		new Victim(direction,distance,origin,sender,criticality,via,howMuch)
-	}
-	
-}
-
-@Data class Area extends Explorable {
-	
-	new(Double2D direction, double distance, AgentSig origin, String sender, double criticality, Double2D via) {
-		super(direction, distance, origin, sender, criticality, via)
-	}
-	
-	new(Double2D direction, double distance, AgentSig origin, double criticality) {
-		this(direction, distance, origin, null, criticality, null)
-	}
-	
-	override via(Double2D newDir, String fromId, Double2D fromCoord) {
-		new Area(newDir, distance+fromCoord.length, origin, fromId, criticality, fromCoord)
-	}
 }
 
 @Data class ReceivedExplorable {
 	
-	String fromId
-	Double2D fromCoord
+	RBEmitter from
 	Explorable explorable
 	int fromHowMany
 	
 	def withHowManyMore(int howManyMore) {
-		new ReceivedExplorable(fromId, fromCoord, explorable, fromHowMany+howManyMore)
+		new ReceivedExplorable(from, explorable, fromHowMany+howManyMore)
 	}
 	
 	def toExplorable(Double2D newDir) {
-		explorable.via(newDir, fromId, fromCoord)
+		explorable.via(newDir, from)
+	}
+	
+	def toExplorable(Double2D newDir, double newCriticality) {
+		explorable.via(newDir, from, newCriticality)
 	}
 	
 }
@@ -111,5 +116,6 @@ import static extension eu.ascens.unimore.xtend.extensions.JavaExtensions.*
 @Data class ExplorableMessage extends Message {
 	
 	val List<Explorable> worthExplorable
+	val boolean onVictim
 	
 }

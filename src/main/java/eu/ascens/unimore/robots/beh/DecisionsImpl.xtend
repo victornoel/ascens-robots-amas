@@ -1,8 +1,8 @@
 package eu.ascens.unimore.robots.beh
 
-import eu.ascens.unimore.robots.Constants
+import eu.ascens.unimore.robots.beh.datatypes.Choice
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
-import eu.ascens.unimore.robots.beh.datatypes.Victim
+import eu.ascens.unimore.robots.beh.datatypes.VisibleVictim
 import eu.ascens.unimore.robots.beh.interfaces.IDecisionsExtra
 import eu.ascens.unimore.xtend.macros.StepCached
 import fj.Ord
@@ -27,7 +27,7 @@ class DecisionsImpl extends Decisions implements IDecisionsExtra {
 	}
 	
 	// this should not be used to take a decision!
-	var Explorable lastChoice
+	var Choice lastChoice
 	override lastChoice() {
 		lastChoice
 	}
@@ -44,68 +44,71 @@ class DecisionsImpl extends Decisions implements IDecisionsExtra {
 			default: {
 				// decide
 				val sortedExplorables = explorables.orderByDescendingCriticality
+				val equivalentExplorables = sortedExplorables.keepEquivalent
+				val selectedExplorable = equivalentExplorables.chooseBetweenEquivalentDirections
 				
-				val equivalentExplorables = sortedExplorables
-												.keepEquivalent
+				val victimsOfInterest =	requires.representations.consideredVictims
 				
-				val choice = if (Constants.COOPERATION || Constants.COOPERATION1)
-								equivalentExplorables.chooseBetweenEquivalentDirections
-								else equivalentExplorables.chooseBetweenEquivalentDirectionsRandom
-				
-				// act
-				// TODO maybe we should advertise on the other interesting thing
-				// if the choice is about a victim that we are close to with enough people
-				handleGoTo(choice)
-				if (Constants.COOPERATION) {
-					handleSend(choice, sortedExplorables)
+				// TODO we need to slow down to wait for others to keep them advertised
+				// or we need to keep some memory of previous choices in case
+				// we loose contact
+				val choice = if (victimsOfInterest.empty) {
+					selectedExplorable
+				} else {
+					// note: this could be inferred by the selectedExplorable normally…
+					// but even if for us it means to go there, maybe we should not advertise
+					// for it and advertise for the next best! (i.e. selectedExplorable?)
+					// but what for us is the most critical, can be (if we are the last one missing)
+					// less critical for another one… if we send, for example, 2 explorable
+					// when he looks at it, maybe he will realise that by himself…
+					victimsOfInterest.chooseMostImportantVictim
 				}
+				
+				handleGoto(choice)
+				handleSend(selectedExplorable, choice !== selectedExplorable)
 				// this should not be used by decision!
 				lastChoice = choice
 			}
 		}
 	}
 	
-	// TODO we need to slow down to wait for others to keep them advertised
-	// or we need to keep some memory of previous choices in case
-	// we loose contact
-	private def handleGoTo(Explorable to) {
-		switch to {
-			Victim case (to.sawMyself && to.distance < Constants.STOP_AS_RESP_NEXT_TO_VICTIM_DISTANCE)
-						|| (!to.sawMyself && to.direction.length < Constants.STOP_NEXT_TO_VICTIM_DISTANCE): {
+	def handleGoto(Choice choice) {
+		switch choice {
+			VisibleVictim case choice.direction.length <= CoopConstants.STOP_NEXT_TO_VICTIM_DISTANCE: {
 				// in that case do nothing, no need to go crazily around
-				// but stop closer if you are the one that saw it
 			}
-			default: requires.actions.goTo(to.direction)
+			default: requires.actions.goTo(choice.direction)
 		}
 	}
 	
-	private def handleSend(Explorable to, List<Explorable> sortedExplorables) {
-		val toSend = switch to {
-			Victim case to.distance > Constants.CONSIDERED_NEXT_TO_VICTIM_DISTANCE: {
-				// I'm going there but I'm not counted in the howMuch yet
-				to.withHowMuch(to.howMuch+1)
-			}
-			default: to
-		}
-		
-		val others = List.nil //sortedExplorables.filter[to !== it].keepEquivalent
-		
-		requires.actions.broadcastExplorables(toSend + others)
+	def chooseMostImportantVictim(List<VisibleVictim> victims) {
+		// to be correct, the best would be to circle the vict so that I arrive
+		// close to it but not closer to others!
+		victims.minimum(
+			Ord.intOrd.comap[VisibleVictim v|v.howMuch]
+			|| Ord.doubleOrd.comap[VisibleVictim v|v.direction.lengthSq]
+		)
 	}
 	
-	private def chooseBetweenEquivalentDirectionsRandom(List<Explorable> in) {
-		val i = requires.random.pull.nextInt(in.length)
-		in.index(i)
+	private def handleSend(Explorable to, boolean onVictim) {
+		if (CoopConstants.COOPERATION) {
+			requires.actions.broadcastExplorables(List.single(to), onVictim)
+		}
 	}
 	
 	private def chooseBetweenEquivalentDirections(List<Explorable> in) {
-		in
-			.map[e|P.p(e,e.distanceToCrowd)]
-			.maximums(crowdEq.comap(P2.__2), crowdOrd.comap(P2.__2))
-			.map[_1]
-			.map[e|P.p(e, e.distanceToLast)]
-			.maximum(Ord.doubleOrd.comap(P2.__2))
-			._1
+		if (CoopConstants.COOPERATION || CoopConstants.COOPERATION1) {
+			in
+				.map[e|P.p(e,e.distanceToCrowd)]
+				.maximums(crowdEq.comap(P2.__2), crowdOrd.comap(P2.__2))
+				.map[_1]
+				.map[e|P.p(e, e.distanceToLast)]
+				.maximum(Ord.doubleOrd.comap(P2.__2))
+				._1
+		} else {
+			val i = requires.random.pull.nextInt(in.length)
+			in.index(i)
+		}
 	}
 	
 	// the bigger the closer to the previous direction
