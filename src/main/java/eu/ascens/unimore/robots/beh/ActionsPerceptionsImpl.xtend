@@ -1,23 +1,23 @@
 package eu.ascens.unimore.robots.beh
 
 import de.oehme.xtend.contrib.Cached
+import eu.ascens.unimore.robots.Constants
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
 import eu.ascens.unimore.robots.beh.datatypes.ExplorableMessage
 import eu.ascens.unimore.robots.beh.interfaces.IActionsExtra
 import eu.ascens.unimore.robots.beh.interfaces.IPerceptionsExtra
+import eu.ascens.unimore.robots.mason.datatypes.RBEmitter
+import eu.ascens.unimore.robots.mason.datatypes.SensorReading
 import eu.ascens.unimore.xtend.macros.StepCached
 import fj.Ord
 import fj.data.List
 import fj.data.Stream
 import fj.data.Zipper
-import org.eclipse.xtext.xbase.lib.Pair
-import org.eclipse.xtext.xbase.lib.Pure
 import org.slf4j.LoggerFactory
 import sim.util.Double2D
 import sim.util.MutableDouble2D
 
 import static extension eu.ascens.unimore.xtend.extensions.MasonExtensions.*
-import eu.ascens.unimore.robots.Constants
 
 class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra, IPerceptionsExtra {
 
@@ -28,7 +28,7 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	}
 	
 	@StepCached
-	def preStep() {}
+	def void preStep() {}
 	
 	override protected make_actions() {
 		this
@@ -156,37 +156,37 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	}
 	
 	@Cached
-	override visibleFreeAreas() {
+	override List<SensorReading> visibleFreeAreas() {
 		sensorReadings
 			.filter[!hasWall]
 	}
 	
 	@Cached
-	override visibleWalls() {
+	override List<SensorReading> visibleWalls() {
 		sensorReadings
 			.filter[hasWall]
 	}
 
 	@Cached
-	override sensorReadings() {
+	override List<SensorReading> sensorReadings() {
 		requires.see.sensorReadings
 			=> [logger.info("sensorReadings: {}", it)]
 	}
 	
 	@Cached
-	override visibleRobots() {
+	override List<RBEmitter> visibleRobots() {
 		requires.see.RBVisibleRobots
 			=> [logger.info("visibleRobots: {}", it)]
 	}
 	
 	@Cached
-	override visibleVictims() {
+	override List<Double2D> visibleVictims() {
 		requires.see.visibleVictims
 			=> [logger.info("visibleVictims: {}", it)]
 	}
 	
 	@Cached
-	private def visibleBotsStillMoving() {
+	private def List<RBEmitter> visibleBotsStillMoving() {
 		visibleRobots
 		.filter[
 			message.isNone
@@ -196,7 +196,7 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	}
 	
 	@Cached
-	override escapeCrowdVector() {
+	override Double2D escapeCrowdVector() {
 		visibleBotsStillMoving
 		.map[coord]
 		.filter[r|

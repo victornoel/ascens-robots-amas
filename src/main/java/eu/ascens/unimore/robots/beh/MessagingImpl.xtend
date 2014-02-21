@@ -25,7 +25,7 @@ class MessagingImpl extends Messaging implements IMessagingExtra {
 	var int timestamp = 0
 	
 	@StepCached
-	def preStep() {
+	def void preStep() {
 		timestamp = timestamp + 1
 	}
 	
@@ -33,7 +33,7 @@ class MessagingImpl extends Messaging implements IMessagingExtra {
 	var Map<String, Integer> previousTimes = newHashMap
 	
 	@Cached
-	override explorationMessages() {
+	override List<ReceivedExplorable> explorationMessages() {
 		
 		// TODO is all of this really useful? If disabled it still works...
 		// most certainly because of the howmuch information...!!

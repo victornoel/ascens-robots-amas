@@ -27,7 +27,7 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 	}
 	
 	@StepCached
-	def preStep() {
+	def void preStep() {
 	}
 	
 	/* Victim stuffs */
@@ -51,7 +51,7 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 	}
 	
 	@Cached
-	override visibleVictims() {
+	override List<VisibleVictim> visibleVictims() {
 		requires.perceptions.visibleVictims
 		.map[v|
 			val myDistToVictSq = v.lengthSq
@@ -69,7 +69,7 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 	}
 	
 	@Cached
-	override consideredVictims() {
+	override List<VisibleVictim> consideredVictims() {
 		visibleVictims.filter[
 			if (imNext) howMuch <= CoopConstants.HOW_MUCH_PER_VICTIM
 			else howMuch < CoopConstants.HOW_MUCH_PER_VICTIM
@@ -91,7 +91,7 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 	}
 	
 	@Cached
-	override responsibleSeen() {
+	override List<Explorable> responsibleSeen() {
 		requires.perceptions.sensorReadings
 			// note: bind is flatMap
 			.bind[sr|
@@ -153,7 +153,7 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 	// TODO unify CRIT computation!
 	
 	@Cached
-	override explorableFromOthers() {
+	override List<Explorable> explorableFromOthers() {
 		// TODO maybe would be best to take the message
 		// that has travelled the less, but the message
 		// the closer to me for a same origin?
@@ -182,7 +182,7 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 	}
 	
 	@Cached
-	override explorables() {
+	override List<Explorable> explorables() {
 		(if (CoopConstants.COOPERATION) explorableFromOthers else List.nil) +
 		responsibleSeen
 	}

@@ -33,7 +33,7 @@ abstract class MasonRobot implements Steppable {
 	}
 	
 	@StepCached
-	override step(SimState state) {
+	override void step(SimState state) {
 	}
 
 	def void applyMove(Double2D to) {
@@ -226,7 +226,7 @@ class Surroundings implements ILosBoard {
 	}
 	
 	@Cached
-	def wallCones() {
+	def List<Pair<Double2D, Double2D>> wallCones() {
 		val meD = me.state.agents.discretize(me.position)
 		wallCoords
 			.bind[conesForWallFromMe(meD)]
@@ -234,7 +234,7 @@ class Surroundings implements ILosBoard {
 	}
 	
 	@Cached
-	def getSensorReadings() {
+	def List<SensorReading> getSensorReadings() {
 		SENSORS_DIRECTIONS_CONES.map[d|
 			// bots in this cone
 			val pbots = proximityBots.filter[between(d.value)]
@@ -262,12 +262,12 @@ class Surroundings implements ILosBoard {
 	}
 	
 	@Cached
-	def getVisibleVictims() {
+	def List<Double2D> getVisibleVictims() {
 		victims.map[relativeVectorFor]
 	}
 	
 	@Cached
-	def getRBVisibleBotsWithCoordinate() {
+	def List<Pair<MasonRobot, Double2D>> getRBVisibleBotsWithCoordinate() {
 		foundBots.map[b|
 			b -> b.position.relativeVectorFor
 		]

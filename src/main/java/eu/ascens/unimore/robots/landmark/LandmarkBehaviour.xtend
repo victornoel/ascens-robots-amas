@@ -9,6 +9,7 @@ import sim.util.Double2D
 import static eu.ascens.unimore.robots.landmark.State.*
 
 import static extension eu.ascens.unimore.xtend.extensions.MasonExtensions.*
+import fj.data.List
 
 class LandmarkBehaviour extends Behaviour implements RobotVisu {
 	
@@ -34,7 +35,7 @@ class LandmarkBehaviour extends Behaviour implements RobotVisu {
 	}
 	
 	@StepCached
-	def step() {
+	def void step() {
 		switch state {
 			case WANDER: wander_in_nest()
 			case EXIT: exit_nest()
@@ -87,7 +88,7 @@ class LandmarkBehaviour extends Behaviour implements RobotVisu {
 	}
 	
 	@Cached
-	private def getRBs() {
+	private def List<RBData> getRBs() {
 		requires.see.RBVisibleRobots.bind[message.toList.map[it as RBData]]
 	}
 	
