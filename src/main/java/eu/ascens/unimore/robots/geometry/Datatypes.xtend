@@ -8,7 +8,7 @@ import sim.util.Double2D
 import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
 import static extension eu.ascens.unimore.xtend.extensions.JavaExtensions.*
 
-package class Radiangle {
+class Radiangle {
 	
 	static def buildCones(int nbDirections) {
 		// this is mutable, careful

@@ -9,7 +9,6 @@ import rlforj.los.ILosBoard
 import rlforj.los.PrecisePermissive
 import sim.engine.SimState
 import sim.engine.Steppable
-import sim.util.Bag
 import sim.util.Double2D
 import sim.util.Int2D
 import sim.util.MutableDouble2D
@@ -17,6 +16,7 @@ import sim.util.MutableDouble2D
 import static extension eu.ascens.unimore.robots.geometry.GeometryExtensions.*
 import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
 import static extension eu.ascens.unimore.xtend.extensions.MasonExtensions.*
+import fj.Ord
 
 abstract class MasonRobot implements Steppable {
 
@@ -62,7 +62,7 @@ abstract class MasonRobot implements Steppable {
 	@Cached
 	def Surroundings surroundings() {
 		val discrPos = state.agents.discretize(position)
-		val dist = Math.max(state.parameters.rbRange, state.parameters.visionRange) as int
+		val dist = Math.max(state.parameters.rbRange, state.parameters.wallRange) as int
 		new Surroundings(this) => [s|
 			// shadow casting just sucks... this one is symmetric so it's better...
 			new PrecisePermissive().visitFieldOfView(s, discrPos.x, discrPos.y, dist)
@@ -110,10 +110,11 @@ class Surroundings implements ILosBoard {
 		new Double2D(p.x+0.5, p.y+0.5).getRelativeVectorFor
 	}
 	
-	val foundBots = new Bag
+	var List<MasonRobot> foundBots = List.nil
 	package var List<Int2D> wallCoords = List.nil
 	package var List<Int2D> victims = List.nil
 	package var List<Int2D> noWallCoords = List.nil
+	package var List<Double2D> proximityBots = List.nil
 	
 	override visit(int x, int y) {
 		val ob = isObstacle(x, y)
@@ -123,18 +124,28 @@ class Surroundings implements ILosBoard {
 		if (!ob && dist < me.state.parameters.rbRange) {
 			val r = me.state.agents.getObjectsAtDiscretizedLocation(pos)
 			if (r != null) {
-				foundBots.addAll(r)
+				for (b: r.filter(MasonRobot)) {
+					if (b !== me) {
+						val realDist = b.position.distance(me.position)
+						if (realDist < me.state.parameters.rbRange) {
+							foundBots = b + foundBots
+						}
+						if (realDist < me.state.parameters.proximityRange) {
+							proximityBots = b.position.relativeVectorFor + proximityBots
+						}
+					}
+				}
 			}
 		}
-		if (!ob && dist < me.state.parameters.visionRange) {
+		if (!ob && dist < me.state.parameters.wallRange) {
 			if (me.state.isVictim(x,y)) {
 				victims = pos + victims
 			}
 		}
-		if (!ob && dist < me.state.parameters.visionRange) {
+		if (!ob && dist < me.state.parameters.wallRange) {
 			noWallCoords = pos + noWallCoords
 		}
-		if (ob && dist < me.state.parameters.visionRange) {
+		if (ob && dist < me.state.parameters.wallRange) {
 			wallCoords = pos + wallCoords
 		}
 	}
@@ -182,19 +193,26 @@ class Surroundings implements ILosBoard {
 	
 	@Cached
 	def getSensorReadings() {
-		
 		SENSORS_DIRECTIONS_CONES.map[d|
-			// this could miss some walls being between two of the directions
-			// but when we get closer we would see it anyway
+			// bots in this cone
+			val pbots = proximityBots.filter[between(d.value)]
+			// walls touched by this direction
 			val ws = wallCones.filter[d.key.between(it)]
-			val l = if (ws.empty) {
-				me.state.parameters.visionRange
-			} else {
+			
+			val l = if (pbots.notEmpty) {
+				pbots.map[length].minimum(Ord.doubleOrd)
+			} else if (ws.notEmpty) {
 				// the mean of the distances of the wall in this cone
 				ws.foldLeft([s,e|s+e.key.length+e.value.length], 0.0)/(ws.length*2)
+			} else {
+				me.state.parameters.wallRange
 			}
-			val dist = Math.min(me.state.parameters.visionRange, l)
-			new SensorReading(d.key*dist, d.value, !ws.empty)
+			
+			// this could miss some walls being between two of the directions
+			// but when we get closer we would see it anyway
+			
+			val dist = Math.min(me.state.parameters.wallRange, l)
+			new SensorReading(d.key*dist, d.value, ws.notEmpty, pbots.notEmpty)
 		]
 	}
 	
@@ -205,8 +223,7 @@ class Surroundings implements ILosBoard {
 	
 	@Cached
 	def getRBVisibleBotsWithCoordinate() {
-		foundBots.remove(me)
-		List.iterableList(foundBots as Iterable<MasonRobot>).map[b|
+		foundBots.map[b|
 			b -> b.position.relativeVectorFor
 		]
 	}

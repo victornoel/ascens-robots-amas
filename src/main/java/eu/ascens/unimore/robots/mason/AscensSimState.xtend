@@ -29,15 +29,18 @@ import sim.util.TableLoader
 import sim.util.gui.SimpleColorMap
 
 import static extension eu.ascens.unimore.xtend.extensions.JavaExtensions.*
+import eu.ascens.unimore.robots.Behaviour
 
-@Data class InitialisationParemeters {
+@Data class InitialisationParameters {
 	val double radioRange
-	val double visionRange
+	val double wallRange
+	val double proximityRange
 	val double speed
 	val double rbRange
 	val String map
 	val long seed
 	val int nbBots
+	val () => Behaviour newBehaviour
 } 
 
 abstract class AscensSimState extends SimState {
@@ -47,12 +50,12 @@ abstract class AscensSimState extends SimState {
 	var Continuous2D agents
 	def getAgents() { agents }
 
-	@Property val InitialisationParemeters parameters
+	@Property val InitialisationParameters parameters
 	@Property var String map
 	
 	val List<Int2D> availStartingAreas = newArrayList()
 
-	new(InitialisationParemeters parameters) {
+	new(InitialisationParameters parameters) {
 		super(parameters.seed)
 		this._parameters = parameters
 		this._map = parameters.map
@@ -350,10 +353,12 @@ class BotPortrayal2D extends OvalPortrayal2D {
 					for(p: object.sensorReadings) {
 						// get absolute position
 						val sloc = p.dir.add(botPos)
-						if (!p.hasWall) {
-							graphics.setPaint(Color.MAGENTA)
-						} else {
+						if (p.hasWall) {
 							graphics.setPaint(Color.PINK)
+						} else if (p.hasBot) {
+							graphics.setPaint(Color.GREEN)
+						} else {
+							graphics.setPaint(Color.MAGENTA)
 						}
 						val spos = fieldPortrayal.getRelativeObjectPosition(sloc, botPos, info)
 						graphics.fillOval(spos.x as int, spos.y as int, w/2, h/2)

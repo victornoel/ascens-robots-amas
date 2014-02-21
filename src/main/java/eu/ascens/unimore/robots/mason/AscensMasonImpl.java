@@ -27,7 +27,7 @@ public class AscensMasonImpl extends AscensMason {
 	private final AtomicInteger nextId = new AtomicInteger();
 	
 	@SuppressWarnings("serial")
-	public AscensMasonImpl(InitialisationParemeters parameters) {
+	public AscensMasonImpl(InitialisationParameters parameters) {
 		simState = new AscensSimState(parameters) {
 			@Override
 			public void populate() {

@@ -163,10 +163,10 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 			val ncLengthSq = nc.lengthSq
 			// to correctly assess the direction
 			// because it's a sum of vector, so length is unreliable
-			// TODO this is not very good as it is
-			val newDir = if (ncLengthSq > Constants.VISION_RANGE_SQUARED) {
+			// TODO this is not very good as it is…
+			val newDir = if (ncLengthSq > Constants.WALL_RANGE) {
 				// stop closer if it points to something too far from me
-				nc.resize(Constants.VISION_RANGE)
+				nc.resize(Constants.WALL_RANGE)
 			} else if (ncLengthSq <= 0) {
 				// follow directly the sender if the information is useless
 				p.from.coord

@@ -25,4 +25,5 @@ import sim.util.Double2D
 	val Double2D dir
 	val Pair<Double2D,Double2D> cone
 	val boolean hasWall
+	val boolean hasBot
 }
