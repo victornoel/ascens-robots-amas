@@ -17,6 +17,7 @@ import sim.util.Double2D
 import sim.util.MutableDouble2D
 
 import static extension eu.ascens.unimore.xtend.extensions.MasonExtensions.*
+import eu.ascens.unimore.robots.Constants
 
 class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra, IPerceptionsExtra {
 
@@ -56,12 +57,19 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	}
 	
 	override goTo(Double2D to) {
+		
+		val l = Math.min(to.length, Constants.SPEED)
+		
 		// TODO: smooth things using prevDirs? like not moving if it's useless
-		val move = to.computeDirectionWithAvoidance.dir.resize(to.length)
+		val move = to.computeDirectionWithAvoidance.dir.resize(l)
 		lastMove = to
 		
 		logger.info("going to {} targetting {}.", move, to)
-		requires.move.setNextMove(move)
+//		val futureBots = visibleBotsStillMoving
+//							.map[(coord-move).lengthSq]
+//							.filter[d|d<Constants.RB_RANGE_SQUARED]
+//		if (futureBots.notEmpty)
+			requires.move.setNextMove(move)
 	}
 	
 	// taken from http://link.springer.com/chapter/10.1007%2F978-3-642-22907-7_7
@@ -110,7 +118,9 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 		val prevprev = prev.cyclePrevious(inverse)
 		val next = z.cycleNext(inverse)
 		val nextnext = next.cycleNext(inverse)
-		if (prev.focus.value < CoopConstants.AVOID_VERY_CLOSE_WALL_DISTANCE_SQUARED || prevprev.focus.value < CoopConstants.AVOID_VERY_CLOSE_WALL_DISTANCE_SQUARED) {
+		if (prev.focus.value < CoopConstants.AVOID_VERY_CLOSE_WALL_DISTANCE_SQUARED
+			|| prevprev.focus.value < CoopConstants.AVOID_VERY_CLOSE_WALL_DISTANCE_SQUARED
+		) {
 			if (next.focus.value >= maxSq) {
 				if (nextnext.focus.value >= maxSq) {
 					return nextnext.focus.key
@@ -118,7 +128,9 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 				return next.focus.key
 			}
 		}
-		if (next.focus.value < CoopConstants.AVOID_VERY_CLOSE_WALL_DISTANCE_SQUARED || nextnext.focus.value < CoopConstants.AVOID_VERY_CLOSE_WALL_DISTANCE_SQUARED) {
+		if (next.focus.value < CoopConstants.AVOID_VERY_CLOSE_WALL_DISTANCE_SQUARED
+			|| nextnext.focus.value < CoopConstants.AVOID_VERY_CLOSE_WALL_DISTANCE_SQUARED
+		) {
 			if (prev.focus.value >= maxSq) {
 				if (prevprev.focus.value >= maxSq) {
 					return prevprev.focus.key
@@ -174,13 +186,18 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	}
 	
 	@Cached
-	override escapeCrowdVector() {
+	private def visibleBotsStillMoving() {
 		visibleRobots
 		.filter[
 			message.isNone
 			|| !(message.some() instanceof ExplorableMessage)
 			|| !(message.some() as ExplorableMessage).onVictim
 		]
+	}
+	
+	@Cached
+	override escapeCrowdVector() {
+		visibleBotsStillMoving
 		.map[coord]
 		.filter[r|
 			!visibleVictims.exists[v|

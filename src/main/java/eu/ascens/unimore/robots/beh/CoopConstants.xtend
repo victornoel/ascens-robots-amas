@@ -14,7 +14,7 @@ class CoopConstants {
 	public static val CRITICALITY_PRECISION = 0.01
 	public static val STARTING_EXPLORABLE_CRITICALITY = 0.5
 	public static val MAX_CRITICALITY = 1.0
-	public static val AVOID_VERY_CLOSE_WALL_DISTANCE = 3.0
+	public static val AVOID_VERY_CLOSE_WALL_DISTANCE = 1.0
 	/**
 	 * 0.0 so that we stop ON the victim: important so that
 	 * other can properly evaluate if I'm taking care of it or

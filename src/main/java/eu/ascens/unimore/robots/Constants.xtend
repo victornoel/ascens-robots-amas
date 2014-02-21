@@ -17,11 +17,11 @@ class Constants {
 	public static val RADIO_RANGE = 60
 	public static val RB_RANGE = 20
 	public static val WALL_RANGE = 3
-	public static val PROXIMITY_RANGE = 2
+	public static val PROXIMITY_RANGE = 1
 	public static val SPEED = 0.15
 	public static val NB_WALL_SENSORS = 24
 	
 	// TODO to be deleted!!!
 	public static val WALL_RANGE_SQUARED = WALL_RANGE*WALL_RANGE
-	
+	public static val RB_RANGE_SQUARED = RB_RANGE*RB_RANGE
 }

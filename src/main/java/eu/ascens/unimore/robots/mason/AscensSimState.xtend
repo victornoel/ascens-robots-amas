@@ -361,7 +361,8 @@ class BotPortrayal2D extends OvalPortrayal2D {
 							graphics.setPaint(Color.MAGENTA)
 						}
 						val spos = fieldPortrayal.getRelativeObjectPosition(sloc, botPos, info)
-						graphics.fillOval(spos.x as int, spos.y as int, w/2, h/2)
+						graphics.drawArrow(botFPos.x as int, botFPos.y as int, spos.x as int, spos.y as int)
+						//graphics.fillOval(spos.x as int, spos.y as int, w/2, h/2)
 					}
 				}
 				

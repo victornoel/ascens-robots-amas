@@ -150,32 +150,75 @@ class Surroundings implements ILosBoard {
 		}
 	}
 	
-	private def coneForWallFromMe(Int2D wall, Int2D meD) {
+	private def conesForWallFromMe(Int2D wall, Int2D meD) {
 		// correspond to the center of the wall from double2d bot position pov
 		val wx = wall.x + 0.5
 		val wy = wall.y + 0.5
-
+		
+		/*
+		 * this compute cones (from left to right in the figure)
+		 * of the side of the squares from bot pov
+               +--------------+
+               | a  | g  | d  |
+               |    |    |    |
+               |----|----|----|
+               | c  | bot| f  |
+               |    |    |    |
+               |----|----|----|
+               | b  | h  | e  |
+               |    |    |    |
+               +--------------+
+		 */
+		
 		if (wall.x < meD.x) {
 			if (wall.y < meD.y) {
-				new Double2D(wx - 0.5, wy + 0.5) -> new Double2D(wx + 0.5, wy - 0.5) 
+				// a
+				List.list(
+					new Double2D(wx - 0.5, wy + 0.5) -> new Double2D(wx + 0.5, wy + 0.5),
+					new Double2D(wx + 0.5, wy + 0.5) -> new Double2D(wx + 0.5, wy - 0.5)
+				)
 			} else if (wall.y > meD.y) {
-				new Double2D(wx + 0.5, wy + 0.5)-> new Double2D(wx - 0.5, wy - 0.5) 
+				// b
+				List.list(
+					new Double2D(wx + 0.5, wy + 0.5)-> new Double2D(wx + 0.5, wy - 0.5),
+					new Double2D(wx + 0.5, wy - 0.5)-> new Double2D(wx - 0.5, wy - 0.5)
+				) 
 			} else {
-				new Double2D(wx + 0.5, wy + 0.5) -> new Double2D(wx + 0.5, wy - 0.5)
+				// c
+				List.list(
+					new Double2D(wx + 0.5, wy + 0.5) -> new Double2D(wx + 0.5, wy - 0.5)
+				)
 			}
 		} else if (wall.x > meD.x) {
 			if (wall.y < meD.y) {
-				new Double2D(wx - 0.5, wy - 0.5) -> new Double2D(wx + 0.5, wy + 0.5)
+				// d
+				List.list(
+					new Double2D(wx - 0.5, wy - 0.5) -> new Double2D(wx - 0.5, wy + 0.5),
+					new Double2D(wx - 0.5, wy + 0.5) -> new Double2D(wx + 0.5, wy + 0.5)
+				)
 			} else if (wall.y > meD.y) {
-				new Double2D(wx + 0.5, wy - 0.5) -> new Double2D(wx - 0.5, wy + 0.5)
+				// e
+				List.list(
+					new Double2D(wx + 0.5, wy - 0.5) -> new Double2D(wx - 0.5, wy - 0.5),
+					new Double2D(wx - 0.5, wy - 0.5) -> new Double2D(wx - 0.5, wy + 0.5)
+				)
 			} else {
-				new Double2D(wx - 0.5, wy - 0.5)-> new Double2D(wx - 0.5, wy + 0.5) 
+				// f
+				List.list(
+					new Double2D(wx - 0.5, wy - 0.5)-> new Double2D(wx - 0.5, wy + 0.5)
+				)
 			}
 		} else {
 			if (wall.y < meD.y) {
-				new Double2D(wx - 0.5, wy + 0.5) -> new Double2D(wx + 0.5, wy + 0.5)
+				// g
+				List.list(
+					new Double2D(wx - 0.5, wy + 0.5) -> new Double2D(wx + 0.5, wy + 0.5)
+				)
 			} else if (wall.y > meD.y) {
-				new Double2D(wx + 0.5, wy - 0.5)-> new Double2D(wx - 0.5, wy - 0.5) 
+				// h
+				List.list(
+					new Double2D(wx + 0.5, wy - 0.5)-> new Double2D(wx - 0.5, wy - 0.5)
+				)
 			} else {
 				throw new RuntimeException("impossible, bot would be inside a wall.")
 			}
@@ -185,10 +228,9 @@ class Surroundings implements ILosBoard {
 	@Cached
 	def wallCones() {
 		val meD = me.state.agents.discretize(me.position)
-		wallCoords.map[
-			val r = coneForWallFromMe(meD)
-			r.key.relativeVectorFor -> r.value.relativeVectorFor
-		]
+		wallCoords
+			.bind[conesForWallFromMe(meD)]
+			.map[key.relativeVectorFor -> value.relativeVectorFor]
 	}
 	
 	@Cached
@@ -202,8 +244,11 @@ class Surroundings implements ILosBoard {
 			val l = if (pbots.notEmpty) {
 				pbots.map[length].minimum(Ord.doubleOrd)
 			} else if (ws.notEmpty) {
-				// the mean of the distances of the wall in this cone
-				ws.foldLeft([s,e|s+e.key.length+e.value.length], 0.0)/(ws.length*2)
+				// the closest wall in the cone
+				// this is kind of ok but not very formal way
+				// of computing the length of the middle intersection
+				// with the wall
+				ws.map[Math.sqrt((key.lengthSq+value.lengthSq)/2)].minimum(Ord.doubleOrd)
 			} else {
 				me.state.parameters.wallRange
 			}
