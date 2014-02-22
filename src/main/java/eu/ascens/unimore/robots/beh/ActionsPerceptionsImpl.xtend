@@ -8,16 +8,16 @@ import eu.ascens.unimore.robots.beh.interfaces.IActionsExtra
 import eu.ascens.unimore.robots.beh.interfaces.IPerceptionsExtra
 import eu.ascens.unimore.robots.mason.datatypes.RBEmitter
 import eu.ascens.unimore.robots.mason.datatypes.SensorReading
-import eu.ascens.unimore.xtend.macros.StepCached
 import fj.Ord
 import fj.data.List
 import fj.data.Stream
 import fj.data.Zipper
+import fr.irit.smac.lib.contrib.xtend.macros.StepCached
 import org.slf4j.LoggerFactory
 import sim.util.Double2D
 import sim.util.MutableDouble2D
 
-import static extension eu.ascens.unimore.xtend.extensions.MasonExtensions.*
+import static extension fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
 
 class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra, IPerceptionsExtra {
 

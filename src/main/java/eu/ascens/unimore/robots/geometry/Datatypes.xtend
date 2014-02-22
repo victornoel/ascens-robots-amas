@@ -2,11 +2,10 @@ package eu.ascens.unimore.robots.geometry
 
 import com.vividsolutions.jts.algorithm.Angle
 import fj.data.List
-import org.eclipse.xtext.xbase.lib.Pair
 import sim.util.Double2D
 
-import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
-import static extension eu.ascens.unimore.xtend.extensions.JavaExtensions.*
+import static extension fr.irit.smac.lib.contrib.fj.xtend.FunctionalJavaExtensions.*
+import static extension fr.irit.smac.lib.contrib.xtend.JavaExtensions.*
 
 class Radiangle {
 	
@@ -101,7 +100,7 @@ class Radiangle {
 	}
 	
 	override toString() {
-		"Rad["+value.toShortString+"]"
+		"Rad["+value.toShortString(2)+"]"
 	}
 	
 }

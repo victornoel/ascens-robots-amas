@@ -2,8 +2,9 @@ package eu.ascens.unimore.robots.mason
 
 import de.oehme.xtend.contrib.Cached
 import eu.ascens.unimore.robots.mason.datatypes.SensorReading
-import eu.ascens.unimore.xtend.macros.StepCached
+import fj.Ord
 import fj.data.List
+import fr.irit.smac.lib.contrib.xtend.macros.StepCached
 import org.slf4j.LoggerFactory
 import rlforj.los.ILosBoard
 import rlforj.los.PrecisePermissive
@@ -13,10 +14,10 @@ import sim.util.Double2D
 import sim.util.Int2D
 import sim.util.MutableDouble2D
 
-import static extension eu.ascens.unimore.robots.geometry.GeometryExtensions.*
-import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
-import static extension eu.ascens.unimore.xtend.extensions.MasonExtensions.*
-import fj.Ord
+import static eu.ascens.unimore.robots.geometry.GeometryExtensions.*
+
+import static extension fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
+import static extension fr.irit.smac.lib.contrib.fj.xtend.FunctionalJavaExtensions.*
 
 abstract class MasonRobot implements Steppable {
 
@@ -82,7 +83,7 @@ abstract class MasonRobot implements Steppable {
 	}
 
 	override toString() {
-		"@" + position.toShortString
+		"@" + position.toShortString(2)
 	}
 }
 

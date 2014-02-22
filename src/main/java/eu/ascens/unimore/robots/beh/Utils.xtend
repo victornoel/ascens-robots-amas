@@ -4,9 +4,8 @@ import eu.ascens.unimore.robots.beh.datatypes.Explorable
 import fj.Equal
 import fj.Ord
 import fj.data.List
-import org.eclipse.xtext.xbase.lib.Pure
 
-import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
+import static extension fr.irit.smac.lib.contrib.fj.xtend.FunctionalJavaExtensions.*
 
 class Utils {
 	

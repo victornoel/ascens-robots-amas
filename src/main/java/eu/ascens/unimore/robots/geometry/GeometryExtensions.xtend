@@ -4,12 +4,9 @@ import eu.ascens.unimore.robots.Constants
 import fj.Ord
 import fj.Ordering
 import java.util.Comparator
-import org.eclipse.xtext.xbase.lib.Pair
-import org.eclipse.xtext.xbase.lib.Pure
 import sim.util.Double2D
 
-import static extension eu.ascens.unimore.xtend.extensions.MasonExtensions.*
-import static extension eu.ascens.unimore.xtend.extensions.JavaExtensions.*
+import static extension fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
 
 class GeometryExtensions {
 	
@@ -26,11 +23,8 @@ class GeometryExtensions {
 	public static val SENSORS_DIRECTIONS_CONES =
 		Radiangle.buildCones(Constants.NB_WALL_SENSORS).map[
 			val cone = it.key.toNormalizedVector -> it.value.toNormalizedVector
-			cone.middleAngledVector -> cone
+			middleAngledVector(cone.key, cone.value) -> cone
 		].sort(ORD_D2D.comap[Pair<Double2D, Pair<Double2D, Double2D>> it|key]) // sort evaluates
 		
-	@Pure
-	static def toShortString(Double2D d) {
-		"("+d.x.toShortString+","+d.y.toShortString+")"
-	}
+	
 }

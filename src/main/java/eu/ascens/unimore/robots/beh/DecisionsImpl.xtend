@@ -4,15 +4,15 @@ import eu.ascens.unimore.robots.beh.datatypes.Choice
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
 import eu.ascens.unimore.robots.beh.datatypes.VisibleVictim
 import eu.ascens.unimore.robots.beh.interfaces.IDecisionsExtra
-import eu.ascens.unimore.xtend.macros.StepCached
 import fj.Ord
 import fj.P
 import fj.P2
 import fj.data.List
+import fr.irit.smac.lib.contrib.xtend.macros.StepCached
 import org.slf4j.LoggerFactory
 
 import static extension eu.ascens.unimore.robots.beh.Utils.*
-import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
+import static extension fr.irit.smac.lib.contrib.fj.xtend.FunctionalJavaExtensions.*
 
 class DecisionsImpl extends Decisions implements IDecisionsExtra {
 

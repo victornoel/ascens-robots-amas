@@ -6,7 +6,7 @@ import eu.ascens.unimore.robots.geometry.GeometryExtensions
 import eu.ascens.unimore.robots.mason.interfaces.RobotVisu
 import sim.util.Double2D
 
-import static extension eu.ascens.unimore.xtend.extensions.MasonExtensions.*
+import static extension fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
 
 class LevyBehaviourImpl extends Behaviour implements RobotVisu {
 	

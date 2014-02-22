@@ -3,13 +3,13 @@ package eu.ascens.unimore.robots.landmark
 import de.oehme.xtend.contrib.Cached
 import eu.ascens.unimore.robots.Behaviour
 import eu.ascens.unimore.robots.mason.interfaces.RobotVisu
-import eu.ascens.unimore.xtend.macros.StepCached
+import fj.data.List
+import fr.irit.smac.lib.contrib.xtend.macros.StepCached
 import sim.util.Double2D
 
 import static eu.ascens.unimore.robots.landmark.State.*
 
-import static extension eu.ascens.unimore.xtend.extensions.MasonExtensions.*
-import fj.data.List
+import static extension fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
 
 class LandmarkBehaviour extends Behaviour implements RobotVisu {
 	
@@ -18,7 +18,7 @@ class LandmarkBehaviour extends Behaviour implements RobotVisu {
 	}
 	
 	override protected make_visu() {
-		throw new UnsupportedOperationException("TODO: auto-generated method stub")
+		this
 	}
 	
 	override protected start() {

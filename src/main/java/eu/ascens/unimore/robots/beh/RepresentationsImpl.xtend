@@ -1,20 +1,20 @@
 package eu.ascens.unimore.robots.beh
 
 import de.oehme.xtend.contrib.Cached
+import eu.ascens.unimore.robots.Constants
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
 import eu.ascens.unimore.robots.beh.datatypes.VisibleVictim
 import eu.ascens.unimore.robots.beh.interfaces.IRepresentationsExtra
 import eu.ascens.unimore.robots.mason.datatypes.SensorReading
-import eu.ascens.unimore.xtend.macros.StepCached
 import fj.Ord
 import fj.P
 import fj.data.List
 import fj.data.Option
+import fr.irit.smac.lib.contrib.xtend.macros.StepCached
 import sim.util.Double2D
 
-import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
-import static extension eu.ascens.unimore.xtend.extensions.MasonExtensions.*
-import eu.ascens.unimore.robots.Constants
+import static extension fr.irit.smac.lib.contrib.fj.xtend.FunctionalJavaExtensions.*
+import static extension fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
 
 class RepresentationsImpl extends Representations implements IRepresentationsExtra {
 	

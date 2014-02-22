@@ -1,5 +1,6 @@
 package eu.ascens.unimore.robots.mason
 
+import eu.ascens.unimore.robots.Behaviour
 import eu.ascens.unimore.robots.Constants
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
 import eu.ascens.unimore.robots.beh.datatypes.VisibleVictim
@@ -28,8 +29,7 @@ import sim.util.Int2D
 import sim.util.TableLoader
 import sim.util.gui.SimpleColorMap
 
-import static extension eu.ascens.unimore.xtend.extensions.JavaExtensions.*
-import eu.ascens.unimore.robots.Behaviour
+import static extension fr.irit.smac.lib.contrib.xtend.JavaExtensions.*
 
 @Data class InitialisationParameters {
 	val double radioRange
@@ -407,7 +407,7 @@ class BotPortrayal2D extends OvalPortrayal2D {
 		val spos = fieldPortrayal.getRelativeObjectPosition(sloc, botPos, info)
 		graphics.setPaint(Color.GREEN)
 		graphics.drawArrow(botFPos.x as int, botFPos.y as int, spos.x as int, spos.y as int)
-		val toPrint = e.criticality.toShortString
+		val toPrint = e.criticality.toShortString(2)
 		
 		printLabel(toPrint, graphics, info, spos.x as int, spos.y as int)
 	}

@@ -124,6 +124,11 @@
 			<artifactId>common-components</artifactId>
 			<version>3.2.1</version>
 		</dependency>
+		<dependency>
+			<groupId>fr.irit.smac.lib.contrib</groupId>
+			<artifactId>xtend-contrib</artifactId>
+			<version>1.0.0</version>
+		</dependency>
 		<!-- For making videos -->
 		<dependency>
 			<groupId>javax.media</groupId>
@@ -150,9 +155,14 @@
 			<version>0.3</version>
 		</dependency>
 		<dependency>
-			<groupId>eu.ascens.unimore</groupId>
-			<artifactId>xtend-macro</artifactId>
-			<version>0.0.2-SNAPSHOT</version>
+			<groupId>fr.irit.smac.lib.contrib</groupId>
+			<artifactId>functionaljava-xtend-contrib</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>fr.irit.smac.lib.contrib</groupId>
+			<artifactId>mason-xtend-contrib</artifactId>
+			<version>1.0.0</version>
 		</dependency>
 	</dependencies>
 

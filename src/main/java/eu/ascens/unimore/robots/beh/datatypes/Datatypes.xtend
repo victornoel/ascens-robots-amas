@@ -5,8 +5,8 @@ import eu.ascens.unimore.robots.mason.datatypes.RBEmitter
 import fj.data.List
 import sim.util.Double2D
 
-import static extension eu.ascens.unimore.robots.geometry.GeometryExtensions.*
-import static extension eu.ascens.unimore.xtend.extensions.JavaExtensions.*
+import static extension fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
+import static extension fr.irit.smac.lib.contrib.xtend.JavaExtensions.*
 
 @Data abstract class Choice {
 	
@@ -68,7 +68,7 @@ import static extension eu.ascens.unimore.xtend.extensions.JavaExtensions.*
 	}
 	
 	override def toString() {
-		"Expl["+criticality.toShortString+","+distance.toShortString+","+direction.toShortString+"]"
+		"Expl["+criticality.toShortString(2)+","+distance.toShortString(2)+","+direction.toShortString(2)+"]"
 	}
 }
 

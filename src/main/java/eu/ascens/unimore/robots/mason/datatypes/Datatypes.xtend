@@ -1,7 +1,6 @@
 package eu.ascens.unimore.robots.mason.datatypes
 
 import fj.data.Option
-import org.eclipse.xtext.xbase.lib.Pair
 import sim.util.Double2D
 
 @Data class Message {

@@ -5,12 +5,12 @@ import eu.ascens.unimore.robots.beh.datatypes.AgentSig
 import eu.ascens.unimore.robots.beh.datatypes.ExplorableMessage
 import eu.ascens.unimore.robots.beh.datatypes.ReceivedExplorable
 import eu.ascens.unimore.robots.beh.interfaces.IMessagingExtra
-import eu.ascens.unimore.xtend.macros.StepCached
 import fj.data.List
+import fr.irit.smac.lib.contrib.xtend.macros.StepCached
 import java.util.Map
 
-import static extension eu.ascens.unimore.xtend.extensions.FunctionalJavaExtensions.*
-import static extension eu.ascens.unimore.xtend.extensions.JavaExtensions.*
+import static extension fr.irit.smac.lib.contrib.fj.xtend.FunctionalJavaExtensions.*
+import static extension fr.irit.smac.lib.contrib.xtend.JavaExtensions.*
 
 class MessagingImpl extends Messaging implements IMessagingExtra {
 
