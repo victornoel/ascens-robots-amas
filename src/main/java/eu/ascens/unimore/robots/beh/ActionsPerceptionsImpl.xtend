@@ -1,13 +1,13 @@
 package eu.ascens.unimore.robots.beh
 
 import de.oehme.xtend.contrib.Cached
-import eu.ascens.unimore.robots.Constants
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
 import eu.ascens.unimore.robots.beh.datatypes.ExplorableMessage
 import eu.ascens.unimore.robots.beh.interfaces.IActionsExtra
 import eu.ascens.unimore.robots.beh.interfaces.IPerceptionsExtra
 import eu.ascens.unimore.robots.mason.datatypes.RBEmitter
 import eu.ascens.unimore.robots.mason.datatypes.SensorReading
+import eu.ascens.unimore.robots.mason.datatypes.VisibleVictim
 import fj.Ord
 import fj.data.List
 import fj.data.Stream
@@ -57,19 +57,15 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	}
 	
 	override goTo(Double2D to) {
-		
-		val l = Math.min(to.length, Constants.SPEED)
-		
-		// TODO: smooth things using prevDirs? like not moving if it's useless
-		val move = to.computeDirectionWithAvoidance.dir.resize(l)
-		lastMove = to
-		
-		logger.info("going to {} targetting {}.", move, to)
-//		val futureBots = visibleBotsStillMoving
-//							.map[(coord-move).lengthSq]
-//							.filter[d|d<Constants.RB_RANGE_SQUARED]
-//		if (futureBots.notEmpty)
+		val l = to.length
+		if (l > 0) {			
+			// TODO: smooth things using prevDirs? like not moving if it's useless
+			val move = to.computeDirectionWithAvoidance.dir.resize(l)
+			lastMove = to
+			
+			logger.info("going to {} targetting {}.", move, to)
 			requires.move.setNextMove(move)
+		}
 	}
 	
 	// taken from http://link.springer.com/chapter/10.1007%2F978-3-642-22907-7_7
@@ -90,6 +86,7 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 			r -> r.dir.lengthSq
 		]
 		// this is the best I can get
+		// I don't know why but it works better with -0.1
 		val maxSq = sensorsReadingsWithLengthSq.map[value].maximum(Ord.doubleOrd)-0.1
 		
 		val vision = Zipper.fromStream(Stream.iterableStream(sensorsReadingsWithLengthSq)).some()
@@ -105,19 +102,19 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 			} else if (gothroughL.focus.value >= maxSq) {
 				return gothroughL.chooseBest(maxSq, false)
 			}
-			gothroughR = gothroughR.cyclePrevious
-			gothroughL = gothroughL.cycleNext
+			gothroughR = gothroughR.cycle(true)
+			gothroughL = gothroughL.cycle(false)
 		} while ((gothroughR.focus != desiredDirection.focus)
 			&& (gothroughL.focus != desiredDirection.focus))
 		
 		return desiredDirection.focus.key
 	}
 	
-	private def <A> chooseBest(Zipper<Pair<A, Double>> z, double maxSq, boolean inverse) {
-		val prev = z.cyclePrevious(inverse)
-		val prevprev = prev.cyclePrevious(inverse)
-		val next = z.cycleNext(inverse)
-		val nextnext = next.cycleNext(inverse)
+	private def <A> chooseBest(Zipper<Pair<A, Double>> z, double maxSq, boolean toTheRight) {
+		val prev = z.cycle(toTheRight)
+		val prevprev = prev.cycle(toTheRight)
+		val next = z.cycle(!toTheRight)
+		val nextnext = next.cycle(!toTheRight)
 		if (prev.focus.value < CoopConstants.AVOID_VERY_CLOSE_WALL_DISTANCE_SQUARED
 			|| prevprev.focus.value < CoopConstants.AVOID_VERY_CLOSE_WALL_DISTANCE_SQUARED
 		) {
@@ -141,14 +138,9 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 		return z.focus.key
 	}
 	
-	private def <A> cycleNext(Zipper<A> z, boolean inverse) {
-		if (inverse) z.cyclePrevious
+	private def <A> cycle(Zipper<A> z, boolean toTheRight) {
+		if (toTheRight) z.cyclePrevious
 		else z.cycleNext
-	}
-	
-	private def <A> cyclePrevious(Zipper<A> z, boolean inverse) {
-		if (inverse) z.cycleNext
-		else z.cyclePrevious
 	}
 	
 	override myId() {
@@ -180,30 +172,20 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	}
 	
 	@Cached
-	override List<Double2D> visibleVictims() {
+	override List<VisibleVictim> visibleVictims() {
 		requires.see.visibleVictims
 			=> [logger.info("visibleVictims: {}", it)]
 	}
 	
 	@Cached
-	private def List<RBEmitter> visibleBotsStillMoving() {
+	override Double2D escapeCrowdVector() {
 		visibleRobots
 		.filter[
 			message.isNone
 			|| !(message.some() instanceof ExplorableMessage)
 			|| !(message.some() as ExplorableMessage).onVictim
 		]
-	}
-	
-	@Cached
-	override Double2D escapeCrowdVector() {
-		visibleBotsStillMoving
 		.map[coord]
-		.filter[r|
-			!visibleVictims.exists[v|
-				r.distanceSq(v) <= CoopConstants.CONSIDERED_NEXT_TO_VICTIM_DISTANCE_SQUARED
-			]
-		]
 		.computeCrowdVector
 	}
 	

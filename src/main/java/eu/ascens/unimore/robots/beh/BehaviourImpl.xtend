@@ -87,11 +87,11 @@ class BehaviourImpl extends ComposedBehaviour implements RobotVisu {
 	}
 	
 	override areasOnlyFromMe() {
-		parts.r.representations.responsibleSeen
+		parts.r.representations.seenAreas
 	}
 	
 	override victimsFromMe() {
-		parts.r.representations.visibleVictims
+		parts.r.representations.seenVictims
 	}
 	
 	override explorablesFromOthers() {

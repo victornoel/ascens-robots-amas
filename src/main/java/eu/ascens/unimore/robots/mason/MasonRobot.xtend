@@ -2,6 +2,7 @@ package eu.ascens.unimore.robots.mason
 
 import de.oehme.xtend.contrib.Cached
 import eu.ascens.unimore.robots.mason.datatypes.SensorReading
+import eu.ascens.unimore.robots.mason.datatypes.VisibleVictim
 import fj.Ord
 import fj.data.List
 import fr.irit.smac.lib.contrib.xtend.macros.StepCached
@@ -14,10 +15,8 @@ import sim.util.Double2D
 import sim.util.Int2D
 import sim.util.MutableDouble2D
 
-import static eu.ascens.unimore.robots.geometry.GeometryExtensions.*
-
-import static extension fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
 import static extension fr.irit.smac.lib.contrib.fj.xtend.FunctionalJavaExtensions.*
+import static extension fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
 
 abstract class MasonRobot implements Steppable {
 
@@ -114,7 +113,7 @@ class Surroundings implements ILosBoard {
 	
 	var List<MasonRobot> foundBots = List.nil
 	package var List<Int2D> wallCoords = List.nil
-	package var List<Int2D> victims = List.nil
+	package var List<Victim> victims = List.nil
 	package var List<Int2D> noWallCoords = List.nil
 	package var List<Double2D> proximityBots = List.nil
 	
@@ -133,15 +132,18 @@ class Surroundings implements ILosBoard {
 							foundBots = b + foundBots
 						}
 						if (realDist < me.state.parameters.proximityBotRange) {
-							proximityBots = b.position.relativeVectorFor + proximityBots
+							proximityBots = b.position + proximityBots
 						}
 					}
 				}
 			}
 		}
 		if (!ob && dist < me.state.parameters.victimRange) {
-			if (me.state.isVictim(x,y)) {
-				victims = pos + victims
+			val r = me.state.victims.getObjectsAtDiscretizedLocation(pos)
+			if (r != null) {
+				for (v: r.filter(Victim)) {
+					victims = v + victims
+				}
 			}
 		}
 		if (dist < me.state.parameters.wallRange) {
@@ -238,9 +240,9 @@ class Surroundings implements ILosBoard {
 	
 	@Cached
 	def List<SensorReading> getSensorReadings() {
-		SENSORS_DIRECTIONS_CONES.map[d|
+		me.state.parameters.sensorDirectionCones.map[d|
 			// bots in this cone
-			val pbots = proximityBots.filter[between(d.value)]
+			val pbots = proximitySensorsBots.filter[between(d.value)]
 			// walls touched by this direction
 			val ws = wallCones.filter[d.key.between(it)]
 			
@@ -265,8 +267,13 @@ class Surroundings implements ILosBoard {
 	}
 	
 	@Cached
-	def List<Double2D> getVisibleVictims() {
-		victims.map[relativeVectorFor]
+	def List<Double2D> getProximitySensorsBots() {
+		proximityBots.map[relativeVectorFor]
+	}
+	
+	@Cached
+	def List<VisibleVictim> getVisibleVictims() {
+		victims.map[new VisibleVictim(position.relativeVectorFor, nbBotNeeded)]
 	}
 	
 	@Cached

@@ -4,11 +4,12 @@ import eu.ascens.unimore.robots.beh.datatypes.AgentSig
 import eu.ascens.unimore.robots.beh.datatypes.Choice
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
 import eu.ascens.unimore.robots.beh.datatypes.ReceivedExplorable
-import eu.ascens.unimore.robots.beh.datatypes.VisibleVictim
+import eu.ascens.unimore.robots.beh.datatypes.SeenVictim
 import eu.ascens.unimore.robots.mason.datatypes.RBEmitter
 import eu.ascens.unimore.robots.mason.datatypes.SensorReading
 import fj.data.List
 import sim.util.Double2D
+import eu.ascens.unimore.robots.mason.datatypes.VisibleVictim
 
 interface IActions {
 	
@@ -35,15 +36,15 @@ interface IRepresentations {
 	
 	def List<Explorable> explorables()
 	
-	def List<VisibleVictim> visibleVictims()
+	def List<SeenVictim> seenVictims()
 	
-	def List<VisibleVictim> consideredVictims()
+	def List<SeenVictim> consideredVictims()
 	
 }
 
 interface IRepresentationsExtra extends IRepresentations {
 	
-	def List<Explorable> responsibleSeen()
+	def List<Explorable> seenAreas()
 	
 	def List<Explorable> explorableFromOthers()
 }
@@ -56,7 +57,7 @@ interface IPerceptions {
 	
 	def List<SensorReading> sensorReadings()
 	
-	def List<Double2D> visibleVictims()
+	def List<VisibleVictim> visibleVictims()
 	
 	def List<SensorReading> visibleWalls()
 	

@@ -2,7 +2,7 @@ package eu.ascens.unimore.robots.beh
 
 import eu.ascens.unimore.robots.beh.datatypes.Choice
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
-import eu.ascens.unimore.robots.beh.datatypes.VisibleVictim
+import eu.ascens.unimore.robots.beh.datatypes.SeenVictim
 import eu.ascens.unimore.robots.beh.interfaces.IDecisionsExtra
 import fj.Ord
 import fj.P
@@ -73,26 +73,23 @@ class DecisionsImpl extends Decisions implements IDecisionsExtra {
 	}
 	
 	def handleGoto(Choice choice) {
-		switch choice {
-			VisibleVictim case choice.direction.length <= CoopConstants.STOP_NEXT_TO_VICTIM_DISTANCE: {
-				// in that case do nothing, no need to go crazily around
-			}
-			default: requires.actions.goTo(choice.direction)
-		}
+		requires.actions.goTo(choice.direction)
 	}
 	
-	def chooseMostImportantVictim(List<VisibleVictim> victims) {
+	def chooseMostImportantVictim(List<SeenVictim> victims) {
 		// to be correct, the best would be to circle the vict so that I arrive
 		// close to it but not closer to others!
 		victims.minimum(
-			Ord.intOrd.comap[VisibleVictim v|v.howMuch]
-			|| Ord.doubleOrd.comap[VisibleVictim v|v.direction.lengthSq]
+			Ord.intOrd.comap[SeenVictim v|v.howMuch]
+			|| Ord.doubleOrd.comap[SeenVictim v|v.direction.lengthSq]
 		)
 	}
 	
 	private def handleSend(Explorable to, boolean onVictim) {
 		if (CoopConstants.COOPERATION) {
 			requires.actions.broadcastExplorables(List.single(to), onVictim)
+		} else {
+			requires.actions.broadcastExplorables(List.nil, onVictim)
 		}
 	}
 	

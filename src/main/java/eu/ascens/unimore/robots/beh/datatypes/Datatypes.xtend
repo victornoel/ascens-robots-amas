@@ -16,68 +16,47 @@ import static extension fr.irit.smac.lib.contrib.xtend.JavaExtensions.*
 
 @Data class Explorable extends Choice {
 	
-	// used by messaging
-	// it is the distance the message has travelled
-	val double distance
-	
-	// used by messaging
-	val AgentSig origin
-	val String sender
-	
 	// used by decision
 	val double criticality
+	
+	val double victimSlice
 	
 	// used by visu
 	val Double2D via
 	
-	new(Double2D direction, double distance, AgentSig origin, String sender, double criticality, Double2D via) {
+	new(Double2D direction, double criticality, double victimSlice, Double2D via) {
 		super(direction)
-		_distance = distance
-		_origin = origin
-		_sender = sender
+		doAssert(criticality >= 0 && criticality <= 1.0, "wrong crit: "+criticality)
 		_criticality = criticality
+		_victimSlice = victimSlice
 		_via = via
 	}
 	
-	new(Double2D direction, AgentSig origin, double criticality) {
-		this(direction, 0, origin, null, criticality, null)
-	}
-	
-	def hasSender(String sender) {
-		this.sender == sender
-	}
-	
-	def hasOrigin(String origin) {
-		this.origin.id == origin
-	}
-	
-	def sawMyself() {
-		this.via == null
-	}
-	
-	def Explorable via(Double2D newDir, RBEmitter from) {
-		via(newDir, from, criticality)
+	new(Double2D direction, double criticality, double victimSlice) {
+		this(direction, criticality, victimSlice, null)
 	}
 	
 	def Explorable via(Double2D newDir, RBEmitter from, double newCriticality) {
-		new Explorable(newDir, distance+from.coord.length, origin, from.id, newCriticality, from.coord)
+		new Explorable(newDir, newCriticality, victimSlice, from.coord)
 	}
 	
 	def Explorable withCriticality(double newCriticality) {
-		new Explorable(direction, distance, origin, sender, newCriticality, via)
+		new Explorable(direction, newCriticality, victimSlice, via)
 	}
 	
 	override def toString() {
-		"Expl["+criticality.toShortString(2)+","+distance.toShortString(2)+","+direction.toShortString(2)+"]"
+		"Expl["+criticality.toShortString(2)+","+direction.toShortString(2)+"]"
 	}
 }
 
-@Data class VisibleVictim extends Choice {
+@Data class SeenVictim extends Choice {
 	
 	/**
 	 * How much people are around this victim (myself included)
 	 */
 	val int howMuch
+	
+	val int nbBotsNeeded
 	
 	val boolean ImNext
 	
@@ -87,15 +66,6 @@ import static extension fr.irit.smac.lib.contrib.xtend.JavaExtensions.*
 	
 	RBEmitter from
 	Explorable explorable
-	int fromHowMany
-	
-	def withHowManyMore(int howManyMore) {
-		new ReceivedExplorable(from, explorable, fromHowMany+howManyMore)
-	}
-	
-	def toExplorable(Double2D newDir) {
-		explorable.via(newDir, from)
-	}
 	
 	def toExplorable(Double2D newDir, double newCriticality) {
 		explorable.via(newDir, from, newCriticality)

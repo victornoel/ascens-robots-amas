@@ -1,9 +1,12 @@
 package eu.ascens.unimore.robots.mason
 
+import de.oehme.xtend.contrib.Cached
 import eu.ascens.unimore.robots.Behaviour
-import eu.ascens.unimore.robots.Constants
+import eu.ascens.unimore.robots.RequirementsConstants
+import eu.ascens.unimore.robots.UIConstants
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
-import eu.ascens.unimore.robots.beh.datatypes.VisibleVictim
+import eu.ascens.unimore.robots.beh.datatypes.SeenVictim
+import eu.ascens.unimore.robots.geometry.Radiangle
 import java.awt.Color
 import java.awt.Font
 import java.awt.Graphics2D
@@ -29,19 +32,35 @@ import sim.util.Int2D
 import sim.util.TableLoader
 import sim.util.gui.SimpleColorMap
 
+import static eu.ascens.unimore.robots.geometry.GeometryExtensions.*
+import static fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
+
 import static extension fr.irit.smac.lib.contrib.xtend.JavaExtensions.*
 
 @Data class InitialisationParameters {
+	
 	val double radioRange
 	val double wallRange
 	val double victimRange
 	val double proximityBotRange
 	val double speed
 	val double rbRange
+	val int nbProximityWallSensors
 	val String map
 	val long seed
 	val int nbBots
+	val int nbVictims
+	val int minBotsPerVictim
+	val int maxBotsPerVictim
 	val () => Behaviour newBehaviour
+	
+	@Cached
+	def fj.data.List<Pair<Double2D, Pair<Double2D, Double2D>>> sensorDirectionCones() {
+		Radiangle.buildCones(nbProximityWallSensors).map[
+			val cone = it.key.toNormalizedVector -> it.value.toNormalizedVector
+			middleAngledVector(cone.key, cone.value) -> cone
+		].sort(ORD_D2D.comap[key]) // sort evaluates
+	}
 } 
 
 abstract class AscensSimState extends SimState {
@@ -50,12 +69,15 @@ abstract class AscensSimState extends SimState {
 	def getMaze() { maze }
 	var Continuous2D agents
 	def getAgents() { agents }
-
+	var Continuous2D victims
+	def getVictims() { victims }
+	
 	@Property val InitialisationParameters parameters
 	@Property var String map
 	
 	val List<Int2D> availStartingAreas = newArrayList()
-
+	val List<Int2D> availVictimAreas = newArrayList()
+	
 	new(InitialisationParameters parameters) {
 		super(parameters.seed)
 		this._parameters = parameters
@@ -82,7 +104,27 @@ abstract class AscensSimState extends SimState {
 			}
 		}
 		
+		availVictimAreas.clear
+		for(i: 0..<maze.width) {
+			for(j: 0..<maze.height) {
+				if (maze.get(i,j) == 1) {
+					availVictimAreas += new Int2D(i,j)
+				}
+			}
+		}
+		
 		agents = new Continuous2D(1, maze.width, maze.height)
+		victims = new Continuous2D(1, maze.width, maze.height)
+		
+		var nbCreated = 0
+		try {
+			for (i : 1..this.parameters.nbVictims) {
+				addVictim
+				nbCreated = i
+			}
+		} catch (NoVictimAreaAvailable e) {
+			println("no more victim area available, created " + nbCreated + " victims.")
+		}
 
 		populate()
 	}
@@ -124,8 +166,15 @@ abstract class AscensSimState extends SimState {
 		maze.get(x, y) == 0
 	}
 	
-	def isVictim(int x, int y) {
-		maze.get(x, y) == 1
+	def addVictim() {
+		if (!availVictimAreas.empty) {
+			val iPos = availVictimAreas.remove(random.nextInt(availVictimAreas.size))
+			val pos = new Double2D(iPos.x+0.5, iPos.y+0.5)
+			val nbBots = parameters.minBotsPerVictim + random.nextInt(parameters.maxBotsPerVictim-parameters.minBotsPerVictim)
+			victims.setObjectLocation(new Victim(pos, nbBots), pos)
+		} else {
+			throw new NoVictimAreaAvailable
+		}
 	}
 	
 	def add(Steppable r) {
@@ -142,6 +191,7 @@ abstract class AscensSimState extends SimState {
 }
 
 class NoStartingAreaAvailable extends RuntimeException {}
+class NoVictimAreaAvailable extends RuntimeException {}
 
 class ModelProperties {
 	
@@ -149,17 +199,17 @@ class ModelProperties {
 	
 	new(AscensSimState state) {
 		this.state = state
-		setMap(Constants.MAZES.indexOf(state.map))
+		setMap(UIConstants.MAZES.indexOf(state.map))
 	}
 	
 	def setMap(int map) {
 		_map = map
-		state.setMap(Constants.MAZES.get(map))
+		state.setMap(UIConstants.MAZES.get(map))
 	}
 	
 	@Property int map
 	def Object domMap() {
-		Constants.MAZES
+		UIConstants.MAZES
 	}
 	@Property boolean showSensorReadings = false
 	@Property boolean showSensorReadingsForAll = false
@@ -182,15 +232,17 @@ class ModelProperties {
 
 class AscensGUIState extends GUIState {
 
+	// initialised in start
 	var FastValueGridPortrayal2D mazePortrayal
-	var ContinuousPortrayal2D agentPortrayal
-
+	var ContinuousPortrayal2D agentsPortrayal
+	var ContinuousPortrayal2D victimsPortrayal
+	
 	// initialised in init
 	var Display2D display
 	var JFrame displayFrame
 
 	val ModelProperties properties
-
+	
 	new(AscensSimState state) {
 		super(state)
 		properties = new ModelProperties(state)
@@ -201,19 +253,20 @@ class AscensGUIState extends GUIState {
 	}
 
 	def setupPortrayals() {
-		agentPortrayal.setPortrayalForClass(AscensMasonImpl.RobotImpl.MyMasonRobot, new BotPortrayal2D(agentPortrayal, properties))
-
+		val state = state as AscensSimState
+		
+		agentsPortrayal.setPortrayalForClass(AscensMasonImpl.RobotImpl.MyMasonRobot, new BotPortrayal2D(agentsPortrayal, properties))
+		victimsPortrayal.setPortrayalForClass(Victim, new VictimPortrayal2D(victimsPortrayal, state))
 		// set up the maze portrayal
 		mazePortrayal.setMap(new SimpleColorMap(0,3,Color.LIGHT_GRAY,Color.WHITE))
 
 		// attach the portrayals
 		display.detatchAll
 		display.attach(mazePortrayal, "Maze")
-		display.attach(agentPortrayal, "Agents")
+		display.attach(victimsPortrayal, "Victims")
+		display.attach(agentsPortrayal, "Agents")
 		display.setBackdrop(Color.white)
 		
-		//robotsPortrayal.setPortrayalForClass(ObstacleObject, new GeomPortrayal(Color.YELLOW,1.0,true))
-		//robotsPortrayal.setPortrayalForClass(VictimObject, new GeomPortrayal(Color.RED,1.0,true))
 		// reschedule the displayer
 		display.reset()
 
@@ -227,10 +280,12 @@ class AscensGUIState extends GUIState {
 		val state = (state as AscensSimState)
 		
 		mazePortrayal = new FastValueGridPortrayal2D()
-		agentPortrayal = new ContinuousPortrayal2D()
-	
-		agentPortrayal.setField(state.agents)
+		agentsPortrayal = new ContinuousPortrayal2D()
+		victimsPortrayal = new ContinuousPortrayal2D()
+		
+		agentsPortrayal.setField(state.agents)
 		mazePortrayal.setField(state.maze)
+		victimsPortrayal.setField(state.victims)
 		
 		setupPortrayals()
 	}
@@ -263,6 +318,32 @@ class AscensGUIState extends GUIState {
 
 		// we now have new grids.  Set up the portrayals to reflect that
 		setupPortrayals()
+	}
+}
+
+class VictimPortrayal2D extends OvalPortrayal2D {
+	
+	val FieldPortrayal2D fieldPortrayal
+	val AscensSimState state
+	
+	new(FieldPortrayal2D fieldPortrayal, AscensSimState state) {
+		super(Color.RED, 1.5, true)
+		this.fieldPortrayal = fieldPortrayal
+		this.state = state
+	}
+	
+	override draw(Object object, Graphics2D graphics, DrawInfo2D info) {
+		switch object {
+			Victim: {
+				val agentsHere = state.agents.getNeighborsExactlyWithinDistance(object.position, RequirementsConstants.CONSIDERED_NEXT_TO_VICTIM_DISTANCE)
+				if (agentsHere!= null && agentsHere.size >= object.nbBotNeeded) {
+					this.paint = Color.GREEN
+				} else {
+					this.paint = Color.RED
+				}
+			}
+		}
+		super.draw(object, graphics, info)
 	}
 }
 
@@ -368,7 +449,8 @@ class BotPortrayal2D extends OvalPortrayal2D {
 				}
 				
 				if (properties.showVisibleBotsAndVictims && info.selected) {
-					val vis = object.surroundings.RBVisibleBotsWithCoordinate.map[value].append(object.surroundings.visibleVictims)
+					val vis = object.surroundings.RBVisibleBotsWithCoordinate.map[value]
+								+ object.surroundings.visibleVictims.map[dir]
 					for(b: vis) {
 						val sloc = b.add(botPos)
 						val spos = fieldPortrayal.getRelativeObjectPosition(sloc, botPos, info)
@@ -393,14 +475,17 @@ class BotPortrayal2D extends OvalPortrayal2D {
 		super.draw(object, graphics, info)
 	}
 	
-	def printVisibleVictim(Graphics2D graphics, VisibleVictim v, Double2D botPos, Point2D.Double botFPos, DrawInfo2D info) {
+	def printVisibleVictim(Graphics2D graphics, SeenVictim v, Double2D botPos, Point2D.Double botFPos, DrawInfo2D info) {
 		val sloc = v.direction.add(botPos)
 		val spos = fieldPortrayal.getRelativeObjectPosition(sloc, botPos, info)
 		graphics.setPaint(Color.GREEN)
 		graphics.drawArrow(botFPos.x as int, botFPos.y as int, spos.x as int, spos.y as int)
 		val toPrint = ""+v.howMuch
 		
-		printLabel(toPrint, graphics, info, spos.x as int, spos.y as int)
+		val lx = botFPos.x*0.2+spos.x*0.8
+		val ly = botFPos.y*0.2+spos.y*0.8
+		
+		printLabel(toPrint, graphics, info, lx as int, ly as int)
 	}
 	
 	def printExplorable(Graphics2D graphics, Explorable e, Double2D botPos, Point2D.Double botFPos, DrawInfo2D info) {
@@ -410,7 +495,10 @@ class BotPortrayal2D extends OvalPortrayal2D {
 		graphics.drawArrow(botFPos.x as int, botFPos.y as int, spos.x as int, spos.y as int)
 		val toPrint = e.criticality.toShortString(2)
 		
-		printLabel(toPrint, graphics, info, spos.x as int, spos.y as int)
+		val lx = botFPos.x*0.2+spos.x*0.8
+		val ly = botFPos.y*0.2+spos.y*0.8
+		
+		printLabel(toPrint, graphics, info, lx as int, ly as int)
 	}
 	
 	val static FONT = new Font("SansSerif",Font.PLAIN, 10)

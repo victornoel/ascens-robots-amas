@@ -1,17 +1,17 @@
 package eu.ascens.unimore.robots
 
-class Constants {
-	
-	// Simulation
+import eu.ascens.unimore.robots.beh.BehaviourImpl
+
+class SimulationConstants {
 	
 	public static val SEED = 12345L
 	
-	// Environment
-	
-	// use mtpaint to draw it: color index 0 for walls, 1 for victims, 2 for starting area, rest for nothing
-	public static val String[] MAZES = #[ "maze1", "maze2", "maze3", "maze4", "maze5" ]
+	// environment
 	public static val DEFAULT_MAZE = "maze1"
 	public static val NB_BOTS = 60
+	public static val MIN_BOTS_PER_VICTIM = 2
+	public static val MAX_BOTS_PER_VICTIM = 4
+	public static val NB_VICTIMS = NB_BOTS/2/((MAX_BOTS_PER_VICTIM+MIN_BOTS_PER_VICTIM)/2)
 	
 	// Robots characteristics, in meters or meters/step
 	public static val RADIO_RANGE = 60
@@ -22,7 +22,21 @@ class Constants {
 	public static val SPEED = 0.15
 	public static val NB_WALL_SENSORS = 24
 	
-	// TODO to be deleted!!!
-	public static val WALL_RANGE_SQUARED = WALL_RANGE*WALL_RANGE
-	public static val RB_RANGE_SQUARED = RB_RANGE*RB_RANGE
+	// bots behaviour
+	public static val DEFAULT_BEHAVIOUR = [|new BehaviourImpl]
+}
+
+class UIConstants {
+		
+	// use mtpaint to draw it: color index 0 for walls, 1 for victims, 2 for starting area, rest for nothing
+	public static val String[] MAZES = #[ "maze1", "maze2", "maze3", "maze4", "maze5" ]
+}
+
+class RequirementsConstants {
+	
+	// used by evaluation but also by behaviours
+	public static val CONSIDERED_NEXT_TO_VICTIM_DISTANCE = 0.5
+	
+	// useful
+	public static val CONSIDERED_NEXT_TO_VICTIM_DISTANCE_SQUARED = CONSIDERED_NEXT_TO_VICTIM_DISTANCE*CONSIDERED_NEXT_TO_VICTIM_DISTANCE
 }

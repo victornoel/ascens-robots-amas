@@ -26,3 +26,9 @@ import sim.util.Double2D
 	val boolean hasWall
 	val boolean hasBot
 }
+
+@Data class VisibleVictim {
+	
+	val Double2D dir
+	val int nbBotsNeeded
+}

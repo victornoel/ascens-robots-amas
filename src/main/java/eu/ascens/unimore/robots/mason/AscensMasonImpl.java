@@ -11,6 +11,7 @@ import ec.util.MersenneTwisterFast;
 import eu.ascens.unimore.robots.mason.datatypes.Message;
 import eu.ascens.unimore.robots.mason.datatypes.RBEmitter;
 import eu.ascens.unimore.robots.mason.datatypes.SensorReading;
+import eu.ascens.unimore.robots.mason.datatypes.VisibleVictim;
 import eu.ascens.unimore.robots.mason.interfaces.RobotMovements;
 import eu.ascens.unimore.robots.mason.interfaces.RobotPerceptions;
 import eu.ascens.unimore.robots.mason.interfaces.RobotVisu;
@@ -94,7 +95,7 @@ public class AscensMasonImpl extends AscensMason {
 				}
 				
 				@Override
-				public List<Double2D> getVisibleVictims() {
+				public List<VisibleVictim> getVisibleVictims() {
 					return bot.getVisibleVictims();
 				}
 				

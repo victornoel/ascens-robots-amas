@@ -2,9 +2,10 @@ package eu.ascens.unimore.robots.mason.interfaces
 
 import eu.ascens.unimore.robots.beh.datatypes.Choice
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
-import eu.ascens.unimore.robots.beh.datatypes.VisibleVictim
+import eu.ascens.unimore.robots.beh.datatypes.SeenVictim
 import eu.ascens.unimore.robots.mason.datatypes.RBEmitter
 import eu.ascens.unimore.robots.mason.datatypes.SensorReading
+import eu.ascens.unimore.robots.mason.datatypes.VisibleVictim
 import fj.data.List
 import sim.util.Double2D
 
@@ -20,7 +21,7 @@ interface RobotPerceptions {
 	
 	def List<SensorReading> getSensorReadings()
 	
-	def List<Double2D> getVisibleVictims()
+	def List<VisibleVictim> getVisibleVictims()
 	
 	def boolean isOutOfNest()
 	
@@ -36,7 +37,7 @@ interface RobotVisu {
 	
 	def Iterable<Explorable> explorables()
 	
-	def Iterable<VisibleVictim> victimsFromMe()
+	def Iterable<SeenVictim> victimsFromMe()
 	
 	def Iterable<Explorable> areasOnlyFromMe()
 	
