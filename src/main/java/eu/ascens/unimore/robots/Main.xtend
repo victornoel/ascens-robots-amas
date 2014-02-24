@@ -9,6 +9,7 @@ class Main {
 		val parameters = new InitialisationParameters(
 			Constants.RADIO_RANGE,
 			Constants.WALL_RANGE,
+			Constants.VICTIM_RANGE,
 			Constants.PROXIMITY_RANGE,
 			Constants.SPEED,
 			Constants.RB_RANGE,

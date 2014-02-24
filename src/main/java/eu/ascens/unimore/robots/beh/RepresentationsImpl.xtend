@@ -1,10 +1,10 @@
 package eu.ascens.unimore.robots.beh
 
 import de.oehme.xtend.contrib.Cached
-import eu.ascens.unimore.robots.Constants
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
 import eu.ascens.unimore.robots.beh.datatypes.VisibleVictim
 import eu.ascens.unimore.robots.beh.interfaces.IRepresentationsExtra
+import eu.ascens.unimore.robots.mason.datatypes.RBEmitter
 import eu.ascens.unimore.robots.mason.datatypes.SensorReading
 import fj.Ord
 import fj.P
@@ -58,10 +58,7 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 			val ImNext = new Double2D(0,0).isConsideredNextTo(myDistToVictSq)
 			new VisibleVictim(v,
 				requires.perceptions.visibleRobots.count[
-					val hisDistToVictSq = coord.distanceSq(v)
-					coord.isConsideredNextTo(hisDistToVictSq)
-					// only consider those that are closer than me
-					//&& hisDistToVictSq < myDistToVictSq
+					coord.isConsideredNextTo(coord.distanceSq(v))
 				] + (if (ImNext) 1 else 0),
 				ImNext
 			)
@@ -76,17 +73,21 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 		]
 	}
 	
+	private def isCloserThanMe(RBEmitter him, double hisDistToDirSq, double myDistToDirSq) {
+		hisDistToDirSq < myDistToDirSq
+			|| (hisDistToDirSq == myDistToDirSq
+				// in case we have the same dist, take the one the more on the east (?)
+				// or if same the more on the south
+				&& (him.coord.x > 0 || (him.coord.x == 0 && him.coord.y > 0)) 
+			)
+	}
+	
 	/* Area stuffs */
 	
 	private def shouldBeResponsibleOf(Double2D dir) {
 		val myDistToDirSq = dir.lengthSq
-		!requires.perceptions.visibleRobots.exists[b|
-			val hisDistToDirSq = b.coord.distanceSq(dir)
-			// -0.1 in order to not get problems when bots are at the same distance
-			// and some glitch make them both see the other as closer
-			// there will be duplicate just for the time of one turn normally
-			hisDistToDirSq < myDistToDirSq
-			|| (hisDistToDirSq == myDistToDirSq && b.id < requires.perceptions.myId)
+		!requires.perceptions.visibleRobots.exists[
+			isCloserThanMe(coord.distanceSq(dir), myDistToDirSq)
 		]
 	}
 	
@@ -161,22 +162,22 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 		requires.messaging.explorationMessages.map[p|
 			val nc = p.explorable.direction+p.from.coord
 			val ncLengthSq = nc.lengthSq
-			// to correctly assess the direction
-			// because it's a sum of vector, so length is unreliable
-			// TODO this is not very good as it is…
-			val newDir = if (ncLengthSq > Constants.WALL_RANGE) {
-				// stop closer if it points to something too far from me
-				nc.resize(Constants.WALL_RANGE)
-			} else if (ncLengthSq <= 0) {
-				// follow directly the sender if the information is useless
+			val newDir = if (ncLengthSq == 0) {
+				// this could happen...
 				p.from.coord
+			} else if (ncLengthSq > p.from.coord.lengthSq) {
+				// TODO not so good...
+				nc.resize(p.from.coord.length)
 			} else {
 				nc
 			}
-			val newCrit = Math.max(
-								CoopConstants.STARTING_EXPLORABLE_CRITICALITY,
-								p.explorable.criticality-CoopConstants.VICTIM_SLICE_CRITICALITY*p.fromHowMany
-							)
+			// TODO I should only take into account the closest to the destination
+			// than me, but how to compute that... !
+			val newCrit =
+				Math.max(
+					CoopConstants.STARTING_EXPLORABLE_CRITICALITY,
+					p.explorable.criticality-CoopConstants.VICTIM_SLICE_CRITICALITY*p.fromHowMany
+				)
 			p.toExplorable(newDir, newCrit)
 		]
 	}

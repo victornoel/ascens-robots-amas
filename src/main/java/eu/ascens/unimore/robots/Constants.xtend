@@ -18,6 +18,7 @@ class Constants {
 	public static val RB_RANGE = 20
 	public static val WALL_RANGE = 3
 	public static val PROXIMITY_RANGE = 1
+	public static val VICTIM_RANGE = 3
 	public static val SPEED = 0.15
 	public static val NB_WALL_SENSORS = 24
 	

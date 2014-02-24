@@ -63,6 +63,7 @@ abstract class MasonRobot implements Steppable {
 	@Cached
 	def Surroundings surroundings() {
 		val discrPos = state.agents.discretize(position)
+		// TODO clean that, that's not very good, there is other range also...
 		val dist = Math.max(state.parameters.rbRange, state.parameters.wallRange) as int
 		new Surroundings(this) => [s|
 			// shadow casting just sucks... this one is symmetric so it's better...
@@ -131,23 +132,24 @@ class Surroundings implements ILosBoard {
 						if (realDist < me.state.parameters.rbRange) {
 							foundBots = b + foundBots
 						}
-						if (realDist < me.state.parameters.proximityRange) {
+						if (realDist < me.state.parameters.proximityBotRange) {
 							proximityBots = b.position.relativeVectorFor + proximityBots
 						}
 					}
 				}
 			}
 		}
-		if (!ob && dist < me.state.parameters.wallRange) {
+		if (!ob && dist < me.state.parameters.victimRange) {
 			if (me.state.isVictim(x,y)) {
 				victims = pos + victims
 			}
 		}
-		if (!ob && dist < me.state.parameters.wallRange) {
-			noWallCoords = pos + noWallCoords
-		}
-		if (ob && dist < me.state.parameters.wallRange) {
-			wallCoords = pos + wallCoords
+		if (dist < me.state.parameters.wallRange) {
+			if (ob) {
+				wallCoords = pos + wallCoords
+			} else {
+				noWallCoords = pos + noWallCoords
+			}
 		}
 	}
 	

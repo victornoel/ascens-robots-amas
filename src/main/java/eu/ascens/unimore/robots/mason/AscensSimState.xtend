@@ -34,7 +34,8 @@ import static extension fr.irit.smac.lib.contrib.xtend.JavaExtensions.*
 @Data class InitialisationParameters {
 	val double radioRange
 	val double wallRange
-	val double proximityRange
+	val double victimRange
+	val double proximityBotRange
 	val double speed
 	val double rbRange
 	val String map

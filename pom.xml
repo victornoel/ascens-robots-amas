@@ -127,7 +127,7 @@
 		<dependency>
 			<groupId>fr.irit.smac.lib.contrib</groupId>
 			<artifactId>xtend-contrib</artifactId>
-			<version>1.0.0</version>
+			<version>1.0.1</version>
 		</dependency>
 		<!-- For making videos -->
 		<dependency>
@@ -162,7 +162,7 @@
 		<dependency>
 			<groupId>fr.irit.smac.lib.contrib</groupId>
 			<artifactId>mason-xtend-contrib</artifactId>
-			<version>1.0.0</version>
+			<version>1.0.1</version>
 		</dependency>
 	</dependencies>
 
