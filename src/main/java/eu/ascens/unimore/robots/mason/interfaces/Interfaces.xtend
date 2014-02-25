@@ -5,6 +5,7 @@ import eu.ascens.unimore.robots.beh.datatypes.Explorable
 import eu.ascens.unimore.robots.beh.datatypes.SeenVictim
 import eu.ascens.unimore.robots.mason.datatypes.RBEmitter
 import eu.ascens.unimore.robots.mason.datatypes.SensorReading
+import eu.ascens.unimore.robots.mason.datatypes.Stats
 import eu.ascens.unimore.robots.mason.datatypes.VisibleVictim
 import fj.data.List
 import sim.util.Double2D
@@ -42,4 +43,18 @@ interface RobotVisu {
 	def Iterable<Explorable> areasOnlyFromMe()
 	
 	def Iterable<Explorable> explorablesFromOthers()
+}
+
+interface MasonControAndStats {
+	
+	def Stats getCurrentStats()
+	
+	def void startGUI()
+	
+	def void setup()
+	
+	def boolean step()
+	
+	def void shutdown()
+	
 }

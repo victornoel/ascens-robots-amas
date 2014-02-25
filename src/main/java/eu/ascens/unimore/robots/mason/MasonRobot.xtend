@@ -50,7 +50,7 @@ abstract class MasonRobot implements Steppable {
 	def getRadioReachableBots() {
 		// uses allObjects since the number of bot is limited and the distance is big
 		// will be more efficient than getNeighborsWithinDistance
-		List.iterableList(state.agents.allObjects as Iterable<MasonRobot>).filter[b|
+		List.iterableList(state.agents.allObjects.filter(MasonRobot)).filter[b|
 			b !== this && b.position.distance(position) < state.parameters.radioRange
 		]
 	}
@@ -139,7 +139,9 @@ class Surroundings implements ILosBoard {
 			}
 		}
 		if (!ob && dist < me.state.parameters.victimRange) {
-			val r = me.state.victims.getObjectsAtDiscretizedLocation(pos)
+			// mark as explored
+			me.state.mazeOverlay.set(x,y,1)
+			val r = me.state.agents.getObjectsAtDiscretizedLocation(pos)
 			if (r != null) {
 				for (v: r.filter(Victim)) {
 					victims = v + victims

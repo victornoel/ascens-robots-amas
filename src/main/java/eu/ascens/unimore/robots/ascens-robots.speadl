@@ -1,6 +1,7 @@
 import ec.util.MersenneTwisterFast
 import eu.ascens.unimore.robots.mason.AscensMason
 import eu.ascens.unimore.robots.mason.datatypes.Message
+import eu.ascens.unimore.robots.mason.interfaces.MasonControAndStats
 import eu.ascens.unimore.robots.mason.interfaces.RobotMovements
 import eu.ascens.unimore.robots.mason.interfaces.RobotPerceptions
 import eu.ascens.unimore.robots.mason.interfaces.RobotVisu
@@ -30,6 +31,8 @@ namespace eu.ascens.unimore.robots {
 	ecosystem AscensRobots {
 		
 		provides populate: Do
+		
+		provides control: MasonControAndStats = env.control
 		
 		part env: AscensMason {
 			bind populateWorld to populate

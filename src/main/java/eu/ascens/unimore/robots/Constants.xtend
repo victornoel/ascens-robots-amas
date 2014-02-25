@@ -7,10 +7,18 @@ class SimulationConstants {
 	public static val SEED = 12345L
 	
 	// environment
-	public static val DEFAULT_MAZE = "maze1"
-	public static val NB_BOTS = 60
+	/**
+	 *  use mtpaint to draw it:
+	 * color index 0 for walls
+	 * 1 for victims
+	 * 2 for starting area
+	 * 3 for an explorable area (do not set to 3 an inaccessible area)
+	 * rest for nothing
+	*/
+	public static val DEFAULT_MAZE = "maze2"
+	public static val NB_BOTS = 800
 	public static val MIN_BOTS_PER_VICTIM = 2
-	public static val MAX_BOTS_PER_VICTIM = 4
+	public static val MAX_BOTS_PER_VICTIM = 6
 	public static val NB_VICTIMS = NB_BOTS/2/((MAX_BOTS_PER_VICTIM+MIN_BOTS_PER_VICTIM)/2)
 	
 	// Robots characteristics, in meters or meters/step
@@ -27,8 +35,7 @@ class SimulationConstants {
 }
 
 class UIConstants {
-		
-	// use mtpaint to draw it: color index 0 for walls, 1 for victims, 2 for starting area, rest for nothing
+	
 	public static val String[] MAZES = #[ "maze1", "maze2", "maze3", "maze4", "maze5" ]
 }
 

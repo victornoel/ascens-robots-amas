@@ -32,3 +32,11 @@ import sim.util.Double2D
 	val Double2D dir
 	val int nbBotsNeeded
 }
+
+@Data class Stats {
+	val long step
+	val boolean allSecured
+	val int nbSecured
+	val int nbDiscovered
+	val int percentExplored
+}

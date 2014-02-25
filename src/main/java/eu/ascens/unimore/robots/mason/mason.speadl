@@ -1,5 +1,6 @@
 import ec.util.MersenneTwisterFast
 import eu.ascens.unimore.robots.mason.datatypes.Message
+import eu.ascens.unimore.robots.mason.interfaces.MasonControAndStats
 import eu.ascens.unimore.robots.mason.interfaces.RobotMovements
 import eu.ascens.unimore.robots.mason.interfaces.RobotPerceptions
 import eu.ascens.unimore.robots.mason.interfaces.RobotVisu
@@ -13,6 +14,8 @@ namespace eu.ascens.unimore.robots.mason {
 		// Mason is responsible of populating the world
 		// because the UI start and restart the simulation...
 		requires populateWorld: Do
+		
+		provides control: MasonControAndStats
 
 		species Robot {
 

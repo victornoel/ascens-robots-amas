@@ -11,7 +11,9 @@ import ec.util.MersenneTwisterFast;
 import eu.ascens.unimore.robots.mason.datatypes.Message;
 import eu.ascens.unimore.robots.mason.datatypes.RBEmitter;
 import eu.ascens.unimore.robots.mason.datatypes.SensorReading;
+import eu.ascens.unimore.robots.mason.datatypes.Stats;
 import eu.ascens.unimore.robots.mason.datatypes.VisibleVictim;
+import eu.ascens.unimore.robots.mason.interfaces.MasonControAndStats;
 import eu.ascens.unimore.robots.mason.interfaces.RobotMovements;
 import eu.ascens.unimore.robots.mason.interfaces.RobotPerceptions;
 import eu.ascens.unimore.robots.mason.interfaces.RobotVisu;
@@ -40,9 +42,37 @@ public class AscensMasonImpl extends AscensMason {
 	@Override
 	protected void start() {
 		super.start();
-		new AscensGUIState(simState).createController();
 	}
 	
+	@Override
+	protected MasonControAndStats make_control() {
+		return new MasonControAndStats() {
+			@Override
+			public Stats getCurrentStats() {
+				return simState.getCurrentStats();
+			}
+			
+			@Override
+			public void startGUI() {
+				new AscensGUIState(simState).createController();
+			}
+			
+			@Override
+			public void setup() {
+				simState.start();
+			}
+			
+			@Override
+			public boolean step() {
+				return simState.schedule.step(simState);
+			}
+			
+			@Override
+			public void shutdown() {
+				simState.finish();
+			}
+		};
+	}
 	
 	@Override
 	protected Robot make_Robot() {

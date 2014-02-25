@@ -8,15 +8,13 @@ import eu.ascens.unimore.robots.beh.interfaces.IPerceptionsExtra
 import eu.ascens.unimore.robots.mason.datatypes.RBEmitter
 import eu.ascens.unimore.robots.mason.datatypes.SensorReading
 import eu.ascens.unimore.robots.mason.datatypes.VisibleVictim
-import fj.Ord
 import fj.data.List
-import fj.data.Stream
-import fj.data.Zipper
 import fr.irit.smac.lib.contrib.xtend.macros.StepCached
 import org.slf4j.LoggerFactory
 import sim.util.Double2D
 import sim.util.MutableDouble2D
 
+import static extension eu.ascens.unimore.robots.geometry.ObstacleAvoidance.*
 import static extension fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
 
 class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra, IPerceptionsExtra {
@@ -58,89 +56,14 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	
 	override goTo(Double2D to) {
 		val l = to.length
-		if (l > 0) {			
+		if (l > 0.01) {			
 			// TODO: smooth things using prevDirs? like not moving if it's useless
-			val move = to.computeDirectionWithAvoidance.dir.resize(l)
+			val move = to.computeDirectionWithAvoidance(sensorReadings).dir.resize(l)
 			lastMove = to
 			
 			logger.info("going to {} targetting {}.", move, to)
 			requires.move.setNextMove(move)
 		}
-	}
-	
-	// taken from http://link.springer.com/chapter/10.1007%2F978-3-642-22907-7_7
-	private def computeDirectionWithAvoidance(Double2D to) {
-		
-		val sensorsReadingsWithLengthSq = sensorReadings.map[r|
-//			val rs = visibleRobots.filter[coord.between(r.cone)].map[
-//				new SensorReading(coord, r.cone, true) -> coord.lengthSq
-//			]
-//			if (rs.notEmpty) rs.minimum(Ord.doubleOrd.comap[value])
-//			else
-//			val vs = visibleVictims.filter[between(r.cone)].map[
-//				new SensorReading(it, r.cone, true) -> it.lengthSq
-//			]
-//			if (vs.notEmpty) vs.minimum(Ord.doubleOrd.comap[value])
-//			else 
-// TODO that does'nt when we want to go there exactly!
-			r -> r.dir.lengthSq
-		]
-		// this is the best I can get
-		// I don't know why but it works better with -0.1
-		val maxSq = sensorsReadingsWithLengthSq.map[value].maximum(Ord.doubleOrd)-0.1
-		
-		val vision = Zipper.fromStream(Stream.iterableStream(sensorsReadingsWithLengthSq)).some()
-		
-		val desiredDirection = vision.find[d|to.between(d.key.cone)].some()
-		
-		var gothroughR = desiredDirection
-		var gothroughL = desiredDirection
-		
-		do {
-			if (gothroughR.focus.value >= maxSq) {
-				return gothroughR.chooseBest(maxSq, true)
-			} else if (gothroughL.focus.value >= maxSq) {
-				return gothroughL.chooseBest(maxSq, false)
-			}
-			gothroughR = gothroughR.cycle(true)
-			gothroughL = gothroughL.cycle(false)
-		} while ((gothroughR.focus != desiredDirection.focus)
-			&& (gothroughL.focus != desiredDirection.focus))
-		
-		return desiredDirection.focus.key
-	}
-	
-	private def <A> chooseBest(Zipper<Pair<A, Double>> z, double maxSq, boolean toTheRight) {
-		val prev = z.cycle(toTheRight)
-		val prevprev = prev.cycle(toTheRight)
-		val next = z.cycle(!toTheRight)
-		val nextnext = next.cycle(!toTheRight)
-		if (prev.focus.value < CoopConstants.AVOID_VERY_CLOSE_WALL_DISTANCE_SQUARED
-			|| prevprev.focus.value < CoopConstants.AVOID_VERY_CLOSE_WALL_DISTANCE_SQUARED
-		) {
-			if (next.focus.value >= maxSq) {
-				if (nextnext.focus.value >= maxSq) {
-					return nextnext.focus.key
-				}
-				return next.focus.key
-			}
-		}
-		if (next.focus.value < CoopConstants.AVOID_VERY_CLOSE_WALL_DISTANCE_SQUARED
-			|| nextnext.focus.value < CoopConstants.AVOID_VERY_CLOSE_WALL_DISTANCE_SQUARED
-		) {
-			if (prev.focus.value >= maxSq) {
-				if (prevprev.focus.value >= maxSq) {
-					return prevprev.focus.key
-				}
-				return prev.focus.key
-			}
-		}
-		return z.focus.key
-	}
-	
-	private def <A> cycle(Zipper<A> z, boolean toTheRight) {
-		if (toTheRight) z.cyclePrevious
-		else z.cycleNext
 	}
 	
 	override myId() {

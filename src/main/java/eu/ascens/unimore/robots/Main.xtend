@@ -1,6 +1,9 @@
 package eu.ascens.unimore.robots
 
 import eu.ascens.unimore.robots.mason.InitialisationParameters
+import eu.ascens.unimore.robots.mason.datatypes.Stats
+import java.io.File
+import java.io.FileWriter
 
 class Main {
 	
@@ -21,7 +24,27 @@ class Main {
 			SimulationConstants.MAX_BOTS_PER_VICTIM,
 			SimulationConstants.DEFAULT_BEHAVIOUR
 		)
-		new AscensRobotsImpl(parameters).newComponent
+		val c = new AscensRobotsImpl(parameters).newComponent
+		c.control.startGUI
+		//c.loop
+	}
+	
+	static def loop(AscensRobots.Component c) {
+		
+		val fw = new FileWriter(new File("/tmp/stats.csv"))
+		
+		c.control.setup
+		var Stats stats
+		fw.write("step;nbDiscovered;nbSecured;percentExplored\n")
+		do {
+			c.control.step
+			stats = c.control.currentStats
+			fw.write(stats.step+";"+stats.nbDiscovered+";"+stats.nbSecured+";"+stats.percentExplored+"\n")
+		} while(stats.percentExplored < 100 || !stats.allSecured)
+		
+		c.control.shutdown
+		
+		fw.close
 	}
 	
 }
