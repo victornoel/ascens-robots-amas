@@ -102,30 +102,20 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 		requires.perceptions.sensorReadings
 		// note: bind is flatMap
 		.bind[sr|
-			if (!CoopConstants.COOPERATION) {
-				if (!sr.hasWall) {
+			val victDirAndCrit = sr.criticalityForDirectionFromVictims
+			if (victDirAndCrit.isSome){
+				if (victDirAndCrit.some().direction.shouldBeResponsibleOf) {
+					List.single(victDirAndCrit.some())
+				} else {
+					List.nil
+				}
+			} else {
+				if (!sr.hasWall && sr.dir.shouldBeResponsibleOf) {
 					List.single(
 						new Explorable(sr.dir, CoopConstants.STARTING_EXPLORABLE_CRITICALITY, 0)
 					)
 				} else {
 					List.nil
-				}
-			} else {
-				val victDirAndCrit = sr.criticalityForDirectionFromVictims
-				if (victDirAndCrit.isSome){
-					if (victDirAndCrit.some().direction.shouldBeResponsibleOf) {
-						List.single(victDirAndCrit.some())
-					} else {
-						List.nil
-					}
-				} else {
-					if (!sr.hasWall && sr.dir.shouldBeResponsibleOf) {
-						List.single(
-							new Explorable(sr.dir, CoopConstants.STARTING_EXPLORABLE_CRITICALITY, 0)
-						)
-					} else {
-						List.nil
-					}
 				}
 			}
 		]
@@ -205,7 +195,7 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 	
 	@Cached
 	override List<Explorable> explorables() {
-		(if (CoopConstants.COOPERATION) explorableFromOthers else List.nil) +
+		explorableFromOthers +
 		seenAreas
 	}
 }

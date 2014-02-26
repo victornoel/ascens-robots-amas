@@ -12,10 +12,9 @@ import fj.data.List
 import fr.irit.smac.lib.contrib.xtend.macros.StepCached
 import org.slf4j.LoggerFactory
 import sim.util.Double2D
-import sim.util.MutableDouble2D
 
+import static extension eu.ascens.unimore.robots.geometry.GeometryExtensions.*
 import static extension eu.ascens.unimore.robots.geometry.ObstacleAvoidance.*
-import static extension fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
 
 class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra, IPerceptionsExtra {
 
@@ -103,6 +102,8 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	@Cached
 	override Double2D escapeCrowdVector() {
 		visibleRobots
+		// TODO I could also just keep those as close as victims
+		// and check with visible victims...
 		.filter[
 			message.isNone
 			|| !(message.some() instanceof ExplorableMessage)
@@ -110,18 +111,5 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 		]
 		.map[coord]
 		.computeCrowdVector
-	}
-	
-	// inspired from http://buildnewgames.com/vector-field-collision-avoidance/
-	@Pure
-	private def computeCrowdVector(Iterable<Double2D> bots) {
-		val v = new MutableDouble2D(0,0)
-		for(o: bots) {
-			val lsq = o.lengthSq
-			if (lsq > 0) {
-				v -= o.resize(1.0/lsq)
-			}
-		}
-		new Double2D(v)
 	}
 }

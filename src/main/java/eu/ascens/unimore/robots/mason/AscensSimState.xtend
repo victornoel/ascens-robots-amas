@@ -198,7 +198,7 @@ abstract class AscensSimState extends SimState {
 		var nbExplored = 0
 		for(i: 0..<mazeOverlay.width) {
 			for(j: 0..<mazeOverlay.height) {
-				if (maze.get(i,j) == 1) {
+				if (mazeOverlay.get(i,j) == 1) {
 					nbExplored = nbExplored + 1
 				}
 			}

@@ -76,7 +76,7 @@ class LevyBehaviourImpl extends Behaviour implements RobotVisu {
 				|| Ord.doubleOrd.comap[SeenVictim v|v.direction.lengthSq]
 			)
 			currentDir = v.direction
-			if (v.direction.lengthSq > 0.01) {
+			if (currentDir.lengthSq > 0.01) {
 				requires.move.setNextMove(currentDir)
 			}
 		}

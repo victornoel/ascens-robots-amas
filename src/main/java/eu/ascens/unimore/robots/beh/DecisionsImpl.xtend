@@ -86,26 +86,17 @@ class DecisionsImpl extends Decisions implements IDecisionsExtra {
 	}
 	
 	private def handleSend(Explorable to, boolean onVictim) {
-		if (CoopConstants.COOPERATION) {
-			requires.actions.broadcastExplorables(List.single(to), onVictim)
-		} else {
-			requires.actions.broadcastExplorables(List.nil, onVictim)
-		}
+		requires.actions.broadcastExplorables(List.single(to), onVictim)
 	}
 	
 	private def chooseBetweenEquivalentDirections(List<Explorable> in) {
-		if (CoopConstants.COOPERATION || CoopConstants.COOPERATION1) {
-			in
-				.map[e|P.p(e,e.distanceToCrowd)]
-				.maximums(crowdEq.comap(P2.__2), crowdOrd.comap(P2.__2))
-				.map[_1]
-				.map[e|P.p(e, e.distanceToLast)]
-				.maximum(Ord.doubleOrd.comap(P2.__2))
-				._1
-		} else {
-			val i = requires.random.pull.nextInt(in.length)
-			in.index(i)
-		}
+		in
+			.map[e|P.p(e,e.distanceToCrowd)]
+			.maximums(crowdEq.comap(P2.__2), crowdOrd.comap(P2.__2))
+			.map[_1]
+			.map[e|P.p(e, e.distanceToLast)]
+			.maximum(Ord.doubleOrd.comap(P2.__2))
+			._1
 	}
 	
 	// the bigger the closer to the previous direction

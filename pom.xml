@@ -8,6 +8,59 @@
 	<properties>
 		<xtend-version>2.5.2</xtend-version>
 	</properties>
+	
+	<dependencies>
+		<dependency>
+			<groupId>org.eclipse.xtend</groupId>
+			<artifactId>org.eclipse.xtend.lib</artifactId>
+			<version>${xtend-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>fr.irit.smac.lib.may</groupId>
+			<artifactId>common-components</artifactId>
+			<version>3.2.1</version>
+		</dependency>
+		<dependency>
+			<groupId>fr.irit.smac.lib.contrib</groupId>
+			<artifactId>xtend-contrib</artifactId>
+			<version>1.0.2-SNAPSHOT</version>
+		</dependency>
+		<!-- For making videos -->
+		<dependency>
+			<groupId>javax.media</groupId>
+			<artifactId>jmf</artifactId>
+			<version>2.1.1e</version>
+		</dependency>
+		<!-- <dependency> <groupId>com.lowagie</groupId> <artifactId>itext</artifactId> 
+			<version>4.2.0</version> </dependency> -->
+		<!-- For manipulating angles mainly -->
+		<dependency>
+			<groupId>com.vividsolutions</groupId>
+			<artifactId>jts</artifactId>
+			<version>1.13</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>1.0.13</version>
+		</dependency>
+		<!-- For robot vision on a grid -->
+		<dependency>
+			<groupId>net.sf.rlforj</groupId>
+			<artifactId>rlforj</artifactId>
+			<version>0.3</version>
+		</dependency>
+		<dependency>
+			<groupId>fr.irit.smac.lib.contrib</groupId>
+			<artifactId>functionaljava-xtend-contrib</artifactId>
+			<version>1.0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>fr.irit.smac.lib.contrib</groupId>
+			<artifactId>mason-xtend-contrib</artifactId>
+			<version>1.0.2-SNAPSHOT</version>
+		</dependency>
+	</dependencies>
 
 	<build>
 		<plugins>
@@ -112,59 +165,6 @@
 			</plugin>
 		</plugins>
 	</build>
-
-	<dependencies>
-		<dependency>
-			<groupId>org.eclipse.xtend</groupId>
-			<artifactId>org.eclipse.xtend.lib</artifactId>
-			<version>${xtend-version}</version>
-		</dependency>
-		<dependency>
-			<groupId>fr.irit.smac.lib.may</groupId>
-			<artifactId>common-components</artifactId>
-			<version>3.2.1</version>
-		</dependency>
-		<dependency>
-			<groupId>fr.irit.smac.lib.contrib</groupId>
-			<artifactId>xtend-contrib</artifactId>
-			<version>1.0.2-SNAPSHOT</version>
-		</dependency>
-		<!-- For making videos -->
-		<dependency>
-			<groupId>javax.media</groupId>
-			<artifactId>jmf</artifactId>
-			<version>2.1.1e</version>
-		</dependency>
-		<!-- <dependency> <groupId>com.lowagie</groupId> <artifactId>itext</artifactId> 
-			<version>4.2.0</version> </dependency> -->
-		<!-- For manipulating angles mainly -->
-		<dependency>
-			<groupId>com.vividsolutions</groupId>
-			<artifactId>jts</artifactId>
-			<version>1.13</version>
-		</dependency>
-		<dependency>
-			<groupId>ch.qos.logback</groupId>
-			<artifactId>logback-classic</artifactId>
-			<version>1.0.13</version>
-		</dependency>
-		<!-- For robot vision on a grid -->
-		<dependency>
-			<groupId>net.sf.rlforj</groupId>
-			<artifactId>rlforj</artifactId>
-			<version>0.3</version>
-		</dependency>
-		<dependency>
-			<groupId>fr.irit.smac.lib.contrib</groupId>
-			<artifactId>functionaljava-xtend-contrib</artifactId>
-			<version>1.0.1-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>fr.irit.smac.lib.contrib</groupId>
-			<artifactId>mason-xtend-contrib</artifactId>
-			<version>1.0.2-SNAPSHOT</version>
-		</dependency>
-	</dependencies>
 
  	<repositories>
 		<repository>

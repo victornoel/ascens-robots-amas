@@ -2,11 +2,6 @@ package eu.ascens.unimore.robots.beh
 
 class CoopConstants {
 	
-	// this one takes over all the other
-	public static val COOPERATION = true
-	// this one is related to choosing a direction with respect to other bots position and last choice	
-	public static val COOPERATION1 = true
-	
 	// Behaviour constants
 	
 	// for these info, other agents do not rely on the fact
