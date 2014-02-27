@@ -1,9 +1,8 @@
 package eu.ascens.unimore.robots.mason
 
-import de.oehme.xtend.contrib.Cached
+import de.oehme.xtend.contrib.ValueObject
 import eu.ascens.unimore.robots.Behaviour
 import eu.ascens.unimore.robots.UIConstants
-import eu.ascens.unimore.robots.geometry.Radiangle
 import eu.ascens.unimore.robots.mason.datatypes.Stats
 import java.awt.Color
 import java.util.List
@@ -22,33 +21,22 @@ import sim.util.Int2D
 import sim.util.TableLoader
 import sim.util.gui.SimpleColorMap
 
-import static eu.ascens.unimore.robots.geometry.GeometryExtensions.*
-import static fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
-
-@Data class InitialisationParameters {
+@ValueObject class InitialisationParameters {
 	
-	val double radioRange
-	val double wallRange
-	val double victimRange
-	val double proximityBotRange
-	val double speed
-	val double rbRange
-	val int nbProximityWallSensors
-	val String map
-	val long seed
-	val int nbBots
-	val int nbVictims
-	val int minBotsPerVictim
-	val int maxBotsPerVictim
-	val () => Behaviour newBehaviour
-	
-	@Cached
-	def fj.data.List<Pair<Double2D, Pair<Double2D, Double2D>>> sensorDirectionCones() {
-		Radiangle.buildCones(nbProximityWallSensors).map[
-			val cone = it.key.toNormalizedVector -> it.value.toNormalizedVector
-			middleAngledVector(cone.key, cone.value) -> cone
-		].sort(ORD_D2D.comap[key]) // sort evaluates
-	}
+	double radioRange
+	double wallRange
+	double victimRange
+	double proximityBotRange
+	double speed
+	double rbRange
+	int nbProximityWallSensors
+	String map
+	long seed
+	int nbBots
+	int nbVictims
+	int minBotsPerVictim
+	int maxBotsPerVictim
+	() => Behaviour newBehaviour
 } 
 
 abstract class AscensSimState extends SimState {

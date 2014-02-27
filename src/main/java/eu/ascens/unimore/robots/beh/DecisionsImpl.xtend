@@ -80,8 +80,7 @@ class DecisionsImpl extends Decisions implements IDecisionsExtra {
 		// to be correct, the best would be to circle the vict so that I arrive
 		// close to it but not closer to others!
 		victims.minimum(
-			Ord.intOrd.comap[SeenVictim v|v.howMuch]
-			|| Ord.doubleOrd.comap[SeenVictim v|v.direction.lengthSq]
+			Ord.doubleOrd.comap[SeenVictim v|v.direction.lengthSq]
 		)
 	}
 	

@@ -1,6 +1,7 @@
 package eu.ascens.unimore.robots.mason
 
 import de.oehme.xtend.contrib.Cached
+import eu.ascens.unimore.robots.geometry.Radiangle
 import eu.ascens.unimore.robots.mason.datatypes.SensorReading
 import eu.ascens.unimore.robots.mason.datatypes.VisibleVictim
 import fj.Ord
@@ -14,6 +15,8 @@ import sim.engine.Steppable
 import sim.util.Double2D
 import sim.util.Int2D
 import sim.util.MutableDouble2D
+
+import static eu.ascens.unimore.robots.geometry.GeometryExtensions.*
 
 import static extension fr.irit.smac.lib.contrib.fj.xtend.FunctionalJavaExtensions.*
 import static extension fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
@@ -84,6 +87,14 @@ abstract class MasonRobot implements Steppable {
 
 	override toString() {
 		"@" + position.toShortString(2)
+	}
+	
+	@Cached
+	def List<Pair<Double2D, Pair<Double2D, Double2D>>> sensorDirectionCones() {
+		Radiangle.buildCones(state.parameters.nbProximityWallSensors).map[
+			val cone = it.key.toNormalizedVector -> it.value.toNormalizedVector
+			middleAngledVector(cone.key, cone.value) -> cone
+		].sort(ORD_D2D.comap[key]) // sort evaluates
 	}
 }
 
@@ -242,7 +253,7 @@ class Surroundings implements ILosBoard {
 	
 	@Cached
 	def List<SensorReading> getSensorReadings() {
-		me.state.parameters.sensorDirectionCones.map[d|
+		me.sensorDirectionCones.map[d|
 			// bots in this cone
 			val pbots = proximitySensorsBots.filter[between(d.value)]
 			// walls touched by this direction

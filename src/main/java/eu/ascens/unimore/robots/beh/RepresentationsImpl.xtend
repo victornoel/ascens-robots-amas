@@ -195,7 +195,6 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 	
 	@Cached
 	override List<Explorable> explorables() {
-		explorableFromOthers +
-		seenAreas
+		explorableFromOthers + seenAreas
 	}
 }

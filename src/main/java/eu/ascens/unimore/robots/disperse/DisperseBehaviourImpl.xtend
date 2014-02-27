@@ -44,8 +44,7 @@ class DisperseBehaviourImpl extends Behaviour implements RobotVisu {
 			goTo(to)
 		} else {
 			val v = victimsOfInterest.minimum(
-				Ord.intOrd.comap[SeenVictim v|v.howMuch]
-				|| Ord.doubleOrd.comap[SeenVictim v|v.direction.lengthSq]
+				Ord.doubleOrd.comap[SeenVictim v|v.direction.lengthSq]
 			)
 			if (v.direction.lengthSq > 0.01) {
 				requires.move.setNextMove(v.direction)

@@ -72,8 +72,7 @@ class LevyBehaviourImpl extends Behaviour implements RobotVisu {
 			}
 		} else {
 			val v = victimsOfInterest.minimum(
-				Ord.intOrd.comap[SeenVictim v|v.howMuch]
-				|| Ord.doubleOrd.comap[SeenVictim v|v.direction.lengthSq]
+				Ord.doubleOrd.comap[SeenVictim v|v.direction.lengthSq]
 			)
 			currentDir = v.direction
 			if (currentDir.lengthSq > 0.01) {

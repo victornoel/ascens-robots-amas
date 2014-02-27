@@ -19,7 +19,7 @@ class SimulationConstants {
 	public static val NB_BOTS = 800
 	public static val MIN_BOTS_PER_VICTIM = 2
 	public static val MAX_BOTS_PER_VICTIM = 6
-	public static val NB_VICTIMS = NB_BOTS/2/((MAX_BOTS_PER_VICTIM+MIN_BOTS_PER_VICTIM)/2)
+	public static val NB_VICTIMS = 100
 	
 	// Robots characteristics, in meters or meters/step
 	public static val RADIO_RANGE = 60
