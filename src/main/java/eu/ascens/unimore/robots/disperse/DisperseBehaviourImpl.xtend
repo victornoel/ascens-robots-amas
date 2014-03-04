@@ -6,7 +6,6 @@ import eu.ascens.unimore.robots.RequirementsConstants
 import eu.ascens.unimore.robots.SimulationConstants
 import eu.ascens.unimore.robots.beh.datatypes.SeenVictim
 import eu.ascens.unimore.robots.mason.interfaces.RobotVisu
-import fj.Equal
 import fj.Ord
 import fj.P
 import fj.P2
@@ -28,11 +27,6 @@ class DisperseBehaviourImpl extends Behaviour implements RobotVisu {
 		this
 	}
 	
-	static val crowdOrd = Ord.doubleOrd
-	static val crowdEq = Equal.equal [double a|[double b|
-		Math.abs(a - b) <= 0.1
-	]]
-	
 	@StepCached
 	private def void step() {
 		val victimsOfInterest =	consideredVictims
@@ -43,9 +37,7 @@ class DisperseBehaviourImpl extends Behaviour implements RobotVisu {
 				.chooseBetweenEquivalentDirections
 			goTo(to)
 		} else {
-			val v = victimsOfInterest.minimum(
-				Ord.doubleOrd.comap[SeenVictim v|v.direction.lengthSq]
-			)
+			val v = victimsOfInterest.mostImportantVictim
 			if (v.direction.lengthSq > 0.01) {
 				requires.move.setNextMove(v.direction)
 			}
@@ -77,9 +69,9 @@ class DisperseBehaviourImpl extends Behaviour implements RobotVisu {
 		requires.see.RBVisibleRobots
 		.map[coord]
 		.filter[b|
-			b.length < SimulationConstants.VICTIM_RANGE
+			b.length <= SimulationConstants.VICTIM_RANGE
 			&& !requires.see.visibleVictims.exists[
-				dir.distanceSq(b) < RequirementsConstants.CONSIDERED_NEXT_TO_VICTIM_DISTANCE_SQUARED
+				dir.distanceSq(b) <= RequirementsConstants.CONSIDERED_NEXT_TO_VICTIM_DISTANCE_SQUARED
 			]
 		].computeCrowdVector
 	}
@@ -87,7 +79,7 @@ class DisperseBehaviourImpl extends Behaviour implements RobotVisu {
 	var lastMove = new Double2D(0,0)
 	def goTo(Double2D to) {
 		val l = to.length
-		if (l > 0.01) {			
+		if (l > 0.01) {
 			// TODO: smooth things using prevDirs? like not moving if it's useless
 			val move = to.computeDirectionWithAvoidance(requires.see.sensorReadings).dir.resize(l)
 			lastMove = to

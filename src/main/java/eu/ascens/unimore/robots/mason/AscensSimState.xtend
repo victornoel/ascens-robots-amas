@@ -3,6 +3,7 @@ package eu.ascens.unimore.robots.mason
 import de.oehme.xtend.contrib.ValueObject
 import eu.ascens.unimore.robots.Behaviour
 import eu.ascens.unimore.robots.UIConstants
+import eu.ascens.unimore.robots.geometry.Radiangle
 import eu.ascens.unimore.robots.mason.datatypes.Stats
 import java.awt.Color
 import java.util.List
@@ -12,6 +13,7 @@ import sim.display.Display2D
 import sim.display.GUIState
 import sim.engine.Schedule
 import sim.engine.SimState
+import sim.engine.Steppable
 import sim.field.continuous.Continuous2D
 import sim.field.grid.IntGrid2D
 import sim.portrayal.continuous.ContinuousPortrayal2D
@@ -20,6 +22,9 @@ import sim.util.Double2D
 import sim.util.Int2D
 import sim.util.TableLoader
 import sim.util.gui.SimpleColorMap
+
+import static eu.ascens.unimore.robots.geometry.GeometryExtensions.*
+import static fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
 
 @ValueObject class InitialisationParameters {
 	
@@ -54,6 +59,7 @@ abstract class AscensSimState extends SimState {
 	val List<Int2D> availStartingAreas = newArrayList
 	val List<Int2D> availVictimAreas = newArrayList
 	val List<Victim> victims = newArrayList
+	val List<Steppable> bots = newArrayList
 	var int[][] areasToExplore
 	var int nbAreasToExplore
 	
@@ -61,7 +67,19 @@ abstract class AscensSimState extends SimState {
 		super(parameters.seed)
 		this._parameters = parameters
 		this._map = parameters.map
+		// +1 to have a margin for error
+		this._visionDistance = 1 + Math.ceil(
+			Math.max(parameters.rbRange, parameters.wallRange)
+		) as int
+		this._sensorDirectionCones = Radiangle.buildCones(parameters.nbProximityWallSensors)
+			.map[
+				val cone = it.key.toNormalizedVector -> it.value.toNormalizedVector
+				middleAngledVector(cone.key, cone.value) -> cone
+			].sort(ORD_D2D.comap[key]) // sort evaluates
 	}
+	
+	@Property val int visionDistance
+	@Property val fj.data.List<Pair<Double2D, Pair<Double2D, Double2D>>> sensorDirectionCones
 
 	abstract def void populate()
 
@@ -102,6 +120,15 @@ abstract class AscensSimState extends SimState {
 		}
 		
 		populate()
+		
+		for(b: bots) {
+			schedule.scheduleRepeating(Schedule.EPOCH, 0, b, 1)
+		}
+		
+//		val Steppable[] a = bots
+//		schedule.scheduleRepeating(
+//			Schedule.EPOCH, 0, new ParallelSequence(a, 4), 1
+//		)
 	}
 	
 	override finish() {
@@ -109,6 +136,7 @@ abstract class AscensSimState extends SimState {
 		mazeOverlay = null
 		agents = null
 		victims.clear
+		bots.clear
 		availStartingAreas.clear
 		availVictimAreas.clear
 		nbAreasToExplore = 0
@@ -147,9 +175,17 @@ abstract class AscensSimState extends SimState {
 		maze.get(x, y) == 0
 	}
 	
+	def isExplored(int x, int y) {
+		mazeOverlay.get(x,y) == 1
+	}
+	
+	def setExplored(int x, int y) {
+		mazeOverlay.set(x,y, 1)
+	}
+	
 	def add(MasonRobot r) {
 		val pos = addOrThrow(r, availStartingAreas, new NoStartingAreaAvailable)
-		schedule.scheduleRepeating(Schedule.EPOCH, 0, r, 1)
+		bots += r
 		pos
 	}
 	
@@ -186,7 +222,7 @@ abstract class AscensSimState extends SimState {
 		var nbExplored = 0
 		for(i: 0..<mazeOverlay.width) {
 			for(j: 0..<mazeOverlay.height) {
-				if (mazeOverlay.get(i,j) == 1) {
+				if (isExplored(i,j)) {
 					nbExplored = nbExplored + 1
 				}
 			}
@@ -311,7 +347,6 @@ class AscensGUIState extends GUIState {
 		setupPortrayals()
 	}
 
-	// TODO better
 	override init(Controller controller) {
 		super.init(controller)
 

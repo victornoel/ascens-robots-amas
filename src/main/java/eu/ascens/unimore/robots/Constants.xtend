@@ -17,16 +17,16 @@ class SimulationConstants {
 	*/
 	public static val DEFAULT_MAZE = "maze2"
 	public static val NB_BOTS = 800
-	public static val MIN_BOTS_PER_VICTIM = 2
-	public static val MAX_BOTS_PER_VICTIM = 6
+	public static val MIN_BOTS_PER_VICTIM = 3
+	public static val MAX_BOTS_PER_VICTIM = 3
 	public static val NB_VICTIMS = 100
 	
 	// Robots characteristics, in meters or meters/step
-	public static val RADIO_RANGE = 60
-	public static val RB_RANGE = 20
-	public static val WALL_RANGE = 3
-	public static val PROXIMITY_RANGE = 1
-	public static val VICTIM_RANGE = 3
+	public static val RADIO_RANGE = 60.0
+	public static val RB_RANGE = 20.0
+	public static val WALL_RANGE = 3.0
+	public static val PROXIMITY_RANGE = WALL_RANGE/2.0
+	public static val VICTIM_RANGE = WALL_RANGE
 	public static val SPEED = 0.15
 	public static val NB_WALL_SENSORS = 24
 	

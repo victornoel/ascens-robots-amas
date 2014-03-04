@@ -30,6 +30,8 @@ class VictimPortrayal2D extends OvalPortrayal2D {
 			Victim: {
 				if (object.secured) {
 					this.paint = Color.GREEN
+				} else if (object.discovered) {
+					this.paint = Color.BLUE
 				} else {
 					this.paint = Color.RED
 				}
@@ -141,7 +143,7 @@ class BotPortrayal2D extends OvalPortrayal2D {
 				}
 				
 				if (properties.showVisibleBotsAndVictims && info.selected) {
-					val vis = object.surroundings.RBVisibleBotsWithCoordinate.map[value]
+					val vis = object.surroundings.RBVisibleBotsWithCoordinate.map[coord]
 								+ object.surroundings.visibleVictims.map[dir]
 					for(b: vis) {
 						val sloc = b.add(botPos)

@@ -1,11 +1,13 @@
 package eu.ascens.unimore.robots.mason
 
 import de.oehme.xtend.contrib.Cached
-import eu.ascens.unimore.robots.geometry.Radiangle
+import eu.ascens.unimore.robots.mason.datatypes.Message
+import eu.ascens.unimore.robots.mason.datatypes.RBEmitter
 import eu.ascens.unimore.robots.mason.datatypes.SensorReading
 import eu.ascens.unimore.robots.mason.datatypes.VisibleVictim
 import fj.Ord
 import fj.data.List
+import fj.data.Option
 import fr.irit.smac.lib.contrib.xtend.macros.StepCached
 import org.slf4j.LoggerFactory
 import rlforj.los.ILosBoard
@@ -16,9 +18,6 @@ import sim.util.Double2D
 import sim.util.Int2D
 import sim.util.MutableDouble2D
 
-import static eu.ascens.unimore.robots.geometry.GeometryExtensions.*
-
-import static extension fr.irit.smac.lib.contrib.fj.xtend.FunctionalJavaExtensions.*
 import static extension fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
 
 abstract class MasonRobot implements Steppable {
@@ -28,6 +27,7 @@ abstract class MasonRobot implements Steppable {
 	package val String id
 	package var Double2D position
 	package val AscensSimState state
+	package var Option<Message> lastMessage = Option.none
 
 	new(AscensSimState state, String id) {
 		this.state = state
@@ -44,7 +44,7 @@ abstract class MasonRobot implements Steppable {
 		val newLoc = new Double2D(new MutableDouble2D(to).resize(s).addIn(position))
 		if (state.isInMaze(newLoc) && !state.isWall(newLoc)) {
 			position = newLoc
-			state.agents.setObjectLocation(this, newLoc);
+			state.agents.setObjectLocation(this, newLoc)
 		} else {
 			logger.error("tried to go into a wall: from {} to {}.",position,newLoc)
 		}
@@ -65,11 +65,8 @@ abstract class MasonRobot implements Steppable {
 	@Cached
 	def Surroundings surroundings() {
 		val discrPos = state.agents.discretize(position)
-		// TODO clean that, that's not very good, there is other range also...
-		val dist = Math.max(state.parameters.rbRange, state.parameters.wallRange) as int
 		new Surroundings(this) => [s|
-			// shadow casting just sucks... this one is symmetric so it's better...
-			new PrecisePermissive().visitFieldOfView(s, discrPos.x, discrPos.y, dist)
+			new PrecisePermissive().visitFieldOfView(s, discrPos.x, discrPos.y, state.visionDistance)
 		]
 	}
 	
@@ -89,12 +86,8 @@ abstract class MasonRobot implements Steppable {
 		"@" + position.toShortString(2)
 	}
 	
-	@Cached
-	def List<Pair<Double2D, Pair<Double2D, Double2D>>> sensorDirectionCones() {
-		Radiangle.buildCones(state.parameters.nbProximityWallSensors).map[
-			val cone = it.key.toNormalizedVector -> it.value.toNormalizedVector
-			middleAngledVector(cone.key, cone.value) -> cone
-		].sort(ORD_D2D.comap[key]) // sort evaluates
+	def setMessage(Message m) {
+		lastMessage = Option.some(m)
 	}
 }
 
@@ -118,52 +111,52 @@ class Surroundings implements ILosBoard {
 		p - me.position
 	}
 	
-	def getRelativeVectorFor(Int2D p) {
-		new Double2D(p.x+0.5, p.y+0.5).getRelativeVectorFor
-	}
-	
-	var List<MasonRobot> foundBots = List.nil
-	package var List<Int2D> wallCoords = List.nil
-	package var List<Victim> victims = List.nil
-	package var List<Int2D> noWallCoords = List.nil
-	package var List<Double2D> proximityBots = List.nil
+	val foundBots = <MasonRobot>newArrayList()
+	package val wallCoords = <Int2D>newArrayList
+	package val victims = <Victim>newArrayList
+	package val noWallCoords = <Int2D>newArrayList
+	package val proximityBots = <Double2D>newArrayList
 	
 	override visit(int x, int y) {
 		val ob = isObstacle(x, y)
 		val pos = new Int2D(x,y)
-		val dist = me.position.distance(pos)
+		
+		val dist = me.position.distance(new Double2D(pos.x+0.5, pos.y+0.5))
 		
 		if (!ob && dist < me.state.parameters.rbRange) {
 			val r = me.state.agents.getObjectsAtDiscretizedLocation(pos)
 			if (r != null) {
-				for (b: r.filter(MasonRobot)) {
-					if (b !== me) {
-						val realDist = b.position.distance(me.position)
-						if (realDist < me.state.parameters.rbRange) {
-							foundBots = b + foundBots
-						}
-						if (realDist < me.state.parameters.proximityBotRange) {
-							proximityBots = b.position + proximityBots
+					for (b: r.filter(MasonRobot)) {
+						if (b !== me) {
+							val realDist = b.position.distance(me.position)
+							if (realDist < me.state.parameters.rbRange) {
+								foundBots += b
+							}
+							if (realDist < me.state.parameters.proximityBotRange) {
+								proximityBots += b.position
+							}
 						}
 					}
 				}
-			}
 		}
 		if (!ob && dist < me.state.parameters.victimRange) {
 			// mark as explored
-			me.state.mazeOverlay.set(x,y,1)
+			me.state.setExplored(x,y)
 			val r = me.state.agents.getObjectsAtDiscretizedLocation(pos)
 			if (r != null) {
 				for (v: r.filter(Victim)) {
-					victims = v + victims
+					val realDist = v.position.distance(me.position)
+					if (realDist < me.state.parameters.victimRange) {
+						victims += v
+					}
 				}
 			}
 		}
 		if (dist < me.state.parameters.wallRange) {
 			if (ob) {
-				wallCoords = pos + wallCoords
+				wallCoords += pos
 			} else {
-				noWallCoords = pos + noWallCoords
+				noWallCoords += pos
 			}
 		}
 	}
@@ -187,56 +180,55 @@ class Surroundings implements ILosBoard {
                |    |    |    |
                +--------------+
 		 */
-		
 		if (wall.x < meD.x) {
 			if (wall.y < meD.y) {
 				// a
-				List.list(
+				#[
 					new Double2D(wx - 0.5, wy + 0.5) -> new Double2D(wx + 0.5, wy + 0.5),
 					new Double2D(wx + 0.5, wy + 0.5) -> new Double2D(wx + 0.5, wy - 0.5)
-				)
+				]
 			} else if (wall.y > meD.y) {
 				// b
-				List.list(
+				#[
 					new Double2D(wx + 0.5, wy + 0.5)-> new Double2D(wx + 0.5, wy - 0.5),
 					new Double2D(wx + 0.5, wy - 0.5)-> new Double2D(wx - 0.5, wy - 0.5)
-				) 
+				]
 			} else {
 				// c
-				List.list(
+				#[
 					new Double2D(wx + 0.5, wy + 0.5) -> new Double2D(wx + 0.5, wy - 0.5)
-				)
+				]
 			}
 		} else if (wall.x > meD.x) {
 			if (wall.y < meD.y) {
 				// d
-				List.list(
+				#[
 					new Double2D(wx - 0.5, wy - 0.5) -> new Double2D(wx - 0.5, wy + 0.5),
 					new Double2D(wx - 0.5, wy + 0.5) -> new Double2D(wx + 0.5, wy + 0.5)
-				)
+				]
 			} else if (wall.y > meD.y) {
 				// e
-				List.list(
+				#[
 					new Double2D(wx + 0.5, wy - 0.5) -> new Double2D(wx - 0.5, wy - 0.5),
 					new Double2D(wx - 0.5, wy - 0.5) -> new Double2D(wx - 0.5, wy + 0.5)
-				)
+				]
 			} else {
 				// f
-				List.list(
+				#[
 					new Double2D(wx - 0.5, wy - 0.5)-> new Double2D(wx - 0.5, wy + 0.5)
-				)
+				]
 			}
 		} else {
 			if (wall.y < meD.y) {
 				// g
-				List.list(
+				#[
 					new Double2D(wx - 0.5, wy + 0.5) -> new Double2D(wx + 0.5, wy + 0.5)
-				)
+				]
 			} else if (wall.y > meD.y) {
 				// h
-				List.list(
+				#[
 					new Double2D(wx + 0.5, wy - 0.5)-> new Double2D(wx - 0.5, wy - 0.5)
-				)
+				]
 			} else {
 				throw new RuntimeException("impossible, bot would be inside a wall.")
 			}
@@ -246,14 +238,17 @@ class Surroundings implements ILosBoard {
 	@Cached
 	def List<Pair<Double2D, Double2D>> wallCones() {
 		val meD = me.state.agents.discretize(me.position)
-		wallCoords
-			.bind[conesForWallFromMe(meD)]
-			.map[key.relativeVectorFor -> value.relativeVectorFor]
+		List.iterableList(
+			wallCoords
+				.map[conesForWallFromMe(meD)]
+				.flatten
+				.map[key.relativeVectorFor -> value.relativeVectorFor]
+		)
 	}
 	
 	@Cached
 	def List<SensorReading> getSensorReadings() {
-		me.sensorDirectionCones.map[d|
+		me.state.sensorDirectionCones.map[d|
 			// bots in this cone
 			val pbots = proximitySensorsBots.filter[between(d.value)]
 			// walls touched by this direction
@@ -280,19 +275,17 @@ class Surroundings implements ILosBoard {
 	}
 	
 	@Cached
-	def List<Double2D> getProximitySensorsBots() {
-		proximityBots.map[relativeVectorFor]
+	private def List<Double2D> getProximitySensorsBots() {
+		List.iterableList(proximityBots.map[relativeVectorFor])
 	}
 	
 	@Cached
 	def List<VisibleVictim> getVisibleVictims() {
-		victims.map[new VisibleVictim(position.relativeVectorFor, nbBotNeeded)]
+		List.iterableList(victims.map[new VisibleVictim(position.relativeVectorFor, nbBotNeeded)])
 	}
 	
 	@Cached
-	def List<Pair<MasonRobot, Double2D>> getRBVisibleBotsWithCoordinate() {
-		foundBots.map[b|
-			b -> b.position.relativeVectorFor
-		]
+	def List<RBEmitter> getRBVisibleBotsWithCoordinate() {
+		List.iterableList(foundBots.map[new RBEmitter(position.relativeVectorFor, id, lastMessage)])
 	}
 }

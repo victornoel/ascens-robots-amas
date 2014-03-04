@@ -1,6 +1,6 @@
-import ec.util.MersenneTwisterFast
 import eu.ascens.unimore.robots.mason.AscensMason
 import eu.ascens.unimore.robots.mason.datatypes.Message
+import eu.ascens.unimore.robots.mason.datatypes.RandomSync
 import eu.ascens.unimore.robots.mason.interfaces.MasonControAndStats
 import eu.ascens.unimore.robots.mason.interfaces.RobotMovements
 import eu.ascens.unimore.robots.mason.interfaces.RobotPerceptions
@@ -25,7 +25,7 @@ namespace eu.ascens.unimore.robots {
 		requires radioBroadcast: Push[Message]
 		requires getRadioMessages: Pull[Collection[Message]]
 		
-		requires random: Pull[MersenneTwisterFast]
+		requires random: Pull[RandomSync]
 	}
 	
 	ecosystem AscensRobots {

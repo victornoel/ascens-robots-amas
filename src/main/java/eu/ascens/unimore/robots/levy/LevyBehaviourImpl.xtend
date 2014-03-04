@@ -5,11 +5,11 @@ import eu.ascens.unimore.robots.Behaviour
 import eu.ascens.unimore.robots.RequirementsConstants
 import eu.ascens.unimore.robots.beh.datatypes.SeenVictim
 import eu.ascens.unimore.robots.mason.interfaces.RobotVisu
-import fj.Ord
 import fj.data.List
 import fr.irit.smac.lib.contrib.xtend.macros.StepCached
 import sim.util.Double2D
 
+import static extension eu.ascens.unimore.robots.geometry.GeometryExtensions.*
 import static extension fr.irit.smac.lib.contrib.fj.xtend.FunctionalJavaExtensions.*
 import static extension fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
 
@@ -71,9 +71,7 @@ class LevyBehaviourImpl extends Behaviour implements RobotVisu {
 				accumulator = accumulator + alpha
 			}
 		} else {
-			val v = victimsOfInterest.minimum(
-				Ord.doubleOrd.comap[SeenVictim v|v.direction.lengthSq]
-			)
+			val v = victimsOfInterest.mostImportantVictim
 			currentDir = v.direction
 			if (currentDir.lengthSq > 0.01) {
 				requires.move.setNextMove(currentDir)

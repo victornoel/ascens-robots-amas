@@ -2,7 +2,6 @@ package eu.ascens.unimore.robots.beh
 
 import eu.ascens.unimore.robots.beh.datatypes.Choice
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
-import eu.ascens.unimore.robots.beh.datatypes.SeenVictim
 import eu.ascens.unimore.robots.beh.interfaces.IDecisionsExtra
 import fj.Ord
 import fj.P
@@ -12,6 +11,7 @@ import fr.irit.smac.lib.contrib.xtend.macros.StepCached
 import org.slf4j.LoggerFactory
 
 import static extension eu.ascens.unimore.robots.beh.Utils.*
+import static extension eu.ascens.unimore.robots.geometry.GeometryExtensions.*
 import static extension fr.irit.smac.lib.contrib.fj.xtend.FunctionalJavaExtensions.*
 
 class DecisionsImpl extends Decisions implements IDecisionsExtra {
@@ -43,9 +43,8 @@ class DecisionsImpl extends Decisions implements IDecisionsExtra {
 			}
 			default: {
 				// decide
-				val sortedExplorables = explorables.orderByDescendingCriticality
-				val equivalentExplorables = sortedExplorables.keepEquivalent
-				val selectedExplorable = equivalentExplorables.chooseBetweenEquivalentDirections
+				val maxEquivalentExplorables = explorables.keepMaxEquivalent
+				val selectedExplorable = maxEquivalentExplorables.chooseBetweenEquivalentDirections
 				
 				val victimsOfInterest =	requires.representations.consideredVictims
 				
@@ -61,7 +60,7 @@ class DecisionsImpl extends Decisions implements IDecisionsExtra {
 					// but what for us is the most critical, can be (if we are the last one missing)
 					// less critical for another one… if we send, for example, 2 explorable
 					// when he looks at it, maybe he will realise that by himself…
-					victimsOfInterest.chooseMostImportantVictim
+					victimsOfInterest.mostImportantVictim
 				}
 				
 				handleGoto(choice)
@@ -74,14 +73,6 @@ class DecisionsImpl extends Decisions implements IDecisionsExtra {
 	
 	def handleGoto(Choice choice) {
 		requires.actions.goTo(choice.direction)
-	}
-	
-	def chooseMostImportantVictim(List<SeenVictim> victims) {
-		// to be correct, the best would be to circle the vict so that I arrive
-		// close to it but not closer to others!
-		victims.minimum(
-			Ord.doubleOrd.comap[SeenVictim v|v.direction.lengthSq]
-		)
 	}
 	
 	private def handleSend(Explorable to, boolean onVictim) {

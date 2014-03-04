@@ -2,14 +2,13 @@ package eu.ascens.unimore.robots.mason;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.eclipse.xtext.xbase.lib.Pair;
 import org.slf4j.MDC;
 
 import sim.engine.SimState;
 import sim.util.Double2D;
-import ec.util.MersenneTwisterFast;
 import eu.ascens.unimore.robots.mason.datatypes.Message;
 import eu.ascens.unimore.robots.mason.datatypes.RBEmitter;
+import eu.ascens.unimore.robots.mason.datatypes.RandomSync;
 import eu.ascens.unimore.robots.mason.datatypes.SensorReading;
 import eu.ascens.unimore.robots.mason.datatypes.Stats;
 import eu.ascens.unimore.robots.mason.datatypes.VisibleVictim;
@@ -17,9 +16,7 @@ import eu.ascens.unimore.robots.mason.interfaces.MasonControAndStats;
 import eu.ascens.unimore.robots.mason.interfaces.RobotMovements;
 import eu.ascens.unimore.robots.mason.interfaces.RobotPerceptions;
 import eu.ascens.unimore.robots.mason.interfaces.RobotVisu;
-import fj.F;
 import fj.data.List;
-import fj.data.Option;
 import fr.irit.smac.may.lib.interfaces.Pull;
 import fr.irit.smac.may.lib.interfaces.Push;
 
@@ -37,11 +34,6 @@ public class AscensMasonImpl extends AscensMason {
 				requires().populateWorld().doIt();
 			}
 		};
-	}
-	
-	@Override
-	protected void start() {
-		super.start();
 	}
 	
 	@Override
@@ -85,12 +77,14 @@ public class AscensMasonImpl extends AscensMason {
 		
 		private MyMasonRobot bot;
 		
+		private RandomSync random;
+		
 		@Override
-		protected Pull<MersenneTwisterFast> make_random() {
-			return new Pull<MersenneTwisterFast>() {
+		protected Pull<RandomSync> make_random() {
+			return new Pull<RandomSync>() {
 				@Override
-				public MersenneTwisterFast pull() {
-					return simState.random;
+				public RandomSync pull() {
+					return random;
 				}
 			};
 		}
@@ -116,12 +110,7 @@ public class AscensMasonImpl extends AscensMason {
 				
 				@Override
 				public List<RBEmitter> getRBVisibleRobots() {
-					return bot.getRBVisibleBotsWithCoordinate().map(new F<Pair<MasonRobot,Double2D>, RBEmitter>() {
-						@Override
-						public RBEmitter f(Pair<MasonRobot, Double2D> p) {
-							return new RBEmitter(p.getValue(), p.getKey().id, ((MyMasonRobot)p.getKey()).lastMsgs());
-						}
-					});
+					return bot.getRBVisibleBotsWithCoordinate();
 				}
 				
 				@Override
@@ -170,10 +159,6 @@ public class AscensMasonImpl extends AscensMason {
 				requires().pushRadioMessage().push(m);
 			}
 			
-			public Option<Message> lastMsgs() {
-				return Option.fromNull(lastMsgs);
-			}
-			
 			public String id() {
 				return id;
 			}
@@ -192,16 +177,15 @@ public class AscensMasonImpl extends AscensMason {
 		protected void start() {
 			super.start();
 			this.bot = new MyMasonRobot();
+			this.random = new RandomSync(simState.random);
 		}
 		
-		private Message lastMsgs = null;
-
 		@Override
 		protected Push<Message> make_rbPublish() {
 			return new Push<Message>() {
 				@Override
 				public void push(Message arg0) {
-					lastMsgs = arg0;
+					bot.setMessage(arg0);
 				}
 			};
 		}

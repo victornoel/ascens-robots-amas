@@ -1,7 +1,6 @@
 package eu.ascens.unimore.robots
 
 import com.google.common.collect.Sets
-import eu.ascens.unimore.robots.beh.BehaviourImpl
 import eu.ascens.unimore.robots.disperse.DisperseBehaviourImpl
 import eu.ascens.unimore.robots.evaluation.Evaluation
 import eu.ascens.unimore.robots.evaluation.ParameterValue
@@ -12,14 +11,17 @@ import eu.ascens.unimore.robots.mason.datatypes.Stats
 import fj.data.List
 import java.io.File
 import java.io.FileWriter
+import java.text.MessageFormat
+import javax.xml.datatype.DatatypeFactory
 
 import static extension fr.irit.smac.lib.contrib.fj.xtend.FunctionalJavaExtensions.*
+import eu.ascens.unimore.robots.beh.BehaviourImpl
 
 class Main {
 
 	def static void main(String[] args) {
-		runEvaluations
-		//gui
+		//runEvaluations
+		gui
 	}
 	
 	static def gui() {
@@ -32,13 +34,14 @@ class Main {
 			SimulationConstants.RB_RANGE,
 			SimulationConstants.NB_WALL_SENSORS,
 			//SimulationConstants.DEFAULT_MAZE,
-			"maze1",
+			"maze3",
 			SimulationConstants.SEED,
-			SimulationConstants.NB_BOTS,
-			SimulationConstants.NB_VICTIMS,
+			90,
+			35,
 			SimulationConstants.MIN_BOTS_PER_VICTIM,
 			SimulationConstants.MAX_BOTS_PER_VICTIM,
 			SimulationConstants.DEFAULT_BEHAVIOUR
+			//[|new DisperseBehaviourImpl]
 			//[|new LevyBehaviourImpl]
 		)
 		val c = new AscensRobotsImpl(parameters).newComponent
@@ -46,52 +49,32 @@ class Main {
 	}
 
 	static def runEvaluations() {
-		val parametersSets = Sets.cartesianProduct(parameters.map[values.toSet].toList)
-		val size = parametersSets.size
-		parametersSets.forEach[ps, run|
-			loop(List.iterableList(ps), run, size)
-		]
-	}
-
-	static def loop(List<ParameterValue> parameters, int run, int size) {
-		
-		val parametersBuilder = new InitialisationParametersBuilder() => [
-			radioRange(SimulationConstants.RADIO_RANGE)
-			wallRange(SimulationConstants.WALL_RANGE)
-			victimRange(SimulationConstants.VICTIM_RANGE)
-			proximityBotRange(SimulationConstants.PROXIMITY_RANGE)
-			speed(SimulationConstants.SPEED)
-			nbProximityWallSensors(SimulationConstants.NB_WALL_SENSORS)
-			seed(SimulationConstants.SEED)
-			// default values
-			rbRange(SimulationConstants.RB_RANGE)
-			minBotsPerVictim(SimulationConstants.MIN_BOTS_PER_VICTIM)
-			maxBotsPerVictim(SimulationConstants.MAX_BOTS_PER_VICTIM)
-		]
-			
-		for (p: parameters) {
-			p.set(parametersBuilder)
-		}
-		
-		val file = new File("evaluation/run_"+parameters.map[name+"."+valueName].join("_")+".csv")
-		println('''
-			Run «run»/«size» to «file.toString»
-			«FOR p: parameters»
-				«p.name»: «p.valueName»
-			«ENDFOR»
-		''')
-		
-		val initParam = parametersBuilder.build
-		
-		if (!initParam.verifyParameters) {
-			println("Invalid configuration, skipping.")
-			return
-		}
 		
 		val start = System.currentTimeMillis
 		
-		val c = new AscensRobotsImpl(initParam).newComponent
+		val size = parametersConfigurations.size
 		
+		parametersConfigurations.forEach[ps, run|
+			val file = new File("evaluation/run_"+ps.map[name+"."+valueName].join("_")+".csv")
+			println('''
+				Run «run+1»/«size» to «file.toString»
+				«FOR p: ps»
+					«p.name»: «p.valueName»
+				«ENDFOR»
+			''')
+			loop(ps, file)
+		]
+		
+		val end = System.currentTimeMillis
+		
+		println("Overall time: "+prettyPrint(end-start))
+	}
+
+	static def loop(List<ParameterValue> parameters, File file) {
+		
+		val start = System.currentTimeMillis
+		
+		val c = new AscensRobotsImpl(parameters.buildParameters).newComponent
 		val fw = new FileWriter(file)
 		
 		fw.write("step"+ (metrics.map[name]+parameters.map[name]).join(";",";","",[it])+ "\n")
@@ -111,7 +94,8 @@ class Main {
 		fw.close
 		
 		val end = System.currentTimeMillis
-		println("Finished Run "+run+" ("+(end-start)+" ms)\n\n")
+		println("Finished Run: "+prettyPrint(end-start)+"\n\n")
+		
 	}
 	
 	static def shouldStop(Stats s) {
@@ -134,7 +118,17 @@ class Main {
 			}
 			case "maze5": {
 				if (parameters.nbBots > 90) return false
-				if (parameters.nbVictims > 6) return false
+				if (parameters.nbVictims > 16) return false
+			}
+		}
+		switch parameters.newBehaviour.apply {
+			LevyBehaviourImpl: {
+				// Levy do not use rb: this allows for one run
+				if (parameters.rbRange > 3.0) return false
+			}
+			DisperseBehaviourImpl: {
+				// disperse do not use rb farther than VICTIM_RANGE
+				if (parameters.rbRange > SimulationConstants.VICTIM_RANGE) return false
 			}
 		}
 		return true
@@ -147,36 +141,75 @@ class Main {
 	)
 	
 	static val parameters = List.list(
+		Evaluation.parameter2(
+			"map", [InitialisationParametersBuilder b, String maze|b.map(maze)],
+			List.list("maze1","maze2","maze3","maze5")
+		),
 		Evaluation.parameter(
 			"algorithm", [InitialisationParametersBuilder b, () => Behaviour algo|b.newBehaviour(algo)],
 			// need to explicit type, because of https://bugs.eclipse.org/bugs/show_bug.cgi?id=429138 ?
 			List.<Pair<String,() => Behaviour>>list(
-				"amas" -> [|new BehaviourImpl]//,
-				//"disperse" -> [|new DisperseBehaviourImpl],
-				//"levy" -> [|new LevyBehaviourImpl]
+				"amas" -> [|new BehaviourImpl],
+				"disperse" -> [|new DisperseBehaviourImpl],
+				"levy" -> [|new LevyBehaviourImpl]
 			)
 		),
 		Evaluation.parameter2(
 			"nbBots", [InitialisationParametersBuilder b, int nbBots|b.nbBots(nbBots)],
-			//List.list(10, 20, 30, 50, 60, 80, 100, 150, 200, 250, 300, 500)
-			List.list(/*10, 60, 90, */250, 500)
+			List.list(60, 90, 250, 500)
 		),
 		Evaluation.parameter2(
 			"nbVictims", [InitialisationParametersBuilder b, int nbVictims|b.nbVictims(nbVictims)],
-			//List.list(1, 3, 6, 8, 15, 20, 35, 50)
-			List.list(/*8, */35)
+			List.list(8, 16, 35)
 		),
 		Evaluation.parameter2(
-			"map", [InitialisationParametersBuilder b, String maze|b.map(maze)],
-			List.list("maze1","maze2","maze3","maze5")
+			"rbRange", [InitialisationParametersBuilder b, double rbRange|b.rbRange(rbRange)],
+			List.list(3.0, 10.0, 20.0)
 		)
-//		Evaluation.parameter(
-//			"minMaxBotperVictim", [InitialisationParametersBuilder b, Pair<Integer,Integer> p|b.minBotsPerVictim(p.key).maxBotsPerVictim(p.value)],
-//			List.list("1-2" -> (1 -> 2), "2-4" -> (2 -> 4), "3-6" -> (3 -> 6))
-//		),
-//		Evaluation.parameter2(
-//			"rbRange", [InitialisationParametersBuilder b, double rbRange|b.rbRange(rbRange)],
-//			List.list(3.0, 4.0, 5.0, 7.0, 10.0, 15.0, 20.0, 25.0)
-//		)
 	)
+	
+	static def buildParameters(Iterable<ParameterValue> ps) {
+		val b = new InitialisationParametersBuilder() => [
+			radioRange(SimulationConstants.RADIO_RANGE)
+			wallRange(SimulationConstants.WALL_RANGE)
+			victimRange(SimulationConstants.VICTIM_RANGE)
+			proximityBotRange(SimulationConstants.PROXIMITY_RANGE)
+			speed(SimulationConstants.SPEED)
+			nbProximityWallSensors(SimulationConstants.NB_WALL_SENSORS)
+			seed(SimulationConstants.SEED)
+			// default values
+			minBotsPerVictim(SimulationConstants.MIN_BOTS_PER_VICTIM)
+			maxBotsPerVictim(SimulationConstants.MAX_BOTS_PER_VICTIM)
+		]
+		for (p: ps) {
+			p.set(b)
+		}
+		b.build
+	}
+	
+	static val parametersConfigurations =
+		List.iterableList(Sets.cartesianProduct(parameters.map[values.toSet].toList))
+		.bind[
+			if (it.buildParameters.verifyParameters) {
+				List.single(List.iterableList(it))
+			}
+			else {
+				List.nil
+			}
+		]
+	
+	static def choiceFor(int index, String noun) {
+		"{index,choice,0#|1#1 noun |1<{index,number,integer} nouns }"
+			.replace("index", String.valueOf(index))
+			.replace("noun", noun);
+	}
+	
+	static def prettyPrint(long ms) {
+		val d = DatatypeFactory.newInstance().newDuration(ms)
+		val fmt = choiceFor(0, "hour")
+					+ choiceFor(1, "minute")
+					+ choiceFor(2, "second");
+		MessageFormat.format(fmt, d.hours, d.minutes, d.seconds).trim();
+	}
+		
 }

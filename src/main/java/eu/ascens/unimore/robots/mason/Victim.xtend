@@ -1,18 +1,19 @@
 package eu.ascens.unimore.robots.mason
 
-import sim.util.Double2D
 import eu.ascens.unimore.robots.RequirementsConstants
+import sim.util.Double2D
 
 class Victim {
 	
 	@Property val Double2D position
 	@Property val int nbBotNeeded
 	
-	var discovered = false
 	val AscensSimState state
 	
 	new(AscensSimState state) {
-		this._nbBotNeeded = state.parameters.minBotsPerVictim + state.random.nextInt(state.parameters.maxBotsPerVictim-state.parameters.minBotsPerVictim)
+		val diff = state.parameters.maxBotsPerVictim-state.parameters.minBotsPerVictim
+		this._nbBotNeeded = state.parameters.minBotsPerVictim
+								+ if (diff != 0) state.random.nextInt(diff) else 0
 		this._position = state.add(this)
 		this.state = state
 	}
@@ -21,9 +22,6 @@ class Victim {
 		val agentsHere = state.agents.getNeighborsExactlyWithinDistance(position, RequirementsConstants.CONSIDERED_NEXT_TO_VICTIM_DISTANCE)
 		if (agentsHere != null) {
 			val nbBots = agentsHere.filter(MasonRobot).size
-			if (nbBots > 0) {
-				discovered = true
-			}
 			if (nbBots >= nbBotNeeded) {
 				return true
 			}
@@ -31,7 +29,12 @@ class Victim {
 		return false
 	}
 	
-	def isDiscovered() {
+	var discovered = false
+	def boolean isDiscovered() {
+		if (!discovered) {
+			val iPos = state.agents.discretize(position)
+			discovered = state.isExplored(iPos.x,iPos.y)
+		}
 		discovered
 	}
 }

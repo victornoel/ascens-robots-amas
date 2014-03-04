@@ -1,11 +1,15 @@
 package eu.ascens.unimore.robots.geometry
 
+import eu.ascens.unimore.robots.beh.datatypes.SeenVictim
+import fj.Equal
 import fj.Ord
 import fj.Ordering
 import sim.util.Double2D
 import sim.util.MutableDouble2D
 
 import static extension fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
+import static extension fr.irit.smac.lib.contrib.fj.xtend.FunctionalJavaExtensions.*
+import fj.data.List
 
 class GeometryExtensions {
 	
@@ -18,6 +22,23 @@ class GeometryExtensions {
 		// copied from Ord.comparableOrd
 		if (x < 0) Ordering.LT else if (x == 0) Ordering.EQ else Ordering.GT
 	]])
+	
+	public static val crowdOrd = Ord.doubleOrd
+	public static val crowdEq = Equal.equal [double a|[double b|
+		Math.abs(a - b) <= 0.1
+	]]
+	
+	public static val victimOrd = Ord.doubleOrd.comap[SeenVictim it|
+		val hm = howMuch - (if (imNext) 1 else 0)
+		(hm as double)/(nbBotsNeeded as double)
+	] || Ord.doubleOrd.comap[SeenVictim it|direction.lengthSq]
+	
+	@Pure
+	public static def mostImportantVictim(List<SeenVictim> victims) {
+		// to be correct, the best would be to circle the vict so that I arrive
+		// close to it but not closer to others!
+		victims.minimum(victimOrd)
+	}
 	
 	// inspired from http://buildnewgames.com/vector-field-collision-avoidance/
 	@Pure

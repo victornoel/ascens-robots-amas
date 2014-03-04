@@ -14,26 +14,11 @@ class Utils {
 		Math.abs(a - b) <= CoopConstants.CRITICALITY_PRECISION
 	]]
 	
-	public static def <E extends Explorable> explorableCriticalityOrd() { criticalityOrd.comap[E e|e.criticality] }	
-	public static def <E extends Explorable> explorableCriticalityEq() { criticalityEq.comap[E e|e.criticality] }
-	
-	public static val crowdOrd = Ord.doubleOrd
-	public static val crowdEq = Equal.equal [double a|[double b|
-		Math.abs(a - b) <= 0.1
-	]]
+	public static val explorableCriticalityOrd = criticalityOrd.comap[Explorable e|e.criticality]
+	public static val explorableCriticalityEq = criticalityEq.comap[Explorable e|e.criticality]
 	
 	@Pure
-	static def <E extends Explorable> maxEquivalentCriticalities(List<E> l) {
-		l.maximums(explorableCriticalityEq,	explorableCriticalityOrd)
-	}
-	
-	@Pure
-	static def <E extends Explorable> keepEquivalent(List<E> l) {
-		l.takeWhile[e|explorableCriticalityEq.eq(l.head,e)]
-	}
-	
-	@Pure
-	static def <E extends Explorable> orderByDescendingCriticality(List<E> l) {
-		l.sort(explorableCriticalityOrd.inverse)
+	static def keepMaxEquivalent(List<Explorable> l) {
+		l.maximums(explorableCriticalityEq, explorableCriticalityOrd)
 	}
 }

@@ -8,12 +8,14 @@ import eu.ascens.unimore.robots.beh.datatypes.SeenVictim
 import eu.ascens.unimore.robots.beh.interfaces.IRepresentationsExtra
 import eu.ascens.unimore.robots.mason.datatypes.RBEmitter
 import eu.ascens.unimore.robots.mason.datatypes.SensorReading
-import fj.Ord
 import fj.data.List
 import fj.data.Option
 import fr.irit.smac.lib.contrib.xtend.macros.StepCached
 import sim.util.Double2D
 
+import static eu.ascens.unimore.robots.beh.Utils.*
+
+import static extension eu.ascens.unimore.robots.geometry.GeometryExtensions.*
 import static extension fr.irit.smac.lib.contrib.fj.xtend.FunctionalJavaExtensions.*
 import static extension fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
 
@@ -103,20 +105,27 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 		// note: bind is flatMap
 		.bind[sr|
 			val victDirAndCrit = sr.criticalityForDirectionFromVictims
-			if (victDirAndCrit.isSome){
-				if (victDirAndCrit.some().direction.shouldBeResponsibleOf) {
-					List.single(victDirAndCrit.some())
+			val otherDirAndCrit = sr.criticalityForDirectionFromOthers
+			val toConsider = List.list(
+				if (victDirAndCrit.isSome && victDirAndCrit.some().direction.shouldBeResponsibleOf){
+					List.list(victDirAndCrit.some())
+				} else {
+					List.nil
+				},
+				if (otherDirAndCrit.isSome) {
+					List.list(otherDirAndCrit.some())
 				} else {
 					List.nil
 				}
+			).flatten
+			if (toConsider.notEmpty) {
+				List.single(toConsider.maximum(explorableCriticalityOrd))
+			} else if (!sr.hasWall && sr.dir.shouldBeResponsibleOf) {
+				List.single(
+					new Explorable(sr.dir, CoopConstants.STARTING_EXPLORABLE_CRITICALITY, 0)
+				)
 			} else {
-				if (!sr.hasWall && sr.dir.shouldBeResponsibleOf) {
-					List.single(
-						new Explorable(sr.dir, CoopConstants.STARTING_EXPLORABLE_CRITICALITY, 0)
-					)
-				} else {
-					List.nil
-				}
+				List.nil
 			}
 		]
 	}
@@ -130,9 +139,7 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 		if (victimsInDirectioOfSR.empty) {
 			Option.none
 		} else {
-			val worst = victimsInDirectioOfSR.minimum(Ord.doubleOrd.comap[
-				(howMuch as double)/(nbBotsNeeded as double)
-			])
+			val worst = victimsInDirectioOfSR.mostImportantVictim
 			val slice = CoopConstants.VICTIM_RANGE_CRITICALITY/(worst.nbBotsNeeded as double)
 			val crit = CoopConstants.STARTING_EXPLORABLE_CRITICALITY + 
 						// TODO WRONG?
@@ -140,6 +147,29 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 								((worst.nbBotsNeeded as double) - (worst.howMuch as double))*slice
 						)
 			Option.some(new Explorable(worst.direction, crit, slice))
+		}
+	}
+	
+	private def criticalityForDirectionFromOthers(SensorReading sr) {
+		val othersInDirectionOfSr = explorableFromOthers.filter[direction.between(sr.cone)]
+		if (othersInDirectionOfSr.empty) {
+			Option.none
+		} else {
+			val worst = othersInDirectionOfSr.maximum(explorableCriticalityOrd)
+			val newCrit =
+				if (worst.criticality > CoopConstants.STARTING_EXPLORABLE_CRITICALITY + 0.02)
+					{
+						Math.max(
+							// the +0.01 is needed so that we follow this one more than
+							// any 0.5 one because it was already more than 0.5...
+							CoopConstants.STARTING_EXPLORABLE_CRITICALITY+0.01,
+							worst.criticality-worst.victimSlice*othersInDirectionOfSr.size
+						)
+					}
+				else {
+					CoopConstants.STARTING_EXPLORABLE_CRITICALITY
+				}
+			Option.some(worst.withCriticality(newCrit))
 		}
 	}
 	
@@ -151,7 +181,8 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 		// that has travelled the less, but the message
 		// the closer to me for a same origin?
 		// or just the most critical (it will then take care of loops...)
-		requires.messaging.explorationMessages.map[re|
+		requires.messaging.explorationMessages
+		.map[re|
 			val newDir = re.computeRealDirFromExplorable
 			// TODO I should only take into account the closest to the destination
 			// than me, but how to compute that... !
@@ -162,18 +193,8 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 			
 			// TODO what I should do is consider that this crit more important
 			// than other equivalent crits in case I go into the first part of the if
-			val newCrit =
-				if (re.explorable.criticality > CoopConstants.STARTING_EXPLORABLE_CRITICALITY + 0.02)
-					{
-						Math.max(
-							CoopConstants.STARTING_EXPLORABLE_CRITICALITY+0.01,
-							re.explorable.criticality-re.explorable.victimSlice
-						)
-					}
-				else {
-					CoopConstants.STARTING_EXPLORABLE_CRITICALITY
-				}
-			re.toExplorable(newDir, newCrit)
+			
+			re.toExplorable(newDir, re.explorable.criticality)
 		]
 	}
 	
@@ -195,6 +216,7 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 	
 	@Cached
 	override List<Explorable> explorables() {
-		explorableFromOthers + seenAreas
+		//explorableFromOthers +
+		seenAreas
 	}
 }

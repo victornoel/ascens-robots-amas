@@ -1,5 +1,6 @@
 package eu.ascens.unimore.robots.mason.datatypes
 
+import ec.util.MersenneTwisterFast
 import fj.data.Option
 import sim.util.Double2D
 
@@ -39,4 +40,18 @@ import sim.util.Double2D
 	val int nbSecured
 	val int nbDiscovered
 	val int percentExplored
+}
+
+@Data class RandomSync {
+	
+	val MersenneTwisterFast random
+	
+	def nextDouble() {
+		random.nextDouble
+	}
+	
+	def nextInt(int i) {
+		random.nextInt(i)
+	}
+	
 }

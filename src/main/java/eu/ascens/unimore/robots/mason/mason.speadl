@@ -1,5 +1,5 @@
-import ec.util.MersenneTwisterFast
 import eu.ascens.unimore.robots.mason.datatypes.Message
+import eu.ascens.unimore.robots.mason.datatypes.RandomSync
 import eu.ascens.unimore.robots.mason.interfaces.MasonControAndStats
 import eu.ascens.unimore.robots.mason.interfaces.RobotMovements
 import eu.ascens.unimore.robots.mason.interfaces.RobotPerceptions
@@ -34,7 +34,7 @@ namespace eu.ascens.unimore.robots.mason {
 
 			requires visu: RobotVisu
 			
-			provides random: Pull[MersenneTwisterFast]
+			provides random: Pull[RandomSync]
 		}
 	}
 
