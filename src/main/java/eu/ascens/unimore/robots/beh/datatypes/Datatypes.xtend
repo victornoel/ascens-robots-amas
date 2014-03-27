@@ -40,6 +40,10 @@ import static extension fr.irit.smac.lib.contrib.xtend.JavaExtensions.*
 		new Explorable(newDir, newCriticality, victimSlice, from.coord)
 	}
 	
+	def Explorable via(Double2D newDir, RBEmitter from) {
+		new Explorable(newDir, criticality, victimSlice, from.coord)
+	}
+	
 	def Explorable withCriticality(double newCriticality) {
 		new Explorable(direction, newCriticality, victimSlice, via)
 	}
@@ -69,6 +73,10 @@ import static extension fr.irit.smac.lib.contrib.xtend.JavaExtensions.*
 	
 	def toExplorable(Double2D newDir, double newCriticality) {
 		explorable.via(newDir, from, newCriticality)
+	}
+	
+	def toExplorable(Double2D newDir) {
+		explorable.via(newDir, from)
 	}
 	
 }

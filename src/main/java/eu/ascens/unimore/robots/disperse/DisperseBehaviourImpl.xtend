@@ -8,7 +8,6 @@ import eu.ascens.unimore.robots.beh.datatypes.SeenVictim
 import eu.ascens.unimore.robots.mason.interfaces.RobotVisu
 import fj.Ord
 import fj.P
-import fj.P2
 import fj.data.List
 import fr.irit.smac.lib.contrib.xtend.macros.StepCached
 import sim.util.Double2D
@@ -16,6 +15,7 @@ import sim.util.Double2D
 import static extension eu.ascens.unimore.robots.geometry.GeometryExtensions.*
 import static extension eu.ascens.unimore.robots.geometry.ObstacleAvoidance.*
 import static extension fr.irit.smac.lib.contrib.fj.xtend.FunctionalJavaExtensions.*
+import fj.P2
 
 class DisperseBehaviourImpl extends Behaviour implements RobotVisu {
 	
@@ -154,5 +154,4 @@ class DisperseBehaviourImpl extends Behaviour implements RobotVisu {
 	override explorablesFromOthers() {
 		throw new UnsupportedOperationException("TODO: auto-generated method stub")
 	}
-	
 }

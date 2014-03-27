@@ -55,7 +55,29 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	
 	override goTo(Double2D to) {
 		val l = to.length
-		if (l > 0.01) {			
+		if (l > 0.001) {
+			
+//			val bbmfm = visibleRobots.filter[
+//				// behind me (w.r.t where I'm going)
+//				coord.dot(to) < 0
+//				// following me (w.r.t where I'm going)
+//				&& message.isSome
+//				&& (message.some() instanceof ExplorableMessage)
+//				&& {
+//					val m = message.some() as ExplorableMessage
+//					m.worthExplorable.notEmpty
+//					&& m.worthExplorable.head.direction.dot(to) > 0
+//				}
+//			]
+			
+//			if (bbmfm.notEmpty) {
+//				val distSq = bbmfm.map[coord.lengthSq].minimum(Ord.doubleOrd)
+//				if (distSq > (SimulationConstants.WALL_RANGE*SimulationConstants.WALL_RANGE)*0.9) {
+//					return
+//				}
+//			}
+			
+			
 			// TODO: smooth things using prevDirs? like not moving if it's useless
 			val move = to.computeDirectionWithAvoidance(sensorReadings).dir.resize(l)
 			lastMove = to
@@ -102,8 +124,6 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	@Cached
 	override Double2D escapeCrowdVector() {
 		visibleRobots
-		// TODO I could also just keep those as close as victims
-		// and check with visible victims...
 		.filter[
 			message.isNone
 			|| !(message.some() instanceof ExplorableMessage)

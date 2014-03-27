@@ -1,53 +1,33 @@
 library(ggplot2)
 
-metrics <- list("secured", "discovered", "explored")
-parameters <- list("algorithm", "nbBots", "nbVictims", "map", "rbRange")
+maps <- list("maze1","maze2","maze3","maze5")
+nbVict <- list("8", "16", "35")
 
-pattern <- "^run.*csv$"
-pattern <- "^run.*maze3.*csv"
-pattern <- "^run.*maze3.*nbVictims.35.*csv"
-
-data <- data.frame(stringsAsFactors = F)
-for(file in list.files(pattern=pattern)) {
-	print(paste0("reading file ",file))
-	ndata = read.table(file, header=T, sep=";", stringsAsFactors = F, colClasses=c('numeric','numeric','numeric','numeric','character','character','character','character','character'))
-	data <- rbind(data, ndata)
-}
-
-# geom_line(aes(x=step, y=secured, colour=nbBots)) + scale_colour_hue() + facet_grid(rbRange ~ nbVictims)
-# p + stat_summary(aes(x=nbBots, y=explored), fun.y = "max", geom="point") + facet_grid(rbRange ~ nbVictims)
-# p + geom_step(aes(x=step, y=secured, colour=algorithm)) + facet_grid(nbBots ~ rbRange, labeller = label_both) + labs(title="35 Victims, Maze 3")
-# p + geom_step(aes(x=step, y=secured, colour=rbRange)) + facet_grid(nbBots ~ nbVictims, labeller = label_both) + labs(title="Maze 3") 
-
-parametersValues <- list()
-for(parameter in parameters) {
-	parametersValues[[parameter]] <- unique(data[[parameter]])
-}
-
-for(m in metrics) {
-	# no need to generate for map
-	for(p in parameters) {
-		paramsWithoutThisOne <- parameters[parameters != p]
-		paramsValues <- parametersValues[names(parametersValues) %in% paramsWithoutThisOne]
-		# cartesian product
-		possibilities <- expand.grid(paramsValues, stringsAsFactors = F)
-		for(i in 1:nrow(possibilities)) {
-			# this is all the data with the parameters fixed and p varying
-			fixedParams <- possibilities[i,]
-			title <- paste0(names(fixedParams), ": ", fixedParams, collapse=' ')
-			pdata <- merge(data,fixedParams)
-			# TODO check that pdata is not empty?
-			if (nrow(pdata) > 0) {
-				plot <- ggplot(pdata) +
-					geom_step(aes_string(x="step", y=m, colour=p)) +
-					scale_colour_hue() +
-					xlab('Steps') +
-					ylab(m) +
-					ggtitle(title)
-				name <- paste0(m,"-",p, "-", paste0(names(fixedParams), ".", fixedParams, collapse='_'),".pdf")
-				print(paste0("printing ", name))
-				ggsave(filename=file.path("pdf", name), plot=plot)
-			}
-		}
+for(m in maps) {
+	pattern <- paste0("^run.*",m,".*csv$")
+	data <- data.frame(stringsAsFactors = F)
+	for(file in list.files(pattern=pattern)) {
+		print(paste0("reading file ",file))
+		ndata = read.table(file, header=T, sep=";", stringsAsFactors = F, colClasses=c('numeric','numeric','numeric','numeric','character','character','character','character','character'))
+		data <- rbind(data, ndata)
+	}
+	for(nb in nbVict) {
+		d <- data[data$nbVictims == nb,]
+		if (nrow(d) == 0) break
+		p <- ggplot(d,aes(x=step))
+		rp <- p +
+			geom_step(aes(y=secured, colour=algorithm, linetype="Secured")) +
+			geom_step(aes(y=discovered, colour=algorithm, linetype="Discovered")) +
+			scale_linetype_manual("Victims", 
+						values = c("Secured" = "solid", "Discovered" = "dashed")) +
+			facet_grid(nbBots ~ rbRange, labeller = label_both) +
+			labs(title=paste(nb, "Victims,",m), y="victims")
+		ggsave(filename=file.path("pdf", paste0(m,"-",nb,"-victims.pdf")), plot=rp)
+		rp <- p +
+			geom_step(aes(y=explored, colour=algorithm)) +
+			ylim(0,100) +
+			facet_grid(nbBots ~ rbRange, labeller = label_both) +
+			labs(title=paste(nb, "Victims,",m))
+		ggsave(filename=file.path("pdf", paste0(m,"-",nb,"-explored.pdf")), plot=rp)
 	}
 }

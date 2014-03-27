@@ -28,16 +28,32 @@ class GeometryExtensions {
 		Math.abs(a - b) <= 0.1
 	]]
 	
-	public static val victimOrd = Ord.doubleOrd.comap[SeenVictim it|
-		val hm = howMuch - (if (imNext) 1 else 0)
-		(hm as double)/(nbBotsNeeded as double)
-	] || Ord.doubleOrd.comap[SeenVictim it|direction.lengthSq]
-	
+	/**
+	 * First tries to secure before trying to go
+	 * For another victim: the idea is that a saved victim
+	 * is more important than two discovered victims
+	 */
 	@Pure
 	public static def mostImportantVictim(List<SeenVictim> victims) {
-		// to be correct, the best would be to circle the vict so that I arrive
-		// close to it but not closer to others!
-		victims.minimum(victimOrd)
+		victims.maximum(
+			Ord.doubleOrd.comap[SeenVictim it|
+				val hm = howMuch - (if (imNext) 1 else 0)
+				(hm as double)/(nbBotsNeeded as double)
+			] || Ord.doubleOrd.comap[SeenVictim it|-direction.lengthSq]
+		)
+	}
+	
+	/**
+	 * Consider first victims in most need
+	 */
+	@Pure
+	public static def mostInNeedVictim(List<SeenVictim> victims) {
+		victims.maximum(
+			Ord.doubleOrd.comap[SeenVictim it|
+				val hm = howMuch - (if (imNext) 1 else 0)
+				(hm as double)/(nbBotsNeeded as double)
+			] || Ord.doubleOrd.comap[SeenVictim it|-direction.lengthSq]
+		)
 	}
 	
 	// inspired from http://buildnewgames.com/vector-field-collision-avoidance/

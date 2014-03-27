@@ -20,9 +20,9 @@ class ObstacleAvoidance {
 		]
 		
 		// this is the best I can get
-		// I don't know why but it works better with -0.1
+		// -0.1 because sometimes walls are not well situated, so it gives us a bit of margin
 		val maxSq = sensorsAndLengthSq.map[value].maximum(Ord.doubleOrd)-0.1
-		
+				
 		val vision = Zipper.fromStream(Stream.iterableStream(sensorsAndLengthSq)).some()
 		
 		val desiredDirection = vision.find[d|to.between(d.key.cone)].some()
@@ -38,8 +38,8 @@ class ObstacleAvoidance {
 			}
 			gothroughR = gothroughR.cycle(true)
 			gothroughL = gothroughL.cycle(false)
-		} while ((gothroughR.focus != desiredDirection.focus)
-			&& (gothroughL.focus != desiredDirection.focus))
+		} while ((gothroughR.focus !== desiredDirection.focus)
+			&& (gothroughL.focus !== desiredDirection.focus))
 		
 		return desiredDirection.focus.key
 	}

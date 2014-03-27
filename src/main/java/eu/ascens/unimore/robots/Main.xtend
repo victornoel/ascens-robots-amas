@@ -17,27 +17,21 @@ import javax.xml.datatype.DatatypeFactory
 import static extension fr.irit.smac.lib.contrib.fj.xtend.FunctionalJavaExtensions.*
 import eu.ascens.unimore.robots.beh.BehaviourImpl
 
-class Main {
-
+class GUI {
 	def static void main(String[] args) {
-		//runEvaluations
-		gui
-	}
-	
-	static def gui() {
 		val parameters = new InitialisationParameters(
 			SimulationConstants.RADIO_RANGE,
 			SimulationConstants.WALL_RANGE,
 			SimulationConstants.VICTIM_RANGE,
 			SimulationConstants.PROXIMITY_RANGE,
 			SimulationConstants.SPEED,
-			SimulationConstants.RB_RANGE,
+			10,
 			SimulationConstants.NB_WALL_SENSORS,
 			//SimulationConstants.DEFAULT_MAZE,
-			"maze3",
-			SimulationConstants.SEED,
-			90,
-			35,
+			"maze5",
+			SimulationConstants.SEED+1,
+			60,
+			8,
 			SimulationConstants.MIN_BOTS_PER_VICTIM,
 			SimulationConstants.MAX_BOTS_PER_VICTIM,
 			SimulationConstants.DEFAULT_BEHAVIOUR
@@ -47,9 +41,11 @@ class Main {
 		val c = new AscensRobotsImpl(parameters).newComponent
 		c.control.startGUI
 	}
+}
 
-	static def runEvaluations() {
-		
+class Eval {
+
+	def static void main(String[] args) {
 		val start = System.currentTimeMillis
 		
 		val size = parametersConfigurations.size
@@ -147,7 +143,8 @@ class Main {
 		),
 		Evaluation.parameter(
 			"algorithm", [InitialisationParametersBuilder b, () => Behaviour algo|b.newBehaviour(algo)],
-			// need to explicit type, because of https://bugs.eclipse.org/bugs/show_bug.cgi?id=429138 ?
+			// need to explicit type, because of https://bugs.eclipse.org/bugs/show_bug.cgi?id=429138
+			// fixed in 2.6
 			List.<Pair<String,() => Behaviour>>list(
 				"amas" -> [|new BehaviourImpl],
 				"disperse" -> [|new DisperseBehaviourImpl],
@@ -156,7 +153,7 @@ class Main {
 		),
 		Evaluation.parameter2(
 			"nbBots", [InitialisationParametersBuilder b, int nbBots|b.nbBots(nbBots)],
-			List.list(60, 90, 250, 500)
+			List.list(60, 90, 150, 250, 500)
 		),
 		Evaluation.parameter2(
 			"nbVictims", [InitialisationParametersBuilder b, int nbVictims|b.nbVictims(nbVictims)],

@@ -11,6 +11,7 @@ import javax.swing.JFrame
 import sim.display.Controller
 import sim.display.Display2D
 import sim.display.GUIState
+import sim.display.MultiSelectDisplay2D
 import sim.engine.Schedule
 import sim.engine.SimState
 import sim.engine.Steppable
@@ -351,7 +352,7 @@ class AscensGUIState extends GUIState {
 		super.init(controller)
 
 		// Make the Display2D.  We'll have it display stuff later
-		display = new Display2D(800, 800, this)
+		display = new MultiSelectDisplay2D(800, 800, this)
 
 		// register the frame so it appears in the "Display" list
 		displayFrame = display.createFrame();

@@ -20,7 +20,7 @@ class VictimPortrayal2D extends OvalPortrayal2D {
 	val AscensSimState state
 	
 	new(FieldPortrayal2D fieldPortrayal, AscensSimState state) {
-		super(Color.RED, 1.3, true)
+		super(Color.RED, 1.4, true)
 		this.fieldPortrayal = fieldPortrayal
 		this.state = state
 	}

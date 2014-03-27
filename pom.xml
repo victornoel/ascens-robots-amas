@@ -80,7 +80,7 @@
 							<transformers>
 								<transformer
 									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<mainClass>eu.ascens.unimore.robots.Main</mainClass>
+									<mainClass>eu.ascens.unimore.robots.Eval</mainClass>
 								</transformer>
 							</transformers>
 							<filters>

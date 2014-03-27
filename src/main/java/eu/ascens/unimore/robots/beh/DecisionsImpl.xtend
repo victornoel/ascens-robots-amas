@@ -35,7 +35,7 @@ class DecisionsImpl extends Decisions implements IDecisionsExtra {
 	@StepCached
 	private def void step() {
 		
-		val explorables = requires.representations.explorables
+		val explorables = requires.representations.explorables.filter[criticality > 0.01]
 		// perceive
 		switch explorables {
 			case List.nil: {
