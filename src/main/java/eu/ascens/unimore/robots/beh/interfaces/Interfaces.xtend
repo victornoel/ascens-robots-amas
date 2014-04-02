@@ -1,15 +1,14 @@
 package eu.ascens.unimore.robots.beh.interfaces
 
-import eu.ascens.unimore.robots.beh.datatypes.AgentSig
-import eu.ascens.unimore.robots.beh.datatypes.Choice
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
 import eu.ascens.unimore.robots.beh.datatypes.ReceivedExplorable
-import eu.ascens.unimore.robots.beh.datatypes.SeenVictim
+import eu.ascens.unimore.robots.common.SeenVictim
+import eu.ascens.unimore.robots.mason.datatypes.Choice
 import eu.ascens.unimore.robots.mason.datatypes.RBEmitter
 import eu.ascens.unimore.robots.mason.datatypes.SensorReading
+import eu.ascens.unimore.robots.mason.datatypes.VisibleVictim
 import fj.data.List
 import sim.util.Double2D
-import eu.ascens.unimore.robots.mason.datatypes.VisibleVictim
 
 interface IActions {
 	
@@ -62,27 +61,11 @@ interface IPerceptions {
 	def List<SensorReading> visibleWalls()
 	
 	def List<RBEmitter> visibleRobots()
-	
-	def Double2D escapeCrowdVector()
-	
-	def Double2D previousDirection()
-	
-	def boolean goingBack(Double2D dir)
+		
+	def List<ReceivedExplorable> receivedMessages()
 }
 
 interface IPerceptionsExtra extends IPerceptions {
 	
 	def Double2D lastMove()
-}
-
-interface IMessaging {
-	
-	def List<ReceivedExplorable> explorationMessages()
-	
-	def AgentSig currentSig()
-	
-}
-
-interface IMessagingExtra extends IMessaging {
-	
 }

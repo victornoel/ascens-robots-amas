@@ -1,8 +1,8 @@
 package eu.ascens.unimore.robots.mason.interfaces
 
-import eu.ascens.unimore.robots.beh.datatypes.Choice
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
-import eu.ascens.unimore.robots.beh.datatypes.SeenVictim
+import eu.ascens.unimore.robots.common.SeenVictim
+import eu.ascens.unimore.robots.mason.datatypes.Choice
 import eu.ascens.unimore.robots.mason.datatypes.RBEmitter
 import eu.ascens.unimore.robots.mason.datatypes.SensorReading
 import eu.ascens.unimore.robots.mason.datatypes.Stats
@@ -33,8 +33,6 @@ interface RobotVisu {
 	def Choice choice()
 	
 	def Double2D move()
-	
-	def Iterable<Double2D> visibleBots()
 	
 	def Iterable<Explorable> explorables()
 	

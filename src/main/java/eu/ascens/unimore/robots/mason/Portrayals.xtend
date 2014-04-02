@@ -1,7 +1,10 @@
 package eu.ascens.unimore.robots.mason
 
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
-import eu.ascens.unimore.robots.beh.datatypes.SeenVictim
+import eu.ascens.unimore.robots.beh.datatypes.ExplorableImpl
+import eu.ascens.unimore.robots.beh.datatypes.MySeenVictim
+import eu.ascens.unimore.robots.common.SeenVictim
+import eu.ascens.unimore.robots.mason.datatypes.Choice
 import java.awt.Color
 import java.awt.Font
 import java.awt.Graphics2D
@@ -12,6 +15,7 @@ import sim.portrayal.FieldPortrayal2D
 import sim.portrayal.simple.OvalPortrayal2D
 import sim.util.Double2D
 
+import static extension fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
 import static extension fr.irit.smac.lib.contrib.xtend.JavaExtensions.*
 
 class VictimPortrayal2D extends OvalPortrayal2D {
@@ -73,9 +77,9 @@ class BotPortrayal2D extends OvalPortrayal2D {
 						graphics.fillRect(wp.x as int, wp.y as int, w, h)
 					}
 					for (wc: object.surroundings.wallCones) {
-						val sloc1 = wc.key.add(botPos)
+						val sloc1 = wc.key + botPos
 						val spos1 = fieldPortrayal.getRelativeObjectPosition(sloc1, botPos, info)
-						val sloc2 = wc.value.add(botPos)
+						val sloc2 = wc.value + botPos
 						val spos2 = fieldPortrayal.getRelativeObjectPosition(sloc2, botPos, info)
 						graphics.setPaint(Color.BLUE)
 						graphics.drawLine(spos1.x as int, spos1.y as int, spos2.x as int, spos2.y as int)
@@ -90,55 +94,78 @@ class BotPortrayal2D extends OvalPortrayal2D {
 					}
 				}
 				
-				if (properties.showExplorableFromOthersForAll || (info.selected && properties.showExplorableFromOthers)) {
+				if (properties.showExplorablesFromOthersForAll || (info.selected && properties.showExplorablesFromOthers)) {
 					for(c: object.visu.explorablesFromOthers) {
-						graphics.printExplorable(c, botPos, botFPos, info)
+						graphics.printExplorable(botFPos, botPos, c, info, Color.GREEN)
 					}
 				}
 				
 				if (properties.showAreasOnlyFromMeForAll || (info.selected && properties.showAreasOnlyFromMe)) {
 					for(c: object.visu.areasOnlyFromMe) {
-						graphics.printExplorable(c, botPos, botFPos, info)
+						graphics.printExplorable(botFPos, botPos, c, info, Color.GREEN)
 					}
 				}
 				
 				if (properties.showVictimsFromMeForAll || (info.selected && properties.showVictimsFromMe)) {
 					for(c: object.visu.victimsFromMe) {
-						graphics.printVisibleVictim(c, botPos, botFPos, info)
+						val color = switch c {
+							MySeenVictim case c.imResponsible: Color.CYAN
+							default: Color.GREEN
+						}
+						graphics.printVisibleVictim(botFPos, botPos, c, info, color)
 					}
 				}
 				
-				
-				if (properties.showExplorableForAll || (info.selected && properties.showExplorable)) {
+				if (properties.showExplorablesForAll || (info.selected && properties.showExplorables)) {
 					for(c: object.visu.explorables) {
-						graphics.printExplorable(c, botPos, botFPos, info)
+						val color = if (c === object.visu.choice) {
+							Color.CYAN
+						} else {
+							Color.GREEN
+						}
+						graphics.printExplorable(botFPos, botPos, c, info, color)
 					}
-					if (object.visu.choice != null) {
-						val sloc = object.visu.choice.direction.add(botPos)
-						val spos = fieldPortrayal.getRelativeObjectPosition(sloc, botPos, info)
-						graphics.setPaint(Color.CYAN)
-						graphics.fillOval(spos.x as int, spos.y as int, w/2, h/2)
-					}
-					val sloc2 = object.visu.move.add(botPos)
+					val sloc2 = object.visu.move + botPos
 					val spos2 = fieldPortrayal.getRelativeObjectPosition(sloc2, botPos, info)
 					graphics.setPaint(Color.MAGENTA)
-					graphics.fillOval(spos2.x as int, spos2.y as int, w/2, h/2)
+					graphics.fillOval(spos2.x as int, spos2.y as int, w/4, h/4)
+				}
+				
+				if (properties.showChoiceForAll || (info.selected && properties.showChoice)) {
+					if (object.visu.choice != null) {
+						switch c: object.visu.choice {
+							Explorable: {
+								graphics.printExplorable(botFPos, botPos, c, info, Color.GREEN)
+								if (c instanceof ExplorableImpl) {
+									for(ob: c.counting) {
+										graphics.printArrow(botFPos, botPos, ob.coord, info, Color.CYAN)
+									}
+								}
+							}
+							SeenVictim: {
+								graphics.printVisibleVictim(botFPos, botPos, c, info, Color.GREEN)
+							}
+							Choice: {
+								graphics.printArrow(botFPos, botPos, c.direction, info, Color.GREEN)
+							}
+						}
+					}
+					val sloc2 = object.visu.move + botPos
+					val spos2 = fieldPortrayal.getRelativeObjectPosition(sloc2, botPos, info)
+					graphics.setPaint(Color.MAGENTA)
+					graphics.fillOval(spos2.x as int, spos2.y as int, w/4, h/4)
 				}
 				
 				if (properties.showSensorReadingsForAll || (info.selected && properties.showSensorReadings)) {
 					for(p: object.sensorReadings) {
-						// get absolute position
-						val sloc = p.dir.add(botPos)
-						if (p.hasWall) {
-							graphics.setPaint(Color.PINK)
+						val color = if (p.hasWall) {
+							Color.PINK
 						} else if (p.hasBot) {
-							graphics.setPaint(Color.GREEN)
+							Color.GREEN
 						} else {
-							graphics.setPaint(Color.MAGENTA)
+							Color.MAGENTA
 						}
-						val spos = fieldPortrayal.getRelativeObjectPosition(sloc, botPos, info)
-						graphics.drawArrow(botFPos.x as int, botFPos.y as int, spos.x as int, spos.y as int)
-						//graphics.fillOval(spos.x as int, spos.y as int, w/2, h/2)
+						graphics.printArrow(botFPos, botPos, p.dir, info, color)
 					}
 				}
 				
@@ -146,7 +173,7 @@ class BotPortrayal2D extends OvalPortrayal2D {
 					val vis = object.surroundings.RBVisibleBotsWithCoordinate.map[coord]
 								+ object.surroundings.visibleVictims.map[dir]
 					for(b: vis) {
-						val sloc = b.add(botPos)
+						val sloc = b + botPos
 						val spos = fieldPortrayal.getRelativeObjectPosition(sloc, botPos, info)
 						graphics.setPaint(Color.BLUE)
 						graphics.drawOval((spos.x - (w+2)/2) as int, (spos.y - (h+2)/2) as int, w+2, h+2)
@@ -155,11 +182,8 @@ class BotPortrayal2D extends OvalPortrayal2D {
 				
 				if (properties.showWhoFollowsWhoForAll ||(properties.showWhoFollowsWho && info.selected)) {
 					switch c: object.visu.choice {
-						Explorable case c.via != null: {
-							val sloc1 = c.via.add(botPos)
-							val spos1 = fieldPortrayal.getRelativeObjectPosition(sloc1, botPos, info)
-							graphics.setPaint(Color.BLUE)
-							graphics.drawArrow(botFPos.x as int, botFPos.y as int, spos1.x as int, spos1.y as int)
+						ExplorableImpl case c.via.isSome: {
+							graphics.printArrow(botFPos, botPos, c.via.some().coord, info, Color.BLUE)
 						}
 					}
 				}
@@ -169,36 +193,42 @@ class BotPortrayal2D extends OvalPortrayal2D {
 		super.draw(object, graphics, info)
 	}
 	
-	def printVisibleVictim(Graphics2D graphics, SeenVictim v, Double2D botPos, Point2D.Double botFPos, DrawInfo2D info) {
-		val sloc = v.direction.add(botPos)
-		val spos = fieldPortrayal.getRelativeObjectPosition(sloc, botPos, info)
-		graphics.setPaint(Color.GREEN)
-		graphics.drawArrow(botFPos.x as int, botFPos.y as int, spos.x as int, spos.y as int)
-		val toPrint = ""+v.howMuch
-		
-		val lx = botFPos.x*0.2+spos.x*0.8
-		val ly = botFPos.y*0.2+spos.y*0.8
-		
-		printLabel(toPrint, graphics, info, lx as int, ly as int)
+	def printVisibleVictim(Graphics2D graphics, Point2D.Double botFPos, Double2D botPos, SeenVictim v, DrawInfo2D info, Color color) {
+		val toPrint = ""+v.howMuch+"/"+v.nbBotsNeeded
+		graphics.printArrow(botFPos, botPos, v.direction, info, color, toPrint)
 	}
 	
-	def printExplorable(Graphics2D graphics, Explorable e, Double2D botPos, Point2D.Double botFPos, DrawInfo2D info) {
-		val sloc = e.direction.add(botPos)
-		val spos = fieldPortrayal.getRelativeObjectPosition(sloc, botPos, info)
-		graphics.setPaint(Color.GREEN)
-		graphics.drawArrow(botFPos.x as int, botFPos.y as int, spos.x as int, spos.y as int)
+	def printExplorable(Graphics2D graphics, Point2D.Double botFPos, Double2D botPos, Explorable e, DrawInfo2D info, Color color) {
 		val toPrint = e.criticality.toShortString(2)
+		graphics.printArrow(botFPos, botPos, e.direction, info, color, toPrint)
+	}
+	
+	def printArrow(Graphics2D graphics, Point2D.Double botFPos, Double2D bot, Double2D relativeTarget, DrawInfo2D info, Color color) {
+		printArrow(graphics,botFPos,bot,relativeTarget,info,color,null)
+	}
+	
+	def printArrow(Graphics2D graphics, Point2D.Double botFPos, Double2D bot, Double2D relativeTarget, DrawInfo2D info, Color color, String label) {
 		
-		val lx = botFPos.x*0.2+spos.x*0.8
-		val ly = botFPos.y*0.2+spos.y*0.8
+		val target = bot + relativeTarget
+		val targetPos = fieldPortrayal.getRelativeObjectPosition(target, bot, info)
 		
-		printLabel(toPrint, graphics, info, lx as int, ly as int)
+		graphics.setPaint(color)
+		graphics.drawArrow(botFPos.x as int, botFPos.y as int, targetPos.x as int, targetPos.y as int)
+		
+		if (label != null) {
+			graphics.printArrowLabel(label, info, botFPos, targetPos)
+		}
 	}
 	
 	val static FONT = new Font("SansSerif",Font.PLAIN, 10)
-	def static printLabel(String s, Graphics2D graphics, DrawInfo2D info, int ox, int oy) {
-		val x = (ox + 0 * info.draw.width + 0) as int
-        val y = (oy + 0.5 * info.draw.height + 10) as int
+	def static printArrowLabel(Graphics2D graphics, String s, DrawInfo2D info, Point2D.Double botFPos, Point2D.Double targetPos) {
+		
+		val lx = botFPos.x*0.2+targetPos.x*0.8
+		val ly = botFPos.y*0.2+targetPos.y*0.8
+		
+		val x = (lx + 0 * info.draw.width + 0) as int
+        val y = (ly + 0.5 * info.draw.height + 10) as int
+        
         graphics.setPaint(Color.BLACK)
         graphics.setFont(FONT)
         

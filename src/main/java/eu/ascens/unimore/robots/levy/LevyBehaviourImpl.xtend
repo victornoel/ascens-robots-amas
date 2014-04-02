@@ -2,15 +2,14 @@ package eu.ascens.unimore.robots.levy
 
 import de.oehme.xtend.contrib.Cached
 import eu.ascens.unimore.robots.Behaviour
-import eu.ascens.unimore.robots.RequirementsConstants
-import eu.ascens.unimore.robots.beh.datatypes.SeenVictim
+import eu.ascens.unimore.robots.common.SeenVictim
+import eu.ascens.unimore.robots.mason.datatypes.Choice
 import eu.ascens.unimore.robots.mason.interfaces.RobotVisu
 import fj.data.List
 import fr.irit.smac.lib.contrib.xtend.macros.StepCached
 import sim.util.Double2D
 
-import static extension eu.ascens.unimore.robots.geometry.GeometryExtensions.*
-import static extension fr.irit.smac.lib.contrib.fj.xtend.FunctionalJavaExtensions.*
+import static extension eu.ascens.unimore.robots.common.VictimVision.*
 import static extension fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
 
 class LevyBehaviourImpl extends Behaviour implements RobotVisu {
@@ -24,19 +23,15 @@ class LevyBehaviourImpl extends Behaviour implements RobotVisu {
 	}
 	
 	override choice() {
-		throw new UnsupportedOperationException("TODO: auto-generated method stub")
+		new MyChoice(currentDir)
 	}
 	
 	override move() {
 		currentDir
 	}
 	
-	override visibleBots() {
-		requires.see.RBVisibleRobots.map[coord]
-	}
-	
 	override explorables() {
-		throw new UnsupportedOperationException("TODO: auto-generated method stub")
+		List.nil
 	}
 	
 	override victimsFromMe() {
@@ -44,17 +39,17 @@ class LevyBehaviourImpl extends Behaviour implements RobotVisu {
 	}
 	
 	override areasOnlyFromMe() {
-		throw new UnsupportedOperationException("TODO: auto-generated method stub")
+		List.nil
 	}
 	
 	override explorablesFromOthers() {
-		throw new UnsupportedOperationException("TODO: auto-generated method stub")
+		List.nil
 	}
 	
 	private var Double2D currentDir
 	private var double alpha
 	private var double accumulator
-		
+	
 	@StepCached
 	private def void step() {
 		
@@ -63,7 +58,7 @@ class LevyBehaviourImpl extends Behaviour implements RobotVisu {
 		if (victimsOfInterest.empty) {
 			if (currentDir == null || shouldChange) {
 				currentDir = randomDirection()
-				alpha = requires.random.pull.nextDouble
+				alpha = requires.random.pull.nextDouble(false, true)
 				accumulator = 0
 			}
 			if (!bump) {
@@ -71,7 +66,7 @@ class LevyBehaviourImpl extends Behaviour implements RobotVisu {
 				accumulator = accumulator + alpha
 			}
 		} else {
-			val v = victimsOfInterest.mostImportantVictim
+			val v = victimsOfInterest.mostInNeedVictim
 			currentDir = v.direction
 			if (currentDir.lengthSq > 0.01) {
 				requires.move.setNextMove(currentDir)
@@ -81,8 +76,8 @@ class LevyBehaviourImpl extends Behaviour implements RobotVisu {
 	
 	def bump() {
 		requires.see.sensorReadings.exists[
-			((hasWall && dir.lengthSq < 1)
-			|| (hasBot && dir.lengthSq < 1))
+			((hasWall && lengthSq < 1)
+			|| (hasBot && lengthSq < 1))
 			&& currentDir.between(cone)
 		]
 	}
@@ -101,39 +96,18 @@ class LevyBehaviourImpl extends Behaviour implements RobotVisu {
 	
 	@Cached
 	private def List<SeenVictim> seenVictims() {
-		requires.see.visibleVictims
-		.map[v|
-			val myDistToVictSq = v.dir.lengthSq
-			val ImNext = new Double2D(0,0).isConsideredNextTo(myDistToVictSq)
-			new SeenVictim(v.dir,
-				requires.see.RBVisibleRobots.count[
-					coord.isConsideredNextTo(coord.distanceSq(v.dir))
-				] + (if (ImNext) 1 else 0),
-				v.nbBotsNeeded,
-				ImNext
-			)
+		requires.see.visibleVictims.map[
+			toSeenVictim(requires.see.RBVisibleRobots, requires.see.visibleVictims)
 		]
 	}
 	
 	@Cached
 	private def List<SeenVictim> consideredVictims() {
-		seenVictims.filter[
-			if (imNext) howMuch <= nbBotsNeeded
-			else howMuch < nbBotsNeeded
-		]
+		seenVictims.filter[inNeed]
 	}
 	
-	private def isConsideredNextTo(Double2D who, double hisDistToVictSq) {
-		// bot is close enough to victim
-		hisDistToVictSq <= RequirementsConstants.CONSIDERED_NEXT_TO_VICTIM_DISTANCE_SQUARED
-			// but not closer to another victim
-			&& who.isCloserTo(hisDistToVictSq)
-	}
-	
-	private def isCloserTo(Double2D who, double distToWhatSq) {
-		!requires.see.visibleVictims.exists[ov|
-			who.distanceSq(ov.dir) < distToWhatSq
-		]
-	}
-	
+}
+
+@Data class MyChoice implements Choice {
+	val Double2D direction
 }

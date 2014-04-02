@@ -3,7 +3,7 @@ package eu.ascens.unimore.robots.mason
 import de.oehme.xtend.contrib.ValueObject
 import eu.ascens.unimore.robots.Behaviour
 import eu.ascens.unimore.robots.UIConstants
-import eu.ascens.unimore.robots.geometry.Radiangle
+import eu.ascens.unimore.robots.common.Radiangle
 import eu.ascens.unimore.robots.mason.datatypes.Stats
 import java.awt.Color
 import java.util.List
@@ -24,8 +24,9 @@ import sim.util.Int2D
 import sim.util.TableLoader
 import sim.util.gui.SimpleColorMap
 
-import static eu.ascens.unimore.robots.geometry.GeometryExtensions.*
+import static eu.ascens.unimore.robots.common.GeometryExtensions.*
 import static fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
+import de.oehme.xtend.contrib.Cached
 
 @ValueObject class InitialisationParameters {
 	
@@ -43,6 +44,15 @@ import static fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
 	int minBotsPerVictim
 	int maxBotsPerVictim
 	() => Behaviour newBehaviour
+	
+	@Cached
+	def fj.data.List<Pair<Double2D, Pair<Double2D, Double2D>>> sensorDirectionCones() {
+		Radiangle.buildCones(nbProximityWallSensors)
+			.map[
+				val cone = it.key.toNormalizedVector -> it.value.toNormalizedVector
+				middleAngledVector(cone.key, cone.value) -> cone
+			].sort(ORD_D2D.comap[key]) // sort evaluates
+	}
 } 
 
 abstract class AscensSimState extends SimState {
@@ -69,18 +79,15 @@ abstract class AscensSimState extends SimState {
 		this._parameters = parameters
 		this._map = parameters.map
 		// +1 to have a margin for error
-		this._visionDistance = 1 + Math.ceil(
-			Math.max(parameters.rbRange, parameters.wallRange)
+		this._visionDistance = Math.ceil(
+			Math.max(
+				Math.max(parameters.rbRange, parameters.wallRange),
+				Math.max(parameters.victimRange, parameters.proximityBotRange)
+			)
 		) as int
-		this._sensorDirectionCones = Radiangle.buildCones(parameters.nbProximityWallSensors)
-			.map[
-				val cone = it.key.toNormalizedVector -> it.value.toNormalizedVector
-				middleAngledVector(cone.key, cone.value) -> cone
-			].sort(ORD_D2D.comap[key]) // sort evaluates
 	}
 	
 	@Property val int visionDistance
-	@Property val fj.data.List<Pair<Double2D, Pair<Double2D, Double2D>>> sensorDirectionCones
 
 	abstract def void populate()
 
@@ -270,10 +277,12 @@ class ModelProperties {
 	@Property boolean showAreasOnlyFromMeForAll = false
 	@Property boolean showVictimsFromMe = false
 	@Property boolean showVictimsFromMeForAll = false
-	@Property boolean showExplorableFromOthers = false
-	@Property boolean showExplorableFromOthersForAll = false
-	@Property boolean showExplorable = false
-	@Property boolean showExplorableForAll = false
+	@Property boolean showExplorablesFromOthers = false
+	@Property boolean showExplorablesFromOthersForAll = false
+	@Property boolean showExplorables = false
+	@Property boolean showExplorablesForAll = false
+	@Property boolean showChoice = false
+	@Property boolean showChoiceForAll = false
 	@Property boolean showVisibleBotsAndVictims = false
 	@Property boolean showWhoFollowsWhoForAll = false
 	@Property boolean showWhoFollowsWho = false

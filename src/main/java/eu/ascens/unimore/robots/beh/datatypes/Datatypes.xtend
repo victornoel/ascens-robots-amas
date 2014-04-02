@@ -1,51 +1,41 @@
 package eu.ascens.unimore.robots.beh.datatypes
 
+import eu.ascens.unimore.robots.common.SeenVictim
+import eu.ascens.unimore.robots.mason.datatypes.Choice
 import eu.ascens.unimore.robots.mason.datatypes.Message
 import eu.ascens.unimore.robots.mason.datatypes.RBEmitter
 import fj.data.List
+import fj.data.Option
 import sim.util.Double2D
 
 import static extension fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
 import static extension fr.irit.smac.lib.contrib.xtend.JavaExtensions.*
 
-@Data abstract class Choice {
+interface Explorable extends Choice {
 	
-	val Double2D direction
-	
+	def double getCriticality()
+	def Option<String> getGotItFrom()
+	def String getOrigin()
+	def double getTraveled()
 }
 
-@Data class Explorable extends Choice {
+@Data class ExplorableImpl implements Explorable {
 	
 	// used by decision
+	val Double2D direction
 	val double criticality
 	
-	val double victimSlice
-	
 	// used by visu
-	val Double2D via
+	val Option<RBEmitter> via
+	val List<RBEmitter> counting
 	
-	new(Double2D direction, double criticality, double victimSlice, Double2D via) {
-		super(direction)
-		doAssert(criticality >= 0 && criticality <= 1.0, "wrong crit: "+criticality)
-		_criticality = criticality
-		_victimSlice = victimSlice
-		_via = via
-	}
+	val Option<String> gotItFrom
+	val String origin
 	
-	new(Double2D direction, double criticality, double victimSlice) {
-		this(direction, criticality, victimSlice, null)
-	}
+	val double traveled
 	
-	def Explorable via(Double2D newDir, RBEmitter from, double newCriticality) {
-		new Explorable(newDir, newCriticality, victimSlice, from.coord)
-	}
-	
-	def Explorable via(Double2D newDir, RBEmitter from) {
-		new Explorable(newDir, criticality, victimSlice, from.coord)
-	}
-	
-	def Explorable withCriticality(double newCriticality) {
-		new Explorable(direction, newCriticality, victimSlice, via)
+	static def build(Double2D direction, double criticality, String origin) {
+		new ExplorableImpl(direction, criticality, Option.none, List.nil, Option.none, origin, 0)
 	}
 	
 	override def toString() {
@@ -53,41 +43,31 @@ import static extension fr.irit.smac.lib.contrib.xtend.JavaExtensions.*
 	}
 }
 
-@Data class SeenVictim extends Choice {
+@Data class MySeenVictim extends SeenVictim {
 	
-	/**
-	 * How much people are around this victim (myself included)
-	 */
-	val int howMuch
+	val boolean imResponsible
 	
-	val int nbBotsNeeded
-	
-	val boolean ImNext
+	static def fromSeenVictim(SeenVictim v, boolean imResponsible) {
+		new MySeenVictim(
+			v.direction,
+			v.howMuch,
+			v.nbBotsNeeded,
+			v.imNext,
+			v.inNeed,
+			imResponsible
+		)
+	}
 	
 }
 
 @Data class ReceivedExplorable {
 	
-	RBEmitter from
-	Explorable explorable
+	val RBEmitter from
+	val Explorable explorable
+	val boolean onVictim
 	
-	def toExplorable(Double2D newDir, double newCriticality) {
-		explorable.via(newDir, from, newCriticality)
-	}
-	
-	def toExplorable(Double2D newDir) {
-		explorable.via(newDir, from)
-	}
-	
-}
-
-@Data class AgentSig {
-	
-	val String id
-	val int time
-	
-	override def toString() {
-		"Sig("+ id + ","+ time + ")"
+	def Explorable toExplorable(Double2D newDir, double newCriticality, List<RBEmitter> counting) {
+		new ExplorableImpl(newDir, newCriticality, Option.some(from), counting, Option.some(from.id), explorable.origin, explorable.traveled + from.coord.length)
 	}
 }
 

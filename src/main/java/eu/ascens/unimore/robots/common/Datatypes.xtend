@@ -1,6 +1,7 @@
-package eu.ascens.unimore.robots.geometry
+package eu.ascens.unimore.robots.common
 
 import com.vividsolutions.jts.algorithm.Angle
+import eu.ascens.unimore.robots.mason.datatypes.Choice
 import fj.data.List
 import sim.util.Double2D
 
@@ -102,5 +103,18 @@ class Radiangle {
 	override toString() {
 		"Rad["+value.toShortString(2)+"]"
 	}
+	
+}
+
+@Data class SeenVictim implements Choice {
+	
+	/**
+	 * How much people are around this victim (myself included)
+	 */
+	val Double2D direction
+	val int howMuch
+	val int nbBotsNeeded
+	val boolean imNext
+	val boolean inNeed
 	
 }

@@ -52,10 +52,6 @@ class BehaviourImpl extends ComposedBehaviour implements RobotVisu {
 		new ActionsPerceptionsImpl
 	}
 	
-	override protected make_m() {
-		new MessagingImpl
-	}
-	
 	override protected make_visu() {
 		this
 	}
@@ -63,7 +59,6 @@ class BehaviourImpl extends ComposedBehaviour implements RobotVisu {
 	override protected make_step() {
 		[|
 			logger.info("\n\n-----------------------")
-			parts.m.preStep.doIt
 			parts.ap.preStep.doIt
 			parts.r.preStep.doIt
 			parts.d.step.doIt
@@ -78,10 +73,6 @@ class BehaviourImpl extends ComposedBehaviour implements RobotVisu {
 		parts.ap.perceptions.lastMove
 	}
 	
-	override visibleBots() {
-		parts.ap.perceptions.visibleRobots.map[coord]
-	}
-	
 	override explorables() {
 		parts.r.representations.explorables
 	}
@@ -91,7 +82,7 @@ class BehaviourImpl extends ComposedBehaviour implements RobotVisu {
 	}
 	
 	override victimsFromMe() {
-		parts.r.representations.seenVictims
+		parts.r.representations.consideredVictims
 	}
 	
 	override explorablesFromOthers() {

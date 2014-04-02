@@ -105,17 +105,17 @@ public class AscensMasonImpl extends AscensMason {
 				
 				@Override
 				public List<SensorReading> getSensorReadings() {
-					return bot.getSensorReadings();
+					return bot.sensorReadings();
 				}
 				
 				@Override
 				public List<RBEmitter> getRBVisibleRobots() {
-					return bot.getRBVisibleBotsWithCoordinate();
+					return bot.rbVisibleBotsWithCoordinate();
 				}
 				
 				@Override
 				public List<VisibleVictim> getVisibleVictims() {
-					return bot.getVisibleVictims();
+					return bot.visibleVictims();
 				}
 				
 				@Override
@@ -195,7 +195,7 @@ public class AscensMasonImpl extends AscensMason {
 			return new Push<Message>() {
 				@Override
 				public void push(Message arg0) {
-					for(MasonRobot b: bot.getRadioReachableBots()) {
+					for(MasonRobot b: bot.radioReachableBots()) {
 						if (b instanceof MyMasonRobot) {
 							((MyMasonRobot)b).pushMsg(arg0);
 						}

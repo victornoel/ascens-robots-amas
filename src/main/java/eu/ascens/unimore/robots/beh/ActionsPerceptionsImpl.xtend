@@ -3,6 +3,7 @@ package eu.ascens.unimore.robots.beh
 import de.oehme.xtend.contrib.Cached
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
 import eu.ascens.unimore.robots.beh.datatypes.ExplorableMessage
+import eu.ascens.unimore.robots.beh.datatypes.ReceivedExplorable
 import eu.ascens.unimore.robots.beh.interfaces.IActionsExtra
 import eu.ascens.unimore.robots.beh.interfaces.IPerceptionsExtra
 import eu.ascens.unimore.robots.mason.datatypes.RBEmitter
@@ -13,8 +14,7 @@ import fr.irit.smac.lib.contrib.xtend.macros.StepCached
 import org.slf4j.LoggerFactory
 import sim.util.Double2D
 
-import static extension eu.ascens.unimore.robots.geometry.GeometryExtensions.*
-import static extension eu.ascens.unimore.robots.geometry.ObstacleAvoidance.*
+import static extension eu.ascens.unimore.robots.common.ObstacleAvoidance.*
 
 class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra, IPerceptionsExtra {
 
@@ -45,41 +45,29 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 		requires.rbPublish.push(new ExplorableMessage(explorables, onVictim))
 	}
 	
-	override previousDirection() {
-		lastMove
-	}
-	
-	override goingBack(Double2D dir) {
-		dir.dot(previousDirection) < 0
-	}
-	
 	override goTo(Double2D to) {
 		val l = to.length
+		
 		if (l > 0.001) {
 			
-//			val bbmfm = visibleRobots.filter[
-//				// behind me (w.r.t where I'm going)
-//				coord.dot(to) < 0
-//				// following me (w.r.t where I'm going)
-//				&& message.isSome
-//				&& (message.some() instanceof ExplorableMessage)
-//				&& {
-//					val m = message.some() as ExplorableMessage
-//					m.worthExplorable.notEmpty
-//					&& m.worthExplorable.head.direction.dot(to) > 0
-//				}
-//			]
-			
+//			val bbmfm = receivedMessages
+//							.filter[
+//								// behind me (w.r.t where I'm going)
+//								from.coord.dot(to) < 0
+//								// following me (w.r.t where I'm going)
+//								//&& directionFromMyPoV.dot(to) > 0
+//							].map[from.coord]
+//				
 //			if (bbmfm.notEmpty) {
-//				val distSq = bbmfm.map[coord.lengthSq].minimum(Ord.doubleOrd)
+//				val distSq = bbmfm.map[lengthSq].minimum(Ord.doubleOrd)
 //				if (distSq > (SimulationConstants.WALL_RANGE*SimulationConstants.WALL_RANGE)*0.9) {
+//					lastMove = new Double2D(0,0)
 //					return
 //				}
 //			}
 			
-			
 			// TODO: smooth things using prevDirs? like not moving if it's useless
-			val move = to.computeDirectionWithAvoidance(sensorReadings).dir.resize(l)
+			val move = to.computeDirectionWithAvoidance(makeVision(sensorReadings)).dir.resize(l)
 			lastMove = to
 			
 			logger.info("going to {} targetting {}.", move, to)
@@ -122,14 +110,19 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	}
 	
 	@Cached
-	override Double2D escapeCrowdVector() {
-		visibleRobots
-		.filter[
-			message.isNone
-			|| !(message.some() instanceof ExplorableMessage)
-			|| !(message.some() as ExplorableMessage).onVictim
+	override List<ReceivedExplorable> receivedMessages() {
+		visibleRobots.bind[vb|
+			switch vb.message {
+				case vb.message.isSome && vb.coord.lengthSq > 0: {
+					switch m: vb.message.some(){
+						ExplorableMessage: m.worthExplorable.bind[
+							List.list(new ReceivedExplorable(vb, it, m.onVictim))
+						]
+						default: List.nil
+					}
+				}
+				default: List.nil
+			}
 		]
-		.map[coord]
-		.computeCrowdVector
 	}
 }

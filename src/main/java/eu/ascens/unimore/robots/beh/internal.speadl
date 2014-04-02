@@ -2,8 +2,6 @@ import eu.ascens.unimore.robots.Behaviour
 import eu.ascens.unimore.robots.beh.interfaces.IActions
 import eu.ascens.unimore.robots.beh.interfaces.IActionsExtra
 import eu.ascens.unimore.robots.beh.interfaces.IDecisionsExtra
-import eu.ascens.unimore.robots.beh.interfaces.IMessaging
-import eu.ascens.unimore.robots.beh.interfaces.IMessagingExtra
 import eu.ascens.unimore.robots.beh.interfaces.IPerceptions
 import eu.ascens.unimore.robots.beh.interfaces.IPerceptionsExtra
 import eu.ascens.unimore.robots.beh.interfaces.IRepresentations
@@ -15,7 +13,6 @@ import eu.ascens.unimore.robots.mason.interfaces.RobotPerceptions
 import fr.irit.smac.may.lib.interfaces.Do
 import fr.irit.smac.may.lib.interfaces.Pull
 import fr.irit.smac.may.lib.interfaces.Push
-import java.util.Collection
 
 namespace eu.ascens.unimore.robots.beh {
 	
@@ -30,7 +27,6 @@ namespace eu.ascens.unimore.robots.beh {
 		
 		part r: Representations {
 			bind perceptions to ap.perceptions
-			bind messaging to m.messaging
 		}
 		
 		part ap: ActionsPerceptions {
@@ -39,24 +35,8 @@ namespace eu.ascens.unimore.robots.beh {
 			bind radioBroadcast to radioBroadcast
 			bind rbPublish to rbPublish
 			bind id to id
-			bind messaging to m.messaging
 		}
 		
-		part m: Messaging {
-			bind getRadioMessages to getRadioMessages
-			bind perceptions to ap.perceptions
-		}
-		
-	}
-	
-	component Messaging {
-		provides preStep: Do
-		
-		provides messaging: IMessagingExtra
-		
-		requires perceptions: IPerceptions
-		
-		requires getRadioMessages: Pull[Collection[Message]]
 	}
 	
 	component Representations {
@@ -64,7 +44,6 @@ namespace eu.ascens.unimore.robots.beh {
 		provides preStep: Do
 		provides representations: IRepresentationsExtra
 		
-		requires messaging: IMessaging
 		requires perceptions: IPerceptions
 	}
 	
@@ -87,7 +66,6 @@ namespace eu.ascens.unimore.robots.beh {
 		provides perceptions: IPerceptionsExtra
 		
 		requires id: Pull[String]
-		requires messaging: IMessaging
 		requires see: RobotPerceptions
 		requires move: RobotMovements
 		requires rbPublish: Push[Message]

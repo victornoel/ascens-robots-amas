@@ -3,14 +3,10 @@ package eu.ascens.unimore.robots.mason.datatypes
 import ec.util.MersenneTwisterFast
 import fj.data.Option
 import sim.util.Double2D
+import de.oehme.xtend.contrib.Cached
 
 @Data class Message {
 	
-}
-
-@Data class RBMessage {
-	RBEmitter emitter
-	Message message
 }
 
 @Data class RBEmitter {
@@ -26,12 +22,23 @@ import sim.util.Double2D
 	val Pair<Double2D,Double2D> cone
 	val boolean hasWall
 	val boolean hasBot
+	
+	@Cached
+	def double lengthSq() {
+		dir.lengthSq
+	}
 }
 
 @Data class VisibleVictim {
 	
 	val Double2D dir
 	val int nbBotsNeeded
+}
+
+interface Choice {
+	
+	def Double2D getDirection()
+	
 }
 
 @Data class Stats {
@@ -46,8 +53,8 @@ import sim.util.Double2D
 	
 	val MersenneTwisterFast random
 	
-	def nextDouble() {
-		random.nextDouble
+	def nextDouble(boolean includeZero, boolean includeOne) {
+		random.nextDouble(includeZero, includeOne)
 	}
 	
 	def nextInt(int i) {

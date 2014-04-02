@@ -1,33 +1,34 @@
 library(ggplot2)
 
-maps <- list("maze1","maze2","maze3","maze5")
-nbVict <- list("8", "16", "35")
+maps <- list("maze1", "maze2", "maze3", "maze5")
 
 for(m in maps) {
 	pattern <- paste0("^run.*",m,".*csv$")
-	data <- data.frame(stringsAsFactors = F)
+	data <- data.frame()
 	for(file in list.files(pattern=pattern)) {
 		print(paste0("reading file ",file))
-		ndata = read.table(file, header=T, sep=";", stringsAsFactors = F, colClasses=c('numeric','numeric','numeric','numeric','character','character','character','character','character'))
+		ndata = read.table(file, header=T, sep=";")
 		data <- rbind(data, ndata)
 	}
-	for(nb in nbVict) {
-		d <- data[data$nbVictims == nb,]
-		if (nrow(d) == 0) break
-		p <- ggplot(d,aes(x=step))
-		rp <- p +
-			geom_step(aes(y=secured, colour=algorithm, linetype="Secured")) +
-			geom_step(aes(y=discovered, colour=algorithm, linetype="Discovered")) +
-			scale_linetype_manual("Victims", 
-						values = c("Secured" = "solid", "Discovered" = "dashed")) +
-			facet_grid(nbBots ~ rbRange, labeller = label_both) +
-			labs(title=paste(nb, "Victims,",m), y="victims")
-		ggsave(filename=file.path("pdf", paste0(m,"-",nb,"-victims.pdf")), plot=rp)
-		rp <- p +
-			geom_step(aes(y=explored, colour=algorithm)) +
-			ylim(0,100) +
-			facet_grid(nbBots ~ rbRange, labeller = label_both) +
-			labs(title=paste(nb, "Victims,",m))
-		ggsave(filename=file.path("pdf", paste0(m,"-",nb,"-explored.pdf")), plot=rp)
-	}
+	if (nrow(data) == 0) next
+	data$rbRange <- ordered(data$rbRange)
+	data$nbVictims <- ordered(data$nbVictims)
+	p <- ggplot(data,aes(x=step, colour=algorithm, linetype=rbRange)) +
+		scale_colour_hue(name="Algorithm") +
+		scale_linetype_manual(name="RB Range", values=c("solid", "dashed", "dotted")) +
+		facet_grid(nbVictims ~ nbBots, labeller = label_both, scales="free_y") +
+		ggtitle(m) +
+		theme(aspect.ratio=1)
+	rp <- p +
+		geom_step(aes(y=secured), direction="vh") +
+		ylab("victims")
+	ggsave(filename=file.path("pdf", paste0(m,"-victims.pdf")), plot=rp, scale=2, paper="a4r")
+	rp <- p +
+		geom_step(aes(y=discovered), direction="vh") +
+		ylab("victims")
+	ggsave(filename=file.path("pdf", paste0(m,"-victims2.pdf")), plot=rp, scale=2, paper="a4r")
+	rp <- p +
+		geom_step(aes(y=explored), direction="vh") +
+		ylim(0,100)
+	ggsave(filename=file.path("pdf", paste0(m,"-explored.pdf")), plot=rp, scale=2, paper="a4r")
 }

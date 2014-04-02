@@ -16,9 +16,9 @@ class SimulationConstants {
 	 * rest for nothing
 	*/
 	public static val DEFAULT_MAZE = "maze2"
-	public static val NB_BOTS = 800
-	public static val MIN_BOTS_PER_VICTIM = 3
-	public static val MAX_BOTS_PER_VICTIM = 3
+	public static val NB_BOTS = 200
+	public static val MIN_BOTS_PER_VICTIM = 2
+	public static val MAX_BOTS_PER_VICTIM = 4
 	public static val NB_VICTIMS = 100
 	
 	// Robots characteristics, in meters or meters/step
@@ -32,6 +32,8 @@ class SimulationConstants {
 	
 	// bots behaviour
 	public static val DEFAULT_BEHAVIOUR = [|new BehaviourImpl]
+	
+	public static val WALL_RANGE_SQUARED = WALL_RANGE*WALL_RANGE
 }
 
 class UIConstants {

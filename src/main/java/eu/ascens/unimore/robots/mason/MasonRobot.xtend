@@ -50,7 +50,7 @@ abstract class MasonRobot implements Steppable {
 		}
 	}
 	
-	def getRadioReachableBots() {
+	def radioReachableBots() {
 		// uses allObjects since the number of bot is limited and the distance is big
 		// will be more efficient than getNeighborsWithinDistance
 		List.iterableList(state.agents.allObjects.filter(MasonRobot)).filter[b|
@@ -58,7 +58,7 @@ abstract class MasonRobot implements Steppable {
 		]
 	}
 	
-	def getVisibleVictims() {
+	def visibleVictims() {
 		surroundings.visibleVictims
 	}
 	
@@ -70,11 +70,11 @@ abstract class MasonRobot implements Steppable {
 		]
 	}
 	
-	def getRBVisibleBotsWithCoordinate() {
+	def rbVisibleBotsWithCoordinate() {
 		surroundings.RBVisibleBotsWithCoordinate
 	}
 	
-	def getSensorReadings() {
+	def sensorReadings() {
 		surroundings.sensorReadings
 	}
 	
@@ -120,43 +120,41 @@ class Surroundings implements ILosBoard {
 	override visit(int x, int y) {
 		val ob = isObstacle(x, y)
 		val pos = new Int2D(x,y)
-		
+				
 		val dist = me.position.distance(new Double2D(pos.x+0.5, pos.y+0.5))
 		
-		if (!ob && dist < me.state.parameters.rbRange) {
+		// +1 to have some margin (anyway realDist is used to doublecheck)
+		if (!ob && dist < me.state.parameters.rbRange+1) {
 			val r = me.state.agents.getObjectsAtDiscretizedLocation(pos)
 			if (r != null) {
 					for (b: r.filter(MasonRobot)) {
 						if (b !== me) {
 							val realDist = b.position.distance(me.position)
-							if (realDist < me.state.parameters.rbRange) {
+							if (realDist <= me.state.parameters.rbRange) {
 								foundBots += b
 							}
-							if (realDist < me.state.parameters.proximityBotRange) {
+							if (realDist <= me.state.parameters.proximityBotRange) {
 								proximityBots += b.position
 							}
 						}
 					}
 				}
 		}
-		if (!ob && dist < me.state.parameters.victimRange) {
+		
+		if (!ob && dist <= me.state.parameters.victimRange) {
 			// mark as explored
 			me.state.setExplored(x,y)
 			val r = me.state.agents.getObjectsAtDiscretizedLocation(pos)
 			if (r != null) {
-				for (v: r.filter(Victim)) {
-					val realDist = v.position.distance(me.position)
-					if (realDist < me.state.parameters.victimRange) {
-						victims += v
-					}
-				}
+				victims += r.filter(Victim)
 			}
 		}
-		if (dist < me.state.parameters.wallRange) {
+		
+		if (dist <= me.state.parameters.wallRange) {
 			if (ob) {
 				wallCoords += pos
 			} else {
-				noWallCoords += pos
+//				noWallCoords += pos
 			}
 		}
 	}
@@ -248,7 +246,7 @@ class Surroundings implements ILosBoard {
 	
 	@Cached
 	def List<SensorReading> getSensorReadings() {
-		me.state.sensorDirectionCones.map[d|
+		me.state.parameters.sensorDirectionCones.map[d|
 			// bots in this cone
 			val pbots = proximitySensorsBots.filter[between(d.value)]
 			// walls touched by this direction

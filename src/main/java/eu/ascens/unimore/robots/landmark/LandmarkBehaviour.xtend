@@ -2,6 +2,7 @@ package eu.ascens.unimore.robots.landmark
 
 import de.oehme.xtend.contrib.Cached
 import eu.ascens.unimore.robots.Behaviour
+import eu.ascens.unimore.robots.mason.datatypes.Choice
 import eu.ascens.unimore.robots.mason.interfaces.RobotVisu
 import fj.data.List
 import fr.irit.smac.lib.contrib.xtend.macros.StepCached
@@ -98,30 +99,30 @@ class LandmarkBehaviour extends Behaviour implements RobotVisu {
 	}
 	
 	override choice() {
-		throw new UnsupportedOperationException("TODO: auto-generated method stub")
+		new MyChoice(lastMove)
 	}
 	
 	override move() {
-		throw new UnsupportedOperationException("TODO: auto-generated method stub")
-	}
-	
-	override visibleBots() {
-		throw new UnsupportedOperationException("TODO: auto-generated method stub")
+		lastMove
 	}
 	
 	override explorables() {
-		throw new UnsupportedOperationException("TODO: auto-generated method stub")
+		List.nil
 	}
 	
 	override victimsFromMe() {
-		throw new UnsupportedOperationException("TODO: auto-generated method stub")
+		List.nil
 	}
 	
 	override areasOnlyFromMe() {
-		throw new UnsupportedOperationException("TODO: auto-generated method stub")
+		List.nil
 	}
 	
 	override explorablesFromOthers() {
-		throw new UnsupportedOperationException("TODO: auto-generated method stub")
+		List.nil
 	}
+}
+
+@Data class MyChoice implements Choice {
+	val Double2D direction
 }
