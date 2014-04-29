@@ -1,8 +1,8 @@
 package eu.ascens.unimore.robots.common
 
-import eu.ascens.unimore.robots.SimulationConstants
 import eu.ascens.unimore.robots.mason.datatypes.SensorReading
 import fj.data.List
+import fj.data.Option
 import fj.data.Stream
 import fj.data.Zipper
 import sim.util.Double2D
@@ -17,48 +17,52 @@ class ObstacleAvoidance {
 	// Useful constants based on the others
 	public static val AVOID_VERY_CLOSE_WALL_DISTANCE_SQUARED = AVOID_VERY_CLOSE_WALL_DISTANCE*AVOID_VERY_CLOSE_WALL_DISTANCE
 	
-	static def makeVision(List<SensorReading> sensorReadings) {
-		Zipper.fromStream(Stream.iterableStream(sensorReadings)).some()
-	}
-	
 	// taken from http://link.springer.com/chapter/10.1007%2F978-3-642-22907-7_7
-	static def computeDirectionWithAvoidance(Double2D to, Zipper<SensorReading> vision) {
+	static def computeDirectionWithAvoidance(Double2D to, List<SensorReading> sensorReadings) {
+		
+		val vision = Zipper.fromStream(Stream.iterableStream(sensorReadings)).some()
 		
 		val desiredDirection = vision.find[d|to.between(d.cone)].some()
 		
-		if (desiredDirection.focus.lengthSq >= SimulationConstants.WALL_RANGE_SQUARED) {
-			return desiredDirection.focus
+		if (desiredDirection.focus.isFree) {
+			return Option.some(desiredDirection.focus)
 		}
 		
 		var gothroughR = desiredDirection.cycle(true)
 		var gothroughL = desiredDirection.cycle(false)
 		
 		while ((gothroughR.focus !== desiredDirection.focus)
-			&& (gothroughL.focus !== desiredDirection.focus)) {
-			if (gothroughR.focus.lengthSq >= SimulationConstants.WALL_RANGE_SQUARED) {
-				return gothroughR.chooseBest(true)
-			} else if (gothroughL.focus.lengthSq >= SimulationConstants.WALL_RANGE_SQUARED) {
-				return gothroughL.chooseBest(false)
+				&& (gothroughL.focus !== desiredDirection.focus)) {
+			
+			if (gothroughR.focus.isFree) {
+				return Option.some(gothroughR.chooseBest(true))
+			} else if (gothroughL.focus.isFree) {
+				return Option.some(gothroughL.chooseBest(false))
 			}
+			
 			gothroughR = gothroughR.cycle(true)
 			gothroughL = gothroughL.cycle(false)
 		} 
 		
-		return desiredDirection.focus
+		return Option.none
+	}
+	
+	private static def isFree(SensorReading sr) {
+		!sr.hasWall
+		//sr.lengthSq >= SimulationConstants.WALL_RANGE_SQUARED
 	}
 	
 	private static def chooseBest(Zipper<SensorReading> z, boolean toTheRight) {
-		val prev = z.cycle(toTheRight)
-		val next = z.cycle(!toTheRight)
+		
+		val next = z.cycle(toTheRight)
+		val prev = z.cycle(!toTheRight)
+		
 		if (prev.focus.lengthSq < AVOID_VERY_CLOSE_WALL_DISTANCE_SQUARED
-			&& next.focus.lengthSq >= SimulationConstants.WALL_RANGE_SQUARED) {
-			return next.focus
-		} else if (next.focus.lengthSq < AVOID_VERY_CLOSE_WALL_DISTANCE_SQUARED
-			&&prev.focus.lengthSq >= SimulationConstants.WALL_RANGE_SQUARED) {
-			return prev.focus
-		} else {
-			return z.focus
+			&& !next.focus.hasWall) {
+				return next.focus
 		}
+		
+		return z.focus
 	}
 	
 	private static def <A> cycle(Zipper<A> z, boolean toTheRight) {

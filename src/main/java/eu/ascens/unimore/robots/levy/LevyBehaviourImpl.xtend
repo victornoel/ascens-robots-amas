@@ -57,14 +57,12 @@ class LevyBehaviourImpl extends Behaviour implements RobotVisu {
 		
 		if (victimsOfInterest.empty) {
 			if (currentDir == null || shouldChange) {
-				currentDir = randomDirection()
+				currentDir = randomDirection
 				alpha = requires.random.pull.nextDouble(false, true)
 				accumulator = 0
 			}
-			if (!bump) {
-				requires.move.setNextMove(currentDir)
-				accumulator = accumulator + alpha
-			}
+			requires.move.setNextMove(currentDir)
+			accumulator = accumulator + alpha
 		} else {
 			val v = victimsOfInterest.mostInNeedVictim
 			currentDir = v.direction
@@ -103,7 +101,7 @@ class LevyBehaviourImpl extends Behaviour implements RobotVisu {
 	
 	@Cached
 	private def List<SeenVictim> consideredVictims() {
-		seenVictims.filter[inNeed]
+		seenVictims.filter[needMe]
 	}
 	
 }

@@ -1,8 +1,7 @@
 package eu.ascens.unimore.robots.mason
 
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
-import eu.ascens.unimore.robots.beh.datatypes.ExplorableImpl
-import eu.ascens.unimore.robots.beh.datatypes.MySeenVictim
+import eu.ascens.unimore.robots.beh.datatypes.ExplorableFromOther
 import eu.ascens.unimore.robots.common.SeenVictim
 import eu.ascens.unimore.robots.mason.datatypes.Choice
 import java.awt.Color
@@ -71,7 +70,7 @@ class BotPortrayal2D extends OvalPortrayal2D {
 				}
 				
 				if (properties.showWallsForAlls || (info.selected && properties.showWalls)) {
-					for (wc: object.surroundings.wallCoords.map[new Double2D(it)]) {
+					for (wc: object.surroundings.wallCoords) {
 						val wp = fieldPortrayal.getRelativeObjectPosition(wc, botPos, info)
 						graphics.setPaint(Color.RED)
 						graphics.fillRect(wp.x as int, wp.y as int, w, h)
@@ -108,9 +107,10 @@ class BotPortrayal2D extends OvalPortrayal2D {
 				
 				if (properties.showVictimsFromMeForAll || (info.selected && properties.showVictimsFromMe)) {
 					for(c: object.visu.victimsFromMe) {
-						val color = switch c {
-							MySeenVictim case c.imResponsible: Color.CYAN
-							default: Color.GREEN
+						val color = if (c.imClosest) {
+							Color.CYAN
+						} else {
+							Color.GREEN
 						}
 						graphics.printVisibleVictim(botFPos, botPos, c, info, color)
 					}
@@ -136,10 +136,11 @@ class BotPortrayal2D extends OvalPortrayal2D {
 						switch c: object.visu.choice {
 							Explorable: {
 								graphics.printExplorable(botFPos, botPos, c, info, Color.GREEN)
-								if (c instanceof ExplorableImpl) {
+								if (c instanceof ExplorableFromOther) {
 									for(ob: c.counting) {
-										graphics.printArrow(botFPos, botPos, ob.coord, info, Color.CYAN)
+										graphics.printArrow(botFPos, botPos, ob, info, Color.CYAN)
 									}
+									graphics.printArrow(botFPos, botPos, c.via, info, Color.BLUE)
 								}
 							}
 							SeenVictim: {
@@ -182,8 +183,8 @@ class BotPortrayal2D extends OvalPortrayal2D {
 				
 				if (properties.showWhoFollowsWhoForAll ||(properties.showWhoFollowsWho && info.selected)) {
 					switch c: object.visu.choice {
-						ExplorableImpl case c.via.isSome: {
-							graphics.printArrow(botFPos, botPos, c.via.some().coord, info, Color.BLUE)
+						ExplorableFromOther: {
+							graphics.printArrow(botFPos, botPos, c.via, info, Color.BLUE)
 						}
 					}
 				}
@@ -210,6 +211,7 @@ class BotPortrayal2D extends OvalPortrayal2D {
 	def printArrow(Graphics2D graphics, Point2D.Double botFPos, Double2D bot, Double2D relativeTarget, DrawInfo2D info, Color color, String label) {
 		
 		val target = bot + relativeTarget
+		
 		val targetPos = fieldPortrayal.getRelativeObjectPosition(target, bot, info)
 		
 		graphics.setPaint(color)

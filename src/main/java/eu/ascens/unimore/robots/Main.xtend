@@ -5,6 +5,7 @@ import eu.ascens.unimore.robots.beh.BehaviourImpl
 import eu.ascens.unimore.robots.disperse.DisperseBehaviourImpl
 import eu.ascens.unimore.robots.evaluation.Evaluation
 import eu.ascens.unimore.robots.evaluation.ParameterValue
+import eu.ascens.unimore.robots.levy.LevyBehaviourImpl
 import eu.ascens.unimore.robots.mason.InitialisationParameters
 import eu.ascens.unimore.robots.mason.InitialisationParametersBuilder
 import eu.ascens.unimore.robots.mason.datatypes.Stats
@@ -24,19 +25,19 @@ class GUI {
 			SimulationConstants.VICTIM_RANGE,
 			SimulationConstants.PROXIMITY_RANGE,
 			SimulationConstants.SPEED,
-			SimulationConstants.RB_RANGE,
+			20,
 			SimulationConstants.NB_WALL_SENSORS,
 			//SimulationConstants.DEFAULT_MAZE,
-			"maze5",
+			"maze2",
 			SimulationConstants.SEED,
 			//SimulationConstants.NB_BOTS,
 			200,
 			//SimulationConstants.NB_VICTIMS,
-			35,
+			16,
 			SimulationConstants.MIN_BOTS_PER_VICTIM,
 			SimulationConstants.MAX_BOTS_PER_VICTIM,
-			SimulationConstants.DEFAULT_BEHAVIOUR
-			//[|new DisperseBehaviourImpl]
+			//SimulationConstants.DEFAULT_BEHAVIOUR
+			[|new DisperseBehaviourImpl]
 			//[|new LevyBehaviourImpl]
 		)
 		val c = new AscensRobotsImpl(parameters).newComponent
@@ -103,11 +104,11 @@ class Eval {
 		switch parameters.map {
 			case "maze1": {
 				if (parameters.nbBots > 60) return false
-				if (parameters.nbVictims > 8) return false
+				if (parameters.nbVictims > 16) return false
 			}
 			case "maze2": {
 				if (parameters.nbBots > 272) return false
-				if (parameters.nbVictims > 8) return false
+				if (parameters.nbVictims > 16) return false
 			}
 			case "maze3": {
 				if (parameters.nbBots > 564) return false
@@ -118,16 +119,12 @@ class Eval {
 				if (parameters.nbVictims > 16) return false
 			}
 		}
-//		switch parameters.newBehaviour.apply {
-//			LevyBehaviourImpl: {
-//				// Levy do not use rb: this allows for only one run
-//				if (parameters.rbRange > 3.0) return false
-//			}
-//			DisperseBehaviourImpl: {
-//				// disperse do not use rb farther than VICTIM_RANGE
-//				if (parameters.rbRange > SimulationConstants.VICTIM_RANGE) return false
-//			}
-//		}
+		switch parameters.newBehaviour.apply {
+			LevyBehaviourImpl: {
+				// Levy do not use rb: this allows for only one run
+				if (parameters.rbRange > 3.0) return false
+			}
+		}
 		return true
 	}
 	
@@ -140,16 +137,17 @@ class Eval {
 	static val parameters = List.list(
 		Evaluation.parameter2(
 			"map", [InitialisationParametersBuilder b, String maze|b.map(maze)],
-			List.list("maze1","maze2","maze5") //"maze1","maze2","maze3","maze5"
+			List.list("maze1","maze2","maze3","maze5") //"maze1","maze2","maze3","maze5"
 		),
 		Evaluation.parameter(
 			"algorithm", [InitialisationParametersBuilder b, () => Behaviour algo|b.newBehaviour(algo)],
 			// need to explicit type, because of https://bugs.eclipse.org/bugs/show_bug.cgi?id=429138
 			// fixed in 2.6
 			List.<Pair<String,() => Behaviour>>list(
-				"amas" -> [|new BehaviourImpl],
-				"disperse" -> [|new DisperseBehaviourImpl]
-				//"levy" -> [|new LevyBehaviourImpl]
+				"amasE" -> [|new BehaviourImpl(false)],
+				"amasEV" -> [|new BehaviourImpl(true)],
+				"disperse" -> [|new DisperseBehaviourImpl],
+				"levy" -> [|new LevyBehaviourImpl]
 			)
 		),
 		Evaluation.parameter2(
@@ -158,11 +156,11 @@ class Eval {
 		),
 		Evaluation.parameter2(
 			"nbVictims", [InitialisationParametersBuilder b, int nbVictims|b.nbVictims(nbVictims)],
-			List.list(8, 16) // 8, 10, 16, 25, 35
+			List.list(8, 10, 16, 25, 35) // 8, 10, 16, 25, 35
 		),
 		Evaluation.parameter2(
 			"rbRange", [InitialisationParametersBuilder b, double rbRange|b.rbRange(rbRange)],
-			List.list(3.0, 20.0) //3.0, 5.0, 10.0, 20.0
+			List.list(3.0, 5.0, 10.0, 20.0) //3.0, 5.0, 10.0, 20.0
 		)
 	)
 	

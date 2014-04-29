@@ -19,6 +19,7 @@ import sim.util.Int2D
 import sim.util.MutableDouble2D
 
 import static extension fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
+import static extension fr.irit.smac.lib.contrib.fj.xtend.FunctionalJavaExtensions.*
 
 abstract class MasonRobot implements Steppable {
 
@@ -159,11 +160,7 @@ class Surroundings implements ILosBoard {
 		}
 	}
 	
-	private def conesForWallFromMe(Int2D wall, Int2D meD) {
-		// correspond to the center of the wall from double2d bot position pov
-		val wx = wall.x + 0.5
-		val wy = wall.y + 0.5
-		
+	private def conesForObjectFromMe(Double2D objectCenter, double objectRadius) {
 		/*
 		 * this compute cones (from left to right in the figure)
 		 * of the side of the squares from bot pov
@@ -178,54 +175,58 @@ class Surroundings implements ILosBoard {
                |    |    |    |
                +--------------+
 		 */
-		if (wall.x < meD.x) {
-			if (wall.y < meD.y) {
+		 
+		val wx = objectCenter.x
+		val wy = objectCenter.y
+		
+		if (objectCenter.x + objectRadius < me.position.x) {
+			if (objectCenter.y + objectRadius < me.position.y) {
 				// a
 				#[
-					new Double2D(wx - 0.5, wy + 0.5) -> new Double2D(wx + 0.5, wy + 0.5),
-					new Double2D(wx + 0.5, wy + 0.5) -> new Double2D(wx + 0.5, wy - 0.5)
+					new Double2D(wx - objectRadius, wy + objectRadius) -> new Double2D(wx + objectRadius, wy + objectRadius),
+					new Double2D(wx + objectRadius, wy + objectRadius) -> new Double2D(wx + objectRadius, wy - objectRadius)
 				]
-			} else if (wall.y > meD.y) {
+			} else if (objectCenter.y - objectRadius > me.position.y) {
 				// b
 				#[
-					new Double2D(wx + 0.5, wy + 0.5)-> new Double2D(wx + 0.5, wy - 0.5),
-					new Double2D(wx + 0.5, wy - 0.5)-> new Double2D(wx - 0.5, wy - 0.5)
+					new Double2D(wx + objectRadius, wy + objectRadius)-> new Double2D(wx + objectRadius, wy - objectRadius),
+					new Double2D(wx + objectRadius, wy - objectRadius)-> new Double2D(wx - objectRadius, wy - objectRadius)
 				]
 			} else {
 				// c
 				#[
-					new Double2D(wx + 0.5, wy + 0.5) -> new Double2D(wx + 0.5, wy - 0.5)
+					new Double2D(wx + objectRadius, wy + objectRadius) -> new Double2D(wx + objectRadius, wy - objectRadius)
 				]
 			}
-		} else if (wall.x > meD.x) {
-			if (wall.y < meD.y) {
+		} else if (objectCenter.x - objectRadius > me.position.x) {
+			if (objectCenter.y + objectRadius < me.position.y) {
 				// d
 				#[
-					new Double2D(wx - 0.5, wy - 0.5) -> new Double2D(wx - 0.5, wy + 0.5),
-					new Double2D(wx - 0.5, wy + 0.5) -> new Double2D(wx + 0.5, wy + 0.5)
+					new Double2D(wx - objectRadius, wy - objectRadius) -> new Double2D(wx - objectRadius, wy + objectRadius),
+					new Double2D(wx - objectRadius, wy + objectRadius) -> new Double2D(wx + objectRadius, wy + objectRadius)
 				]
-			} else if (wall.y > meD.y) {
+			} else if (objectCenter.y - objectRadius > me.position.y) {
 				// e
 				#[
-					new Double2D(wx + 0.5, wy - 0.5) -> new Double2D(wx - 0.5, wy - 0.5),
-					new Double2D(wx - 0.5, wy - 0.5) -> new Double2D(wx - 0.5, wy + 0.5)
+					new Double2D(wx + objectRadius, wy - objectRadius) -> new Double2D(wx - objectRadius, wy - objectRadius),
+					new Double2D(wx - objectRadius, wy - objectRadius) -> new Double2D(wx - objectRadius, wy + objectRadius)
 				]
 			} else {
 				// f
 				#[
-					new Double2D(wx - 0.5, wy - 0.5)-> new Double2D(wx - 0.5, wy + 0.5)
+					new Double2D(wx - objectRadius, wy - objectRadius)-> new Double2D(wx - objectRadius, wy + objectRadius)
 				]
 			}
 		} else {
-			if (wall.y < meD.y) {
+			if (objectCenter.y + objectRadius < me.position.y) {
 				// g
 				#[
-					new Double2D(wx - 0.5, wy + 0.5) -> new Double2D(wx + 0.5, wy + 0.5)
+					new Double2D(wx - objectRadius, wy + objectRadius) -> new Double2D(wx + objectRadius, wy + objectRadius)
 				]
-			} else if (wall.y > meD.y) {
+			} else if (objectCenter.y - objectRadius > me.position.y) {
 				// h
 				#[
-					new Double2D(wx + 0.5, wy - 0.5)-> new Double2D(wx - 0.5, wy - 0.5)
+					new Double2D(wx + objectRadius, wy - objectRadius)-> new Double2D(wx - objectRadius, wy - objectRadius)
 				]
 			} else {
 				throw new RuntimeException("impossible, bot would be inside a wall.")
@@ -235,10 +236,19 @@ class Surroundings implements ILosBoard {
 	
 	@Cached
 	def List<Pair<Double2D, Double2D>> wallCones() {
-		val meD = me.state.agents.discretize(me.position)
 		List.iterableList(
 			wallCoords
-				.map[conesForWallFromMe(meD)]
+				.map[new Double2D(x + 0.5, y + 0.5).conesForObjectFromMe(0.5)]
+				.flatten
+				.map[key.relativeVectorFor -> value.relativeVectorFor]
+		)
+	}
+	
+	@Cached
+	private def List<Pair<Double2D, Double2D>> proximityBotsCones() {
+		List.iterableList(
+			proximityBots
+				.map[conesForObjectFromMe(0.5)]
 				.flatten
 				.map[key.relativeVectorFor -> value.relativeVectorFor]
 		)
@@ -246,14 +256,18 @@ class Surroundings implements ILosBoard {
 	
 	@Cached
 	def List<SensorReading> getSensorReadings() {
-		me.state.parameters.sensorDirectionCones.map[d|
+		me.state.parameters.sensorDirectionCones.mapIdx[d,i|
 			// bots in this cone
-			val pbots = proximitySensorsBots.filter[between(d.value)]
+			val pbots = proximitySensorsBots
+							.filter[between(d.value)]
+							.map[length]
+							.filter[it > 0]
+							
 			// walls touched by this direction
 			val ws = wallCones.filter[d.key.between(it)]
-			
+						
 			val l = if (pbots.notEmpty) {
-				pbots.map[length].minimum(Ord.doubleOrd)
+				pbots.minimum(Ord.doubleOrd)
 			} else if (ws.notEmpty) {
 				// the closest wall in the cone
 				// this is kind of ok but not very formal way
@@ -268,7 +282,7 @@ class Surroundings implements ILosBoard {
 			// but when we get closer we would see it anyway
 			
 			val dist = Math.min(me.state.parameters.wallRange, l)
-			new SensorReading(d.key*dist, d.value, ws.notEmpty, pbots.notEmpty)
+			new SensorReading(i, d.key*dist, d.value, ws.notEmpty, pbots.notEmpty)
 		]
 	}
 	

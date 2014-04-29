@@ -40,12 +40,18 @@ class BehaviourImpl extends ComposedBehaviour implements RobotVisu {
 	
 	val logger = LoggerFactory.getLogger("agent")
 	
+	val boolean withVictim
+	
+	new(boolean withVictim) {
+		this.withVictim = withVictim
+	}
+	
 	override protected make_d() {
 		new DecisionsImpl
 	}
 	
 	override protected make_r() {
-		new RepresentationsImpl
+		new RepresentationsImpl(withVictim)
 	}
 	
 	override protected make_ap() {

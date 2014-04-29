@@ -25,7 +25,17 @@
 		<dependency>
 			<groupId>fr.irit.smac.lib.contrib</groupId>
 			<artifactId>xtend-contrib</artifactId>
-			<version>1.0.2-SNAPSHOT</version>
+			<version>1.0.2</version>
+		</dependency>
+		<dependency>
+			<groupId>fr.irit.smac.lib.contrib</groupId>
+			<artifactId>functionaljava-xtend-contrib</artifactId>
+			<version>1.0.2</version>
+		</dependency>
+		<dependency>
+			<groupId>fr.irit.smac.lib.contrib</groupId>
+			<artifactId>mason-xtend-contrib</artifactId>
+			<version>1.0.2</version>
 		</dependency>
 		<!-- For making videos -->
 		<dependency>
@@ -51,16 +61,6 @@
 			<groupId>net.sf.rlforj</groupId>
 			<artifactId>rlforj</artifactId>
 			<version>0.3</version>
-		</dependency>
-		<dependency>
-			<groupId>fr.irit.smac.lib.contrib</groupId>
-			<artifactId>functionaljava-xtend-contrib</artifactId>
-			<version>1.0.1-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>fr.irit.smac.lib.contrib</groupId>
-			<artifactId>mason-xtend-contrib</artifactId>
-			<version>1.0.2-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 

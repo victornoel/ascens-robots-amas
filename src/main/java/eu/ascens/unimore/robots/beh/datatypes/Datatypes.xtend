@@ -1,15 +1,14 @@
 package eu.ascens.unimore.robots.beh.datatypes
 
-import eu.ascens.unimore.robots.common.SeenVictim
 import eu.ascens.unimore.robots.mason.datatypes.Choice
 import eu.ascens.unimore.robots.mason.datatypes.Message
-import eu.ascens.unimore.robots.mason.datatypes.RBEmitter
 import fj.data.List
 import fj.data.Option
 import sim.util.Double2D
 
 import static extension fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
 import static extension fr.irit.smac.lib.contrib.xtend.JavaExtensions.*
+import eu.ascens.unimore.robots.common.SeenVictim
 
 interface Explorable extends Choice {
 	
@@ -17,57 +16,54 @@ interface Explorable extends Choice {
 	def Option<String> getGotItFrom()
 	def String getOrigin()
 	def double getTraveled()
+	
 }
 
 @Data class ExplorableImpl implements Explorable {
 	
 	// used by decision
 	val Double2D direction
+	
 	val double criticality
-	
-	// used by visu
-	val Option<RBEmitter> via
-	val List<RBEmitter> counting
-	
 	val Option<String> gotItFrom
 	val String origin
-	
 	val double traveled
 	
 	static def build(Double2D direction, double criticality, String origin) {
-		new ExplorableImpl(direction, criticality, Option.none, List.nil, Option.none, origin, 0)
+		new ExplorableImpl(direction, criticality, Option.none, origin, 0)
 	}
 	
-	override def toString() {
+	override toString() {
 		"Expl["+criticality.toShortString(2)+","+direction.toShortString(2)+"]"
 	}
 }
 
-@Data class MySeenVictim extends SeenVictim {
+@Data class ExplorableFromVictim extends ExplorableImpl {
 	
-	val boolean imResponsible
+	val SeenVictim relatedVictim
 	
-	static def fromSeenVictim(SeenVictim v, boolean imResponsible) {
-		new MySeenVictim(
-			v.direction,
-			v.howMuch,
-			v.nbBotsNeeded,
-			v.imNext,
-			v.inNeed,
-			imResponsible
-		)
+	static def build(Double2D direction, double criticality, String origin, SeenVictim v) {
+		new ExplorableFromVictim(direction, criticality, Option.none, origin, 0, v)
 	}
+}
+
+@Data class ExplorableFromOther extends ExplorableImpl {
+	
+	// used by visu
+	val Double2D via
+	val List<Double2D> counting
 	
 }
 
 @Data class ReceivedExplorable {
 	
-	val RBEmitter from
+	val Double2D from
+	val String fromId
 	val Explorable explorable
 	val boolean onVictim
 	
-	def Explorable toExplorable(Double2D newDir, double newCriticality, List<RBEmitter> counting) {
-		new ExplorableImpl(newDir, newCriticality, Option.some(from), counting, Option.some(from.id), explorable.origin, explorable.traveled + from.coord.length)
+	def Explorable toExplorable(Double2D newDir, double newCriticality, List<Double2D> counting) {
+		new ExplorableFromOther(newDir, newCriticality, Option.some(fromId), explorable.origin, explorable.traveled + from.length, from, counting)
 	}
 }
 

@@ -16,18 +16,23 @@ class VictimVision {
 	@Pure
 	public static def toSeenVictim(VisibleVictim v, List<RBEmitter> visibleRobots, List<VisibleVictim> visibleVictims) {
 		val myDistToVictSq = v.dir.lengthSq
-			val imNext = new Double2D(0,0).isConsideredNextTo(v, myDistToVictSq, visibleVictims)
-			val howMuch = visibleRobots
-							.count[
-								coord.isConsideredNextTo(v, coord.distanceSq(v.dir), visibleVictims)
-							] + (if (imNext) 1 else 0)
-			new SeenVictim(
-				v.dir,
-				howMuch,
-				v.nbBotsNeeded,
-				imNext,
-				if (imNext) howMuch <= v.nbBotsNeeded else howMuch < v.nbBotsNeeded
-			)
+		val imNext = new Double2D(0,0).isConsideredNextTo(v, myDistToVictSq, visibleVictims)
+		val howMuch = visibleRobots
+						.count[
+							coord.isConsideredNextTo(v, coord.distanceSq(v.dir), visibleVictims)
+						] + (if (imNext) 1 else 0)
+		val imClosest = !visibleRobots.exists[
+			coord.isCloserThanMe(coord.distanceSq(v.dir), myDistToVictSq)
+		]
+		new SeenVictim(
+			v.dir,
+			howMuch,
+			v.nbBotsNeeded,
+			imNext,
+			howMuch < v.nbBotsNeeded,
+			if (imNext) howMuch <= v.nbBotsNeeded else howMuch < v.nbBotsNeeded,
+			imClosest
+		)
 	}
 	
 	/** 
@@ -58,10 +63,9 @@ class VictimVision {
 	 */
 	@Pure
 	public static def <V extends SeenVictim> mostInNeedVictim(List<V> victims) {
-		victims.maximum(
+		victims.filter[needMe].maximum(
 			Ord.doubleOrd.comap[V it|
-				val hm = howMuch - (if (imNext) 1 else 0)
-				(hm as double)/(nbBotsNeeded as double)
+				(howMuch as double)/(nbBotsNeeded as double)
 			] || Ord.doubleOrd.comap[V it|-direction.lengthSq]
 		)
 	}

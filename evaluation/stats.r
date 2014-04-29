@@ -13,10 +13,10 @@ for(m in maps) {
 	if (nrow(data) == 0) next
 	data$rbRange <- ordered(data$rbRange)
 	data$nbVictims <- ordered(data$nbVictims)
-	p <- ggplot(data,aes(x=step, colour=algorithm, linetype=rbRange)) +
+	p <- ggplot(data,aes(x=step, colour=algorithm)) + # , linetype=rbRange
 		scale_colour_hue(name="Algorithm") +
-		scale_linetype_manual(name="RB Range", values=c("solid", "dashed", "dotted")) +
-		facet_grid(nbVictims ~ nbBots, labeller = label_both, scales="free_y") +
+		#scale_linetype_manual(name="RB Range", values=c("solid", "dashed", "dotted")) +
+		facet_grid(rbRange ~ nbBots, labeller = label_both, scales="free_y") + # nbVictims
 		ggtitle(m) +
 		theme(aspect.ratio=1)
 	rp <- p +

@@ -18,14 +18,27 @@ class Victim {
 		this.state = state
 	}
 	
+//	var wasSecured = false
+//	var howLongNot = 0
 	def isSecured() {
 		val agentsHere = state.agents.getNeighborsExactlyWithinDistance(position, RequirementsConstants.CONSIDERED_NEXT_TO_VICTIM_DISTANCE)
 		if (agentsHere != null) {
 			val nbBots = agentsHere.filter(MasonRobot).size
 			if (nbBots >= nbBotNeeded) {
+//				wasSecured = true
 				return true
 			}
 		}
+		// to avoid glitches in stats
+		// TODO better would be to have bots go around other bots and victims...
+//		if (wasSecured && howLongNot < 5) {
+//			howLongNot = howLongNot + 1
+//			return true
+//		} else {
+//			wasSecured = false
+//			howLongNot = 0
+//			return false
+//		}
 		return false
 	}
 	

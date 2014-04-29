@@ -108,13 +108,19 @@ class Radiangle {
 
 @Data class SeenVictim implements Choice {
 	
+
+	val Double2D direction
 	/**
 	 * How much people are around this victim (myself included)
 	 */
-	val Double2D direction
 	val int howMuch
 	val int nbBotsNeeded
+	/** I'm next to this one and not another */
 	val boolean imNext
+	/** there is not enough bots */
 	val boolean inNeed
-	
+	/** in need, and if I'm next, I'm one of the bots next to it */
+	val boolean needMe
+	/** i'm the closest bot to it */
+	val boolean imClosest
 }

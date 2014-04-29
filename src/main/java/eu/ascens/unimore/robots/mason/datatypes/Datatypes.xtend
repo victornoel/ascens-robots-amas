@@ -18,6 +18,7 @@ import de.oehme.xtend.contrib.Cached
 
 @Data class SensorReading {
 	
+	val int index
 	val Double2D dir
 	val Pair<Double2D,Double2D> cone
 	val boolean hasWall

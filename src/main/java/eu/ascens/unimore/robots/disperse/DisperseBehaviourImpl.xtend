@@ -12,11 +12,12 @@ import fj.P2
 import fj.data.List
 import fr.irit.smac.lib.contrib.xtend.macros.StepCached
 import sim.util.Double2D
+import sim.util.MutableDouble2D
 
-import static extension eu.ascens.unimore.robots.common.GeometryExtensions.*
 import static extension eu.ascens.unimore.robots.common.ObstacleAvoidance.*
 import static extension eu.ascens.unimore.robots.common.VictimVision.*
 import static extension fr.irit.smac.lib.contrib.fj.xtend.FunctionalJavaExtensions.*
+import static extension fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
 
 class DisperseBehaviourImpl extends Behaviour implements RobotVisu {
 	
@@ -54,7 +55,7 @@ class DisperseBehaviourImpl extends Behaviour implements RobotVisu {
 	private def chooseBetweenEquivalentDirections(List<Double2D> in) {
 		in
 			.map[e|P.p(e,e.distanceToCrowd)]
-			.maximums(crowdEq.comap(P2.__2), crowdOrd.comap(P2.__2))
+			.maximums(doubleEqWithEpsilon(0.01).comap(P2.__2), Ord.doubleOrd.comap(P2.__2))
 			.map[_1]
 			.map[e|P.p(e, e.distanceToLast)]
 			.maximum(Ord.doubleOrd.comap(P2.__2))
@@ -80,23 +81,32 @@ class DisperseBehaviourImpl extends Behaviour implements RobotVisu {
 			|| !(message.some() as DisperseMessage).onVictim
 		]
 		.map[coord]
-//		.filter[b|
-//			// -0.5 because if not it could escape a stopped bot
-//			b.length < SimulationConstants.VICTIM_RANGE-0.5
-//			&& !requires.see.visibleVictims.exists[
-//				dir.distanceSq(b) <= RequirementsConstants.CONSIDERED_NEXT_TO_VICTIM_DISTANCE_SQUARED
-//			]
-//		]
 		.computeCrowdVector
+	}
+	
+	// inspired from http://buildnewgames.com/vector-field-collision-avoidance/
+	@Pure
+	public def computeCrowdVector(Iterable<Double2D> bots) {
+		val v = new MutableDouble2D(0,0)
+		for(o: bots) {
+			val lsq = o.lengthSq
+			if (lsq > 0) {
+				v -= o.resize(1.0/lsq)
+			}
+		}
+		new Double2D(v)
 	}
 	
 	var lastMove = new Double2D(0,0)
 	def goTo(Double2D to) {
 		val l = to.length
-		if (l > 0.01) {
-			val move = to.computeDirectionWithAvoidance(makeVision(requires.see.sensorReadings)).dir.resize(l)
-			lastMove = to
-			requires.move.setNextMove(move)
+		if (l > 0) {
+			val av = to.computeDirectionWithAvoidance(requires.see.sensorReadings)
+			if (av.isSome) {
+				val move = av.some().dir.resize(l)
+				lastMove = move
+				requires.move.setNextMove(move)
+			}
 		}
 	}
 	
@@ -105,6 +115,11 @@ class DisperseBehaviourImpl extends Behaviour implements RobotVisu {
 		requires.see.visibleVictims.map[
 			toSeenVictim(requires.see.RBVisibleRobots,requires.see.visibleVictims)
 		]
+	}
+	
+	@Cached
+	private def List<SeenVictim> consideredVictims() {
+		seenVictims.filter[needMe]
 	}
 	
 	override choice() {
@@ -117,11 +132,6 @@ class DisperseBehaviourImpl extends Behaviour implements RobotVisu {
 	
 	override explorables() {
 		List.nil
-	}
-	
-	@Cached
-	private def List<SeenVictim> consideredVictims() {
-		seenVictims.filter[inNeed]
 	}
 	
 	override victimsFromMe() {

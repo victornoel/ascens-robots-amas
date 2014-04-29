@@ -1,5 +1,6 @@
 package eu.ascens.unimore.robots.mason
 
+import de.oehme.xtend.contrib.Cached
 import de.oehme.xtend.contrib.ValueObject
 import eu.ascens.unimore.robots.Behaviour
 import eu.ascens.unimore.robots.UIConstants
@@ -26,7 +27,6 @@ import sim.util.gui.SimpleColorMap
 
 import static eu.ascens.unimore.robots.common.GeometryExtensions.*
 import static fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
-import de.oehme.xtend.contrib.Cached
 
 @ValueObject class InitialisationParameters {
 	
@@ -53,11 +53,44 @@ import de.oehme.xtend.contrib.Cached
 				middleAngledVector(cone.key, cone.value) -> cone
 			].sort(ORD_D2D.comap[key]) // sort evaluates
 	}
-} 
+}
+
+class Maze extends IntGrid2D {
+	
+	@Property val int nbAreasToExplore
+	
+	@Property val List<Int2D> availStartingAreas = newArrayList
+	@Property val List<Int2D> availVictimAreas = newArrayList
+	
+	new(String filename) {
+		super(0,0)
+		setTo(TableLoader.loadPNGFile(this.class.getResourceAsStream(filename)))
+		
+		var nbAtE = 0
+		for(i: 0..<width) {
+			for(j: 0..<height) {
+				val type = get(i,j)
+				val iPos = new Int2D(i,j)
+				if (type == 2) {
+					availStartingAreas += iPos
+				}
+				if (type == 1) {
+					availVictimAreas += iPos
+				}
+				if (type == 1 || type == 2 || type == 3) {
+					nbAtE = nbAtE + 1
+				}
+			}
+		}
+		
+		_nbAreasToExplore = nbAtE
+	}
+	
+}
 
 abstract class AscensSimState extends SimState {
 
-	var IntGrid2D maze
+	var Maze maze
 	def getMaze() { maze }
 	var IntGrid2D mazeOverlay
 	def getMazeOverlay() { mazeOverlay }
@@ -67,12 +100,9 @@ abstract class AscensSimState extends SimState {
 	@Property val InitialisationParameters parameters
 	@Property var String map
 	
-	val List<Int2D> availStartingAreas = newArrayList
-	val List<Int2D> availVictimAreas = newArrayList
 	val List<Victim> victims = newArrayList
 	val List<Steppable> bots = newArrayList
-	var int[][] areasToExplore
-	var int nbAreasToExplore
+
 	
 	new(InitialisationParameters parameters) {
 		super(parameters.seed)
@@ -94,29 +124,11 @@ abstract class AscensSimState extends SimState {
 	override start() {
 		super.start()
 		
-		maze = new IntGrid2D(0, 0)
-		maze.setTo(TableLoader.loadPNGFile(this.class.getResourceAsStream("/"+map+".png")))
+		maze = new Maze("/"+map+".png")
 		
 		mazeOverlay = new IntGrid2D(maze.width, maze.height)
 		mazeOverlay.setTo(0)
-		
-		nbAreasToExplore = 0
-		for(i: 0..<maze.width) {
-			for(j: 0..<maze.height) {
-				val type = maze.get(i,j)
-				val iPos = new Int2D(i,j)
-				if (type == 2) {
-					availStartingAreas += iPos
-				}
-				if (type == 1) {
-					availVictimAreas += iPos
-				}
-				if (type == 1 || type == 2 || type == 3) {
-					nbAreasToExplore = nbAreasToExplore + 1
-				}
-			}
-		}
-		
+				
 		agents = new Continuous2D(1, maze.width, maze.height)
 		
 		try {
@@ -145,10 +157,6 @@ abstract class AscensSimState extends SimState {
 		agents = null
 		victims.clear
 		bots.clear
-		availStartingAreas.clear
-		availVictimAreas.clear
-		nbAreasToExplore = 0
-		areasToExplore = null
 	}
 	
 	def isInNest(Double2D loc) {
@@ -192,13 +200,13 @@ abstract class AscensSimState extends SimState {
 	}
 	
 	def add(MasonRobot r) {
-		val pos = addOrThrow(r, availStartingAreas, new NoStartingAreaAvailable)
+		val pos = addOrThrow(r, maze.availStartingAreas, new NoStartingAreaAvailable)
 		bots += r
 		pos
 	}
 	
 	def add(Victim v) {
-		addOrThrow(v, availVictimAreas, new NoVictimAreaAvailable)
+		addOrThrow(v, maze.availVictimAreas, new NoVictimAreaAvailable)
 	}
 	
 	def addOrThrow(Object o, List<Int2D> availablePositions, RuntimeException exception) {
@@ -241,7 +249,7 @@ abstract class AscensSimState extends SimState {
 			allSecured,
 			nbSecured,
 			nbDiscovered,
-			(((nbExplored as double)/(nbAreasToExplore as double))*100) as int
+			(((nbExplored as double)/(maze.nbAreasToExplore as double))*100) as int
 		)
 	}
 }

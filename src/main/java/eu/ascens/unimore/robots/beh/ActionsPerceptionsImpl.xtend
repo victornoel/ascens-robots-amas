@@ -46,32 +46,31 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 	}
 	
 	override goTo(Double2D to) {
+		
 		val l = to.length
 		
-		if (l > 0.001) {
+		if (l > 0) {
 			
-//			val bbmfm = receivedMessages
-//							.filter[
-//								// behind me (w.r.t where I'm going)
-//								from.coord.dot(to) < 0
-//								// following me (w.r.t where I'm going)
-//								//&& directionFromMyPoV.dot(to) > 0
-//							].map[from.coord]
-//				
-//			if (bbmfm.notEmpty) {
-//				val distSq = bbmfm.map[lengthSq].minimum(Ord.doubleOrd)
-//				if (distSq > (SimulationConstants.WALL_RANGE*SimulationConstants.WALL_RANGE)*0.9) {
-//					lastMove = new Double2D(0,0)
-//					return
-//				}
+//			val toConsider = receivedMessages.filter[
+//								from.dot(to) < 0]
+//			val gogo = toConsider.empty || toConsider
+//				.exists[
+//					from.lengthSq < (SimulationConstants.WALL_RANGE_SQUARED)*0.9
+//				]
+//			if (!gogo) {
+//				lastMove = new Double2D(0,0)
+//				return
 //			}
 			
 			// TODO: smooth things using prevDirs? like not moving if it's useless
-			val move = to.computeDirectionWithAvoidance(makeVision(sensorReadings)).dir.resize(l)
-			lastMove = to
+			val av = to.computeDirectionWithAvoidance(sensorReadings)
+			if (av.isSome) {
+				val move = av.some().dir.resize(l)
+				lastMove = move
+				logger.info("going to {} targetting {}.", move, to)
+				requires.move.setNextMove(move)
+			}
 			
-			logger.info("going to {} targetting {}.", move, to)
-			requires.move.setNextMove(move)
 		}
 	}
 	
@@ -116,7 +115,7 @@ class ActionsPerceptionsImpl extends ActionsPerceptions implements IActionsExtra
 				case vb.message.isSome && vb.coord.lengthSq > 0: {
 					switch m: vb.message.some(){
 						ExplorableMessage: m.worthExplorable.bind[
-							List.list(new ReceivedExplorable(vb, it, m.onVictim))
+							List.list(new ReceivedExplorable(vb.coord, vb.id, it, m.onVictim))
 						]
 						default: List.nil
 					}
