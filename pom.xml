@@ -37,15 +37,7 @@
 			<artifactId>mason-xtend-contrib</artifactId>
 			<version>1.0.2</version>
 		</dependency>
-		<!-- For making videos -->
-		<dependency>
-			<groupId>javax.media</groupId>
-			<artifactId>jmf</artifactId>
-			<version>2.1.1e</version>
-		</dependency>
-		<!-- <dependency> <groupId>com.lowagie</groupId> <artifactId>itext</artifactId> 
-			<version>4.2.0</version> </dependency> -->
-		<!-- For manipulating angles mainly -->
+		<!-- For manipulating angles -->
 		<dependency>
 			<groupId>com.vividsolutions</groupId>
 			<artifactId>jts</artifactId>
@@ -63,6 +55,16 @@
 			<version>0.3</version>
 		</dependency>
 	</dependencies>
+	
+	<dependencyManagement>
+ 		<dependencies>
+ 			<dependency>
+ 				<groupId>com.google.guava</groupId>
+ 				<artifactId>guava</artifactId>
+ 				<version>15.0</version>
+ 			</dependency>
+ 		</dependencies>
+ 	</dependencyManagement>
 
 	<build>
 		<plugins>
@@ -172,6 +174,7 @@
 							<goal>clean</goal>
 						</goals>
 						<configuration>
+							<excludeDefaultDirectories>true</excludeDefaultDirectories>
 							<filesets>
 								<fileset>
 									<directory>src/main/xtend-gen</directory>
@@ -226,4 +229,5 @@
 			<url>http://www.irit.fr/~Victor.Noel/maven-repos/</url>
 		</repository>
 	</repositories>
+
 </project>

@@ -146,7 +146,7 @@ class BotPortrayal2D extends OvalPortrayal2D {
 							SeenVictim: {
 								graphics.printVisibleVictim(botFPos, botPos, c, info, Color.GREEN)
 							}
-							Choice: {
+							default: {
 								graphics.printArrow(botFPos, botPos, c.direction, info, Color.GREEN)
 							}
 						}
