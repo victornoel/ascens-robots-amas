@@ -3,6 +3,7 @@ package eu.ascens.unimore.robots.mason
 import de.oehme.xtend.contrib.Cached
 import de.oehme.xtend.contrib.ValueObject
 import eu.ascens.unimore.robots.Behaviour
+import eu.ascens.unimore.robots.SimulationConstants
 import eu.ascens.unimore.robots.UIConstants
 import eu.ascens.unimore.robots.common.Radiangle
 import eu.ascens.unimore.robots.mason.datatypes.Stats
@@ -18,8 +19,10 @@ import sim.engine.SimState
 import sim.engine.Steppable
 import sim.field.continuous.Continuous2D
 import sim.field.grid.IntGrid2D
+import sim.portrayal.SimpleInspector
 import sim.portrayal.continuous.ContinuousPortrayal2D
 import sim.portrayal.grid.FastValueGridPortrayal2D
+import sim.portrayal.inspector.TabbedInspector
 import sim.util.Double2D
 import sim.util.Int2D
 import sim.util.TableLoader
@@ -30,7 +33,6 @@ import static fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
 
 @ValueObject class InitialisationParameters {
 	
-	double radioRange
 	double wallRange
 	double victimRange
 	double proximityBotRange
@@ -52,6 +54,16 @@ import static fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
 				val cone = it.key.toNormalizedVector -> it.value.toNormalizedVector
 				middleAngledVector(cone.key, cone.value) -> cone
 			].sort(ORD_D2D.comap[key]) // sort evaluates
+	}
+	
+	@Cached
+	def int visionDistance() {
+		Math.ceil(
+			Math.max(
+				Math.max(rbRange, wallRange),
+				Math.max(victimRange, proximityBotRange)
+			)
+		) as int
 	}
 }
 
@@ -97,38 +109,26 @@ abstract class AscensSimState extends SimState {
 	var Continuous2D agents
 	def getAgents() { agents }
 	
-	@Property val InitialisationParameters parameters
-	@Property var String map
-	
+	@Property var InitialisationParameters parameters
+		
 	val List<Victim> victims = newArrayList
 	val List<Steppable> bots = newArrayList
 
-	
 	new(InitialisationParameters parameters) {
 		super(parameters.seed)
-		this._parameters = parameters
-		this._map = parameters.map
-		// +1 to have a margin for error
-		this._visionDistance = Math.ceil(
-			Math.max(
-				Math.max(parameters.rbRange, parameters.wallRange),
-				Math.max(parameters.victimRange, parameters.proximityBotRange)
-			)
-		) as int
+		this.parameters = parameters
 	}
-	
-	@Property val int visionDistance
 
-	abstract def void populate()
+	abstract def void newRobot()
 
 	override start() {
 		super.start()
 		
-		maze = new Maze("/"+map+".png")
+		maze = new Maze("/"+this.parameters.map+".png")
 		
 		mazeOverlay = new IntGrid2D(maze.width, maze.height)
 		mazeOverlay.setTo(0)
-				
+		
 		agents = new Continuous2D(1, maze.width, maze.height)
 		
 		try {
@@ -139,16 +139,19 @@ abstract class AscensSimState extends SimState {
 			println("no more victim area available, created " + victims.size + " victims.")
 		}
 		
-		populate()
+		var nbCreated = 0
+		try {
+			for(i: 1..this.parameters.nbBots) {
+				newRobot()
+				nbCreated = i
+			}
+		} catch (NoStartingAreaAvailable e) {
+			println("no more starting area available, created "+nbCreated+" robots.")
+		}
 		
 		for(b: bots) {
 			schedule.scheduleRepeating(Schedule.EPOCH, 0, b, 1)
 		}
-		
-//		val Steppable[] a = bots
-//		schedule.scheduleRepeating(
-//			Schedule.EPOCH, 0, new ParallelSequence(a, 4), 1
-//		)
 	}
 	
 	override finish() {
@@ -257,24 +260,7 @@ abstract class AscensSimState extends SimState {
 class NoStartingAreaAvailable extends RuntimeException {}
 class NoVictimAreaAvailable extends RuntimeException {}
 
-class ModelProperties {
-	
-	val AscensSimState state
-	
-	new(AscensSimState state) {
-		this.state = state
-		setMap(UIConstants.MAZES.indexOf(state.map))
-	}
-	
-	def setMap(int map) {
-		_map = map
-		state.setMap(UIConstants.MAZES.get(map))
-	}
-	
-	@Property int map
-	def Object domMap() {
-		UIConstants.MAZES
-	}
+class VisualisationProperties {
 	@Property boolean showSensorReadings = false
 	@Property boolean showSensorReadingsForAll = false
 	@Property boolean showWalls = false
@@ -296,6 +282,64 @@ class ModelProperties {
 	@Property boolean showWhoFollowsWho = false
 }
 
+class ModelProperties {
+	
+	var InitialisationParameters currentParameters
+	
+	def buildParameters() {
+		val b = new InitialisationParametersBuilder() => [
+			map(SimulationConstants.MAZES.get(_map))
+			newBehaviour(SimulationConstants.BEHAVIOURS.get(_behaviour))
+			wallRange(_wallRange)
+			victimRange(_victimRange)
+			proximityBotRange(_proximityBotRange)
+			speed(_speed)
+			rbRange(_rbRange)
+			nbProximityWallSensors(_nbProximityWallSensors)
+			nbBots(_nbBots)
+			nbVictims(_nbVictims)
+			minBotsPerVictim(_minBotsPerVictim)
+			maxBotsPerVictim(_maxBotsPerVictim)
+		]
+		b.build
+	}
+	
+	new(InitialisationParameters parameters) {
+		this.currentParameters = parameters
+		_wallRange = parameters.wallRange
+		_victimRange = parameters.victimRange
+		_proximityBotRange = parameters.proximityBotRange
+		_speed = parameters.speed
+		_rbRange = parameters.rbRange
+		_nbProximityWallSensors = parameters.nbProximityWallSensors
+		_nbBots = parameters.nbBots
+		_nbVictims = parameters.nbVictims
+		_minBotsPerVictim = parameters.minBotsPerVictim
+		_maxBotsPerVictim = parameters.maxBotsPerVictim
+		_behaviour = SimulationConstants.BEHAVIOURS.indexOf(parameters.newBehaviour)
+		_map = SimulationConstants.MAZES.indexOf(parameters.map)
+	}
+	
+	@Property double wallRange
+	@Property double victimRange
+	@Property double proximityBotRange
+	@Property double speed
+	@Property double rbRange
+	@Property int nbProximityWallSensors
+	@Property int nbBots
+	@Property int nbVictims
+	@Property int minBotsPerVictim
+	@Property int maxBotsPerVictim
+	@Property int behaviour
+	def Object domBehaviour() {
+		UIConstants.BEHAVIOURS
+	}
+	@Property int map
+	def Object domMap() {
+		UIConstants.MAZES
+	}
+}
+
 class AscensGUIState extends GUIState {
 
 	// initialised in start
@@ -307,21 +351,26 @@ class AscensGUIState extends GUIState {
 	var Display2D display
 	var JFrame displayFrame
 
-	val ModelProperties properties
+	val ModelProperties modelProperties
+	val VisualisationProperties visualisationProperties
 	
 	new(AscensSimState state) {
 		super(state)
-		properties = new ModelProperties(state)
+		modelProperties = new ModelProperties(state.parameters)
+		visualisationProperties = new VisualisationProperties
 	}
 	
-	override getSimulationInspectedObject() {
-		properties
+	override getInspector() {
+		val i = new TabbedInspector(false)
+		i.addInspector(new SimpleInspector(visualisationProperties, this, null, getMaximumPropertiesForInspector()), "Visualisation")
+		i.addInspector(new SimpleInspector(modelProperties, this, null, getMaximumPropertiesForInspector()), "Model")
+		i
 	}
 
 	def setupPortrayals() {
 		val state = state as AscensSimState
 		
-		agentsPortrayal.setPortrayalForClass(AscensMasonImpl.RobotImpl.MyMasonRobot, new BotPortrayal2D(agentsPortrayal, properties))
+		agentsPortrayal.setPortrayalForClass(AscensMasonImpl.RobotImpl.MyMasonRobot, new BotPortrayal2D(agentsPortrayal, visualisationProperties))
 		agentsPortrayal.setPortrayalForClass(Victim, new VictimPortrayal2D(agentsPortrayal, state))
 		mazePortrayal.setMap(new SimpleColorMap(#[
 			Color.BLACK,
@@ -350,9 +399,11 @@ class AscensGUIState extends GUIState {
 	}
 
 	override start() {
-		super.start()
-		
 		val state = (state as AscensSimState)
+		
+		state.setParameters(modelProperties.buildParameters)
+		
+		super.start()
 		
 		mazePortrayal = new FastValueGridPortrayal2D()
 		mazeOverlayPortrayal = new FastValueGridPortrayal2D()

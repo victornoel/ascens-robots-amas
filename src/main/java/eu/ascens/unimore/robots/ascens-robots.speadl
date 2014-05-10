@@ -1,15 +1,13 @@
 import eu.ascens.unimore.robots.mason.AscensMason
 import eu.ascens.unimore.robots.mason.datatypes.Message
 import eu.ascens.unimore.robots.mason.datatypes.RandomSync
-import eu.ascens.unimore.robots.mason.interfaces.MasonControAndStats
+import eu.ascens.unimore.robots.mason.interfaces.MasonControlAndStats
 import eu.ascens.unimore.robots.mason.interfaces.RobotMovements
 import eu.ascens.unimore.robots.mason.interfaces.RobotPerceptions
 import eu.ascens.unimore.robots.mason.interfaces.RobotVisu
-import fr.irit.smac.may.lib.components.collections.Queue
 import fr.irit.smac.may.lib.interfaces.Do
 import fr.irit.smac.may.lib.interfaces.Pull
 import fr.irit.smac.may.lib.interfaces.Push
-import java.util.Collection
 
 namespace eu.ascens.unimore.robots {
 	
@@ -22,39 +20,39 @@ namespace eu.ascens.unimore.robots {
 		requires move: RobotMovements
 		requires id: Pull[String]
 		requires rbPublish: Push[Message]
-		requires radioBroadcast: Push[Message]
-		requires getRadioMessages: Pull[Collection[Message]]
+		//requires radioBroadcast: Push[Message]
+		//requires getRadioMessages: Pull[Collection[Message]]
 		
 		requires random: Pull[RandomSync]
 	}
 	
 	ecosystem AscensRobots {
 		
-		provides populate: Do
+		provides newRobot: Do
 		
-		provides control: MasonControAndStats = env.control
+		provides control: MasonControlAndStats = env.control
 		
 		part env: AscensMason {
-			bind populateWorld to populate
+			bind newRobot to newRobot
 		}
 		
 		species RobotAgent {
 			
-			part mbox: Queue[Message]
+			//part mbox: Queue[Message]
 			
 			part beh: Behaviour {
 				bind move to robot.move
 				bind see to robot.see
-				bind radioBroadcast to robot.radioBroadcast
+				//bind radioBroadcast to robot.radioBroadcast
 				bind rbPublish to robot.rbPublish
-				bind getRadioMessages to mbox.getAll
+				//bind getRadioMessages to mbox.getAll
 				bind id to robot.id
 				bind random to robot.random
 			}
 			
 			use robot: env.Robot {
 				bind step to beh.step
-				bind pushRadioMessage to mbox.put
+				//bind pushRadioMessage to mbox.put
 				bind visu to beh.visu
 			}
 		}

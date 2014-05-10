@@ -47,9 +47,9 @@ class VictimPortrayal2D extends OvalPortrayal2D {
 class BotPortrayal2D extends OvalPortrayal2D {
 	
 	val FieldPortrayal2D fieldPortrayal
-	val ModelProperties properties
+	val VisualisationProperties properties
 	
-	new(FieldPortrayal2D fieldPortrayal, ModelProperties properties) {
+	new(FieldPortrayal2D fieldPortrayal, VisualisationProperties properties) {
 		super(Color.DARK_GRAY, 1.0, true)
 		this.fieldPortrayal = fieldPortrayal
 		this.properties = properties

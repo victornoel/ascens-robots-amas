@@ -18,8 +18,8 @@ import sim.util.Double2D
 import sim.util.Int2D
 import sim.util.MutableDouble2D
 
-import static extension fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
 import static extension fr.irit.smac.lib.contrib.fj.xtend.FunctionalJavaExtensions.*
+import static extension fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
 
 abstract class MasonRobot implements Steppable {
 
@@ -51,13 +51,13 @@ abstract class MasonRobot implements Steppable {
 		}
 	}
 	
-	def radioReachableBots() {
-		// uses allObjects since the number of bot is limited and the distance is big
-		// will be more efficient than getNeighborsWithinDistance
-		List.iterableList(state.agents.allObjects.filter(MasonRobot)).filter[b|
-			b !== this && b.position.distance(position) < state.parameters.radioRange
-		]
-	}
+//	def radioReachableBots() {
+//		// uses allObjects since the number of bot is limited and the distance is big
+//		// will be more efficient than getNeighborsWithinDistance
+//		List.iterableList(state.agents.allObjects.filter(MasonRobot)).filter[b|
+//			b !== this && b.position.distance(position) < state.parameters.radioRange
+//		]
+//	}
 	
 	def visibleVictims() {
 		surroundings.visibleVictims
@@ -67,7 +67,7 @@ abstract class MasonRobot implements Steppable {
 	def Surroundings surroundings() {
 		val discrPos = state.agents.discretize(position)
 		new Surroundings(this) => [s|
-			new PrecisePermissive().visitFieldOfView(s, discrPos.x, discrPos.y, state.visionDistance)
+			new PrecisePermissive().visitFieldOfView(s, discrPos.x, discrPos.y, state.parameters.visionDistance)
 		]
 	}
 	
@@ -244,15 +244,15 @@ class Surroundings implements ILosBoard {
 		)
 	}
 	
-	@Cached
-	private def List<Pair<Double2D, Double2D>> proximityBotsCones() {
-		List.iterableList(
-			proximityBots
-				.map[conesForObjectFromMe(0.5)]
-				.flatten
-				.map[key.relativeVectorFor -> value.relativeVectorFor]
-		)
-	}
+//	@Cached
+//	private def List<Pair<Double2D, Double2D>> proximityBotsCones() {
+//		List.iterableList(
+//			proximityBots
+//				.map[conesForObjectFromMe(0.5)]
+//				.flatten
+//				.map[key.relativeVectorFor -> value.relativeVectorFor]
+//		)
+//	}
 	
 	@Cached
 	def List<SensorReading> getSensorReadings() {

@@ -124,16 +124,11 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 			]
 		]
 		
-		/*
-		 * j'ai :
-		 * from who
-		 * 
-		 */
-		
 		msgToConsider
 			.map[
 				val target = if (
 						// I should see what he points to (or it is behind him and it's as good)
+						// correct to use constant because WALL RANGE is the max, that's all
 						from.lengthSq < SimulationConstants.WALL_RANGE_SQUARED
 						// it's behind him, so I can point to where he points and it's quite precise
 						|| explorable.direction.dot(from) > 0) {
@@ -166,6 +161,7 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 				
 				val crit = computeNewCrit(mc.explorable.criticality, othersToCount.length)
 				
+				// correct to use constant because WALL RANGE is the max, that's all
 				mc.toExplorable(target.resize(SimulationConstants.WALL_RANGE), crit, othersToCount)
 			]
 	}

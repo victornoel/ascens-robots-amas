@@ -43,7 +43,7 @@ interface RobotVisu {
 	def Iterable<Explorable> explorablesFromOthers()
 }
 
-interface MasonControAndStats {
+interface MasonControlAndStats {
 	
 	def Stats getCurrentStats()
 	

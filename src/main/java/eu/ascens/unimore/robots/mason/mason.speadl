@@ -1,6 +1,6 @@
 import eu.ascens.unimore.robots.mason.datatypes.Message
 import eu.ascens.unimore.robots.mason.datatypes.RandomSync
-import eu.ascens.unimore.robots.mason.interfaces.MasonControAndStats
+import eu.ascens.unimore.robots.mason.interfaces.MasonControlAndStats
 import eu.ascens.unimore.robots.mason.interfaces.RobotMovements
 import eu.ascens.unimore.robots.mason.interfaces.RobotPerceptions
 import eu.ascens.unimore.robots.mason.interfaces.RobotVisu
@@ -13,9 +13,11 @@ namespace eu.ascens.unimore.robots.mason {
 	ecosystem AscensMason {
 		// Mason is responsible of populating the world
 		// because the UI start and restart the simulation...
-		requires populateWorld: Do
 		
-		provides control: MasonControAndStats
+		provides currentParameters: Pull[InitialisationParameters]
+		provides control: MasonControlAndStats
+
+		requires newRobot: Do
 
 		species Robot {
 
@@ -29,8 +31,8 @@ namespace eu.ascens.unimore.robots.mason {
 
 			provides rbPublish: Push[Message]
 			
-			requires pushRadioMessage: Push[Message]
-			provides radioBroadcast: Push[Message]
+			//requires pushRadioMessage: Push[Message]
+			//provides radioBroadcast: Push[Message]
 
 			requires visu: RobotVisu
 			

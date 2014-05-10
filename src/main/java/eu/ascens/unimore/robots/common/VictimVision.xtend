@@ -42,6 +42,7 @@ class VictimVision {
 	@Pure
 	private static def isConsideredNextTo(Double2D who, VisibleVictim v, double hisDistToVictSq, List<VisibleVictim> visibleVictims) {
 		// bot is close enough to victim
+		// TODO this is not correct to use that because distance should not be considered absolute...
 		hisDistToVictSq <= RequirementsConstants.CONSIDERED_NEXT_TO_VICTIM_DISTANCE_SQUARED
 			// but not closer to another victim
 			&& who.isCloserTo(v, hisDistToVictSq, visibleVictims)

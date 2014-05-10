@@ -1,8 +1,6 @@
 package eu.ascens.unimore.robots
 
 import com.google.common.collect.Sets
-import eu.ascens.unimore.robots.beh.BehaviourImpl
-import eu.ascens.unimore.robots.disperse.DisperseBehaviourImpl
 import eu.ascens.unimore.robots.evaluation.Evaluation
 import eu.ascens.unimore.robots.evaluation.ParameterValue
 import eu.ascens.unimore.robots.levy.LevyBehaviourImpl
@@ -20,25 +18,20 @@ import static extension fr.irit.smac.lib.contrib.fj.xtend.FunctionalJavaExtensio
 class GUI {
 	def static void main(String[] args) {
 		val parameters = new InitialisationParameters(
-			SimulationConstants.RADIO_RANGE,
+			//SimulationConstants.RADIO_RANGE,
 			SimulationConstants.WALL_RANGE,
 			SimulationConstants.VICTIM_RANGE,
 			SimulationConstants.PROXIMITY_RANGE,
 			SimulationConstants.SPEED,
-			20,
+			SimulationConstants.RB_RANGE,
 			SimulationConstants.NB_WALL_SENSORS,
-			//SimulationConstants.DEFAULT_MAZE,
-			"maze2",
+			SimulationConstants.DEFAULT_MAZE,
 			SimulationConstants.SEED,
-			//SimulationConstants.NB_BOTS,
-			200,
-			//SimulationConstants.NB_VICTIMS,
-			16,
+			SimulationConstants.NB_BOTS,
+			SimulationConstants.NB_VICTIMS,
 			SimulationConstants.MIN_BOTS_PER_VICTIM,
 			SimulationConstants.MAX_BOTS_PER_VICTIM,
-			//SimulationConstants.DEFAULT_BEHAVIOUR
-			[|new DisperseBehaviourImpl]
-			//[|new LevyBehaviourImpl]
+			SimulationConstants.DEFAULT_BEHAVIOUR
 		)
 		val c = new AscensRobotsImpl(parameters).newComponent
 		c.control.startGUI
@@ -144,10 +137,10 @@ class Eval {
 			// need to explicit type, because of https://bugs.eclipse.org/bugs/show_bug.cgi?id=429138
 			// fixed in 2.6
 			List.<Pair<String,() => Behaviour>>list(
-				"amasE" -> [|new BehaviourImpl(false)],
-				"amasEV" -> [|new BehaviourImpl(true)],
-				"disperse" -> [|new DisperseBehaviourImpl],
-				"levy" -> [|new LevyBehaviourImpl]
+				"amasEV" -> SimulationConstants.BEHAVIOURS.get(0),
+				"amasE" -> SimulationConstants.BEHAVIOURS.get(1),
+				"disperse" -> SimulationConstants.BEHAVIOURS.get(2),
+				"levy" -> SimulationConstants.BEHAVIOURS.get(3)
 			)
 		),
 		Evaluation.parameter2(
@@ -166,7 +159,7 @@ class Eval {
 	
 	static def buildParameters(Iterable<ParameterValue> ps) {
 		val b = new InitialisationParametersBuilder() => [
-			radioRange(SimulationConstants.RADIO_RANGE)
+			//radioRange(SimulationConstants.RADIO_RANGE)
 			wallRange(SimulationConstants.WALL_RANGE)
 			victimRange(SimulationConstants.VICTIM_RANGE)
 			proximityBotRange(SimulationConstants.PROXIMITY_RANGE)

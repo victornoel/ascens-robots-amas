@@ -12,7 +12,7 @@ import eu.ascens.unimore.robots.mason.datatypes.RandomSync;
 import eu.ascens.unimore.robots.mason.datatypes.SensorReading;
 import eu.ascens.unimore.robots.mason.datatypes.Stats;
 import eu.ascens.unimore.robots.mason.datatypes.VisibleVictim;
-import eu.ascens.unimore.robots.mason.interfaces.MasonControAndStats;
+import eu.ascens.unimore.robots.mason.interfaces.MasonControlAndStats;
 import eu.ascens.unimore.robots.mason.interfaces.RobotMovements;
 import eu.ascens.unimore.robots.mason.interfaces.RobotPerceptions;
 import eu.ascens.unimore.robots.mason.interfaces.RobotVisu;
@@ -30,15 +30,25 @@ public class AscensMasonImpl extends AscensMason {
 	public AscensMasonImpl(InitialisationParameters parameters) {
 		simState = new AscensSimState(parameters) {
 			@Override
-			public void populate() {
-				requires().populateWorld().doIt();
+			public void newRobot() {
+				requires().newRobot().doIt();
+			}
+		};
+	}
+
+	@Override
+	protected Pull<InitialisationParameters> make_currentParameters() {
+		return new Pull<InitialisationParameters>() {
+			@Override
+			public InitialisationParameters pull() {
+				return simState.getParameters();
 			}
 		};
 	}
 	
 	@Override
-	protected MasonControAndStats make_control() {
-		return new MasonControAndStats() {
+	protected MasonControlAndStats make_control() {
+		return new MasonControlAndStats() {
 			@Override
 			public Stats getCurrentStats() {
 				return simState.getCurrentStats();
@@ -155,9 +165,9 @@ public class AscensMasonImpl extends AscensMason {
 				}
 			}
 			
-			public void pushMsg(Message m) {
-				requires().pushRadioMessage().push(m);
-			}
+//			public void pushMsg(Message m) {
+//				requires().pushRadioMessage().push(m);
+//			}
 			
 			public String id() {
 				return id;
@@ -190,19 +200,18 @@ public class AscensMasonImpl extends AscensMason {
 			};
 		}
 		
-		@Override
-		protected Push<Message> make_radioBroadcast() {
-			return new Push<Message>() {
-				@Override
-				public void push(Message arg0) {
-					for(MasonRobot b: bot.radioReachableBots()) {
-						if (b instanceof MyMasonRobot) {
-							((MyMasonRobot)b).pushMsg(arg0);
-						}
-					}
-				}
-			};
-		}
+//		@Override
+//		protected Push<Message> make_radioBroadcast() {
+//			return new Push<Message>() {
+//				@Override
+//				public void push(Message arg0) {
+//					for(MasonRobot b: bot.radioReachableBots()) {
+//						if (b instanceof MyMasonRobot) {
+//							((MyMasonRobot)b).pushMsg(arg0);
+//						}
+//					}
+//				}
+//			};
+//		}
 	}
-	
 }

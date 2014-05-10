@@ -6,7 +6,7 @@
 	<version>0.0.2-SNAPSHOT</version>
 
 	<properties>
-		<xtext-version>2.5.3</xtext-version>
+		<xtext-version>2.5.4</xtext-version>
 		<xtend-version>${xtext-version}</xtend-version>
 		<may-version>3.2.4</may-version>
 	</properties>
