@@ -1,17 +1,18 @@
 package sim.display;
 
 import java.awt.Point;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.Rectangle2D;
 
-import sim.display.Display2D;
-import sim.display.GUIState;
 import sim.portrayal.LocationWrapper;
 import sim.util.Bag;
 
 public class MultiSelectDisplay2D extends Display2D {
+
+	private static final long serialVersionUID = 4883560847644971005L;
 
 	public MultiSelectDisplay2D(final double width, final double height,
 			final GUIState simulation) {
@@ -31,7 +32,7 @@ public class MultiSelectDisplay2D extends Display2D {
 					// we only care about mouse button 1. Perhaps in the future
 					// we may eliminate some key modifiers as well
 					int modifiers = e.getModifiers();
-					if ((modifiers & e.BUTTON1_MASK) == e.BUTTON1_MASK) {
+					if ((modifiers & InputEvent.BUTTON1_MASK) == InputEvent.BUTTON1_MASK) {
 						final Point point = e.getPoint();
 						if (e.getClickCount() == 2)
 							createInspectors(new Rectangle2D.Double(point.x,
@@ -40,7 +41,7 @@ public class MultiSelectDisplay2D extends Display2D {
 																				// both
 																				// situations
 						{
-							if ((modifiers & e.SHIFT_MASK) != e.SHIFT_MASK) {
+							if ((modifiers & InputEvent.SHIFT_MASK) != InputEvent.SHIFT_MASK) {
 								clearSelections();
 							}
 							performSelection(new Rectangle2D.Double(point.x,
@@ -70,6 +71,7 @@ public class MultiSelectDisplay2D extends Display2D {
 		});
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void performSelection(Bag locationWrappers) {
 		if (locationWrappers == null)

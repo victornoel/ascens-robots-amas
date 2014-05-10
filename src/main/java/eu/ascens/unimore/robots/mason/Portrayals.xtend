@@ -3,7 +3,6 @@ package eu.ascens.unimore.robots.mason
 import eu.ascens.unimore.robots.beh.datatypes.Explorable
 import eu.ascens.unimore.robots.beh.datatypes.ExplorableFromOther
 import eu.ascens.unimore.robots.common.SeenVictim
-import eu.ascens.unimore.robots.mason.datatypes.Choice
 import java.awt.Color
 import java.awt.Font
 import java.awt.Graphics2D

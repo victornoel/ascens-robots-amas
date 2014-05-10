@@ -166,11 +166,11 @@ class RepresentationsImpl extends Representations implements IRepresentationsExt
 			]
 	}
 	
-	private def getSensorReading(Double2D direction) {
-		requires.perceptions.sensorReadings
-			.find[sr|direction.between(sr.cone)]
-			.some()
-	}
+//	private def getSensorReading(Double2D direction) {
+//		requires.perceptions.sensorReadings
+//			.find[sr|direction.between(sr.cone)]
+//			.some()
+//	}
 	
 	private def computeVictimCrit(int howManyVictims) {
 		Math.pow(2, howManyVictims)
