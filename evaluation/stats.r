@@ -1,30 +1,47 @@
 library(ggplot2)
 
-maps <- list("maze1", "maze2", "maze3", "maze5")
+# can be edited
+maps <- c(
+	"maze1",
+	"maze2",
+	"maze3",
+	"maze5"
+	)
 
-for(m in maps) {
-	pattern <- paste0("^run.*",m,".*csv$")
+# can be edited
+algorithms <- c(
+		"amasE",
+		"amasEV",
+		"disperse",
+		"levy"
+		)
+
+victims <- c("maze1" = 16, "maze2" = 16, "maze3" = 35, "maze5" = 16)
+metrics <- c("secured", "discovered", "explored")
+
+for(map in maps) {
 	data <- data.frame()
-	for(file in list.files(pattern=pattern)) {
-		print(paste0("reading file ",file))
-		ndata = read.table(file, header=T, sep=";")
-		data <- rbind(data, ndata[ndata$step < 5000,])
+	for(algo in algorithms) {
+		
+		pattern <- paste0("^run_map.",map,"_algorithm.",algo,"_.*_nbVictims.",victims[[map]],"_.*csv$")
+		for(file in list.files(pattern=pattern)) {
+			print(paste0("reading file ",file))
+			ndata <- read.table(file, header=T, sep=";")
+			data <- rbind(data, ndata)
+		}
 	}
 	data$rbRange <- ordered(data$rbRange)
 	data$nbVictims <- ordered(data$nbVictims)
-	p <- ggplot(data,aes(x=step, colour=algorithm, linetype=rbRange)) +
-		scale_colour_hue(name="Algorithm") +
-		scale_linetype(name="RB Range") +
-		facet_grid(nbVictims ~ nbBots, labeller = label_both, scales="free_y") +
-		ggtitle(m) +
-		theme(aspect.ratio=1)
-	rp <- p +
-		geom_step(aes(y=secured), direction="vh") +
-		#geom_point(aes(y=discovered)) +
-		ylab("victims")
-	ggsave(filename=file.path("pdf", paste0(m,"-victims.pdf")), plot=rp, scale=2, paper="a4r")
-	rp <- p +
-		geom_step(aes(y=explored), direction="vh") +
-		ylim(0,100)
-	ggsave(filename=file.path("pdf", paste0(m,"-explored.pdf")), plot=rp, scale=2, paper="a4r")
+	data$nbBots <- ordered(data$nbBots)
+	for(metric in metrics) {
+		p <- ggplot(data, aes(x=step, colour=algorithm)) +
+			facet_grid(nbBots ~ rbRange, labeller = label_both, scales="fixed") +
+			ggtitle(map) +
+			theme(aspect.ratio=1) +
+			geom_step(aes_string(y=metric), direction="hv", size=0.3) +
+			ylab(metric)
+		fn <- file.path("pdf", paste0(map,"-",metric,".svg"))
+		print(paste0("saving to ",fn))
+		ggsave(filename=fn, plot=p, width=10, height=8)
+	}
 }

@@ -10,7 +10,6 @@ import fr.irit.smac.lib.contrib.xtend.macros.StepCached
 import sim.util.Double2D
 
 import static extension eu.ascens.unimore.robots.common.VictimVision.*
-import static extension fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
 
 class LevyBehaviourImpl extends Behaviour implements RobotVisu {
 	
@@ -76,7 +75,8 @@ class LevyBehaviourImpl extends Behaviour implements RobotVisu {
 		requires.see.sensorReadings.exists[
 			((hasWall && lengthSq < 1)
 			|| (hasBot && lengthSq < 1))
-			&& currentDir.between(cone)
+			//&& currentDir.between(cone)
+			&& currentDir.dot(dir) > 0
 		]
 	}
 	

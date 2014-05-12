@@ -43,9 +43,13 @@ class Eval {
 	def static void main(String[] args) {
 		val start = System.currentTimeMillis
 		
-		val size = parametersConfigurations.size
+		val configurations = List.iterableList(Sets.cartesianProduct(parameters.map[values.toSet].toList))
+								.filter[buildParameters.verifyParameters]
+								.map[List.iterableList(it)]
 		
-		parametersConfigurations.forEach[ps, run|
+		val size = configurations.size
+		
+		configurations.forEach[ps, run|
 			val file = new File("evaluation/run_"+ps.map[name+"."+valueName].join("_")+".csv")
 			println('''
 				Run «run+1»/«size» to «file.toString»
@@ -61,11 +65,11 @@ class Eval {
 		println("Overall time: "+prettyPrint(end-start))
 	}
 
-	static def loop(List<ParameterValue> parameters, File file) {
+	private static def loop(List<ParameterValue> parameters, File file) {
 		
 		val start = System.currentTimeMillis
-		
-		val c = new AscensRobotsImpl(parameters.buildParameters).newComponent
+		val initParameters = parameters.buildParameters
+		val c = new AscensRobotsImpl(initParameters).newComponent
 		val fw = new FileWriter(file)
 		
 		fw.write("step"+ (metrics.map[name]+parameters.map[name]).join(";",";","",[it])+ "\n")
@@ -79,7 +83,7 @@ class Eval {
 			stats = c.control.currentStats
 			val s = stats
 			fw.write(s.step + (metrics.map[get(s)] + parametersValueNames).join(";",";","",[it])+ "\n")
-		} while (!stats.shouldStop)
+		} while (!stats.shouldStop(initParameters))
 		
 		c.control.shutdown
 		fw.close
@@ -89,11 +93,20 @@ class Eval {
 		
 	}
 	
-	static def shouldStop(Stats s) {
-		(s.percentExplored >= 100 && s.allSecured) || s.step > 10000
+	private static def maxSteps(InitialisationParameters parameters) {
+		switch parameters.map {
+			case "maze1": 10000
+			case "maze2": 10000
+			case "maze3": 15000
+			case "maze5": 10000
+		}
 	}
 	
-	static def verifyParameters(InitialisationParameters parameters) {
+	private static def shouldStop(Stats s, InitialisationParameters parameters) {
+		(s.percentExplored >= 95 && s.allSecured) || s.step > maxSteps(parameters)
+	}
+	
+	private static def verifyParameters(InitialisationParameters parameters) {
 		switch parameters.map {
 			case "maze1": {
 				if (parameters.nbBots > 60) return false
@@ -121,13 +134,13 @@ class Eval {
 		return true
 	}
 	
-	static val metrics = List.list(
+	private static val metrics = List.list(
 		Evaluation.metric("discovered", [Stats s|s.nbDiscovered]),
 		Evaluation.metric("secured", [Stats s|s.nbSecured]),
 		Evaluation.metric("explored", [Stats s|s.percentExplored])
 	)
 	
-	static val parameters = List.list(
+	private static val parameters = List.list(
 		Evaluation.parameter2(
 			"map", [InitialisationParametersBuilder b, String maze|b.map(maze)],
 			List.list("maze1","maze2","maze3","maze5") //"maze1","maze2","maze3","maze5"
@@ -157,7 +170,7 @@ class Eval {
 		)
 	)
 	
-	static def buildParameters(Iterable<ParameterValue> ps) {
+	private static def buildParameters(Iterable<ParameterValue> ps) {
 		val b = new InitialisationParametersBuilder() => [
 			//radioRange(SimulationConstants.RADIO_RANGE)
 			wallRange(SimulationConstants.WALL_RANGE)
@@ -176,24 +189,13 @@ class Eval {
 		b.build
 	}
 	
-	static val parametersConfigurations =
-		List.iterableList(Sets.cartesianProduct(parameters.map[values.toSet].toList))
-		.bind[
-			if (it.buildParameters.verifyParameters) {
-				List.single(List.iterableList(it))
-			}
-			else {
-				List.nil
-			}
-		]
-	
-	static def choiceFor(int index, String noun) {
+	private static def choiceFor(int index, String noun) {
 		"{index,choice,0#|1#1 noun |1<{index,number,integer} nouns }"
 			.replace("index", String.valueOf(index))
 			.replace("noun", noun);
 	}
 	
-	static def prettyPrint(long ms) {
+	private static def prettyPrint(long ms) {
 		val d = DatatypeFactory.newInstance().newDuration(ms)
 		val fmt = choiceFor(0, "hour")
 					+ choiceFor(1, "minute")
