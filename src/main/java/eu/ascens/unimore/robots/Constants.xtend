@@ -1,7 +1,8 @@
 package eu.ascens.unimore.robots
 
 import eu.ascens.unimore.robots.beh.BehaviourImpl
-import eu.ascens.unimore.robots.disperse.DisperseBehaviourImpl
+import eu.ascens.unimore.robots.disperse.DisperseBehaviour
+import eu.ascens.unimore.robots.disperse.DisperseBehaviourWithTweaks
 import eu.ascens.unimore.robots.levy.LevyBehaviourImpl
 
 class SimulationConstants {
@@ -11,7 +12,8 @@ class SimulationConstants {
 	public static val BEHAVIOURS = <() => Behaviour>newArrayList(
 		[|new BehaviourImpl(true)],
 		[|new BehaviourImpl(false)],
-		[|new DisperseBehaviourImpl],
+		[|new DisperseBehaviourWithTweaks],
+		[|new DisperseBehaviour],
 		[|new LevyBehaviourImpl]
 	)
 	
@@ -51,7 +53,13 @@ class UIConstants {
 	
 	public static val String[] MAZES = SimulationConstants.MAZES
 	
-	public static val String[] BEHAVIOURS = #[ "AMAS (Exploration+Victims)", "AMAS (Exploration)", "Disperse", "Levy" ]
+	public static val String[] BEHAVIOURS = #[
+		"AMAS (Exploration+Victims)",
+		"AMAS (Exploration)",
+		"Disperse (With Tweaks)",
+		"Disperse (Without Tweaks)",
+		"Levy"
+	]
 	
 }
 

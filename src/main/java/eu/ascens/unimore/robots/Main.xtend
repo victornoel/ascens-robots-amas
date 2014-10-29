@@ -5,7 +5,6 @@ import eu.ascens.unimore.robots.evaluation.Evaluation
 import eu.ascens.unimore.robots.evaluation.ParameterValue
 import eu.ascens.unimore.robots.levy.LevyBehaviourImpl
 import eu.ascens.unimore.robots.mason.InitialisationParameters
-import eu.ascens.unimore.robots.mason.InitialisationParametersBuilder
 import eu.ascens.unimore.robots.mason.datatypes.Stats
 import fj.data.List
 import java.io.File
@@ -142,14 +141,12 @@ class Eval {
 	
 	private static val parameters = List.list(
 		Evaluation.parameter2(
-			"map", [InitialisationParametersBuilder b, String maze|b.map(maze)],
+			"map", [InitialisationParameters.Builder b, String maze|b.map(maze)],
 			List.list("maze1","maze2","maze3","maze5") //"maze1","maze2","maze3","maze5"
 		),
 		Evaluation.parameter(
-			"algorithm", [InitialisationParametersBuilder b, () => Behaviour algo|b.newBehaviour(algo)],
-			// need to explicit type, because of https://bugs.eclipse.org/bugs/show_bug.cgi?id=429138
-			// fixed in 2.6
-			List.<Pair<String,() => Behaviour>>list(
+			"algorithm", [InitialisationParameters.Builder b, () => Behaviour algo|b.newBehaviour(algo)],
+			List.list(
 				"amasEV" -> SimulationConstants.BEHAVIOURS.get(0),
 				"amasE" -> SimulationConstants.BEHAVIOURS.get(1),
 				"disperse" -> SimulationConstants.BEHAVIOURS.get(2),
@@ -157,21 +154,21 @@ class Eval {
 			)
 		),
 		Evaluation.parameter2(
-			"nbBots", [InitialisationParametersBuilder b, int nbBots|b.nbBots(nbBots)],
+			"nbBots", [InitialisationParameters.Builder b, int nbBots|b.nbBots(nbBots)],
 			List.list(60, 90, 150, 250, 500)
 		),
 		Evaluation.parameter2(
-			"nbVictims", [InitialisationParametersBuilder b, int nbVictims|b.nbVictims(nbVictims)],
+			"nbVictims", [InitialisationParameters.Builder b, int nbVictims|b.nbVictims(nbVictims)],
 			List.list(8, 10, 16, 25, 35) // 8, 10, 16, 25, 35
 		),
 		Evaluation.parameter2(
-			"rbRange", [InitialisationParametersBuilder b, double rbRange|b.rbRange(rbRange)],
+			"rbRange", [InitialisationParameters.Builder b, double rbRange|b.rbRange(rbRange)],
 			List.list(3.0, 5.0, 10.0, 20.0) //3.0, 5.0, 10.0, 20.0
 		)
 	)
 	
 	private static def buildParameters(Iterable<ParameterValue> ps) {
-		val b = new InitialisationParametersBuilder() => [
+		val b = InitialisationParameters.builder() => [
 			//radioRange(SimulationConstants.RADIO_RANGE)
 			wallRange(SimulationConstants.WALL_RANGE)
 			victimRange(SimulationConstants.VICTIM_RANGE)

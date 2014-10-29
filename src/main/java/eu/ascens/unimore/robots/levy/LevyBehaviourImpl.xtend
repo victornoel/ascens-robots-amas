@@ -12,7 +12,7 @@ import sim.util.Double2D
 import static extension eu.ascens.unimore.robots.common.VictimVision.*
 
 class LevyBehaviourImpl extends Behaviour implements RobotVisu {
-	
+
 	override protected make_step() {
 		[|step]
 	}

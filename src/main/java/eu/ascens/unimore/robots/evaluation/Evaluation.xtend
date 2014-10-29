@@ -1,8 +1,9 @@
 package eu.ascens.unimore.robots.evaluation
 
-import eu.ascens.unimore.robots.mason.InitialisationParametersBuilder
+import eu.ascens.unimore.robots.mason.InitialisationParameters
 import eu.ascens.unimore.robots.mason.datatypes.Stats
 import fj.data.List
+import org.eclipse.xtend.lib.annotations.Data
 
 interface Parameter {
 	
@@ -14,7 +15,7 @@ interface ParameterValue {
 	
 	def String getName()
 	def String getValueName()
-	def InitialisationParametersBuilder set(InitialisationParametersBuilder b)
+	def InitialisationParameters.Builder set(InitialisationParameters.Builder b)
 	
 }
 
@@ -23,9 +24,9 @@ interface ParameterValue {
 	val String name
 	val String valueName
 	val T value
-	val (InitialisationParametersBuilder, T) => InitialisationParametersBuilder setter
+	val (InitialisationParameters.Builder, T) => InitialisationParameters.Builder setter
 	
-	override set(InitialisationParametersBuilder b) {
+	override set(InitialisationParameters.Builder b) {
 		setter.apply(b, value)
 	}
 	
@@ -55,14 +56,14 @@ interface Metric {
 }
 
 class Evaluation {
-	static def <T> Parameter parameter(String name, (InitialisationParametersBuilder, T) => InitialisationParametersBuilder setter, List<Pair<String,T>> values) {
+	static def <T> Parameter parameter(String name, (InitialisationParameters.Builder, T) => InitialisationParameters.Builder setter, List<Pair<String,T>> values) {
 		new ParameterImpl(
 			name,
 			values.map[new ParameterValueImpl(name,key,value,setter)]
 		)
 	}
 	
-	static def <T> Parameter parameter2(String name, (InitialisationParametersBuilder, T) => InitialisationParametersBuilder setter, List<T> values) {
+	static def <T> Parameter parameter2(String name, (InitialisationParameters.Builder, T) => InitialisationParameters.Builder setter, List<T> values) {
 		new ParameterImpl(
 			name,
 			values.map[new ParameterValueImpl(name,it.toString,it,setter)]

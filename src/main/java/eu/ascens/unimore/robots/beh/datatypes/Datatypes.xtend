@@ -1,14 +1,15 @@
 package eu.ascens.unimore.robots.beh.datatypes
 
+import eu.ascens.unimore.robots.common.SeenVictim
 import eu.ascens.unimore.robots.mason.datatypes.Choice
 import eu.ascens.unimore.robots.mason.datatypes.Message
 import fj.data.List
 import fj.data.Option
+import org.eclipse.xtend.lib.annotations.Data
 import sim.util.Double2D
 
 import static extension fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
 import static extension fr.irit.smac.lib.contrib.xtend.JavaExtensions.*
-import eu.ascens.unimore.robots.common.SeenVictim
 
 interface Explorable extends Choice {
 	
@@ -68,8 +69,13 @@ interface Explorable extends Choice {
 }
 
 @Data class ExplorableMessage extends Message {
-	
 	val List<Explorable> worthExplorable
 	val boolean onVictim
 	
+	// TODO this is needed because there seems to be a bug…
+	// See https://bugs.eclipse.org/bugs/show_bug.cgi?id=449185
+	new(List<Explorable> worthExplorable, boolean onVictim) {
+		this.worthExplorable = worthExplorable
+		this.onVictim = onVictim
+	}
 }

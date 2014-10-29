@@ -94,5 +94,4 @@ class BehaviourImpl extends ComposedBehaviour implements RobotVisu {
 	override explorablesFromOthers() {
 		parts.r.representations.explorableFromOthers
 	}
-	
 }

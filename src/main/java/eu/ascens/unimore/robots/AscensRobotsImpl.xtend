@@ -16,22 +16,15 @@ class AscensRobotsImpl extends AscensRobots {
 	}
 	
 	override protected make_RobotAgent() {
-		new RobotAgentImpl()
+		new RobotAgent() {
+			override protected make_beh() {
+				eco_parts.env.currentParameters.pull.newBehaviour.apply
+			}
+		}
 	}
 	
 	override protected make_newRobot() {[|
-		newRobotAgent()
+		newRobotAgent
 	]}
 	
-}
-
-class RobotAgentImpl extends AscensRobots.RobotAgent {
-	
-	override protected make_beh() {
-		eco_parts.env.currentParameters.pull.newBehaviour.apply
-	}
-	
-//	override protected make_mbox() {
-//		new ConcurrentQueueImpl
-//	}
 }

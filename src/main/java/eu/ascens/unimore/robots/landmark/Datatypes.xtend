@@ -1,8 +1,7 @@
 package eu.ascens.unimore.robots.landmark
 
 import eu.ascens.unimore.robots.mason.datatypes.Message
-
-import static eu.ascens.unimore.robots.landmark.State.*
+import org.eclipse.xtend.lib.annotations.Data
 
 @Data class LandmarkData {
 	val boolean victim_nearby = false
@@ -30,7 +29,7 @@ import static eu.ascens.unimore.robots.landmark.State.*
 			case VICTIM:{}
 			default: new RuntimeException("must be a landmark")
 		}
-		this._mark = mark
+		this.mark = mark
 	}
 	
 }
@@ -41,7 +40,7 @@ import static eu.ascens.unimore.robots.landmark.State.*
 	
 	new(double distance) {
 		super(State.EXIT)
-		this._distance = distance
+		this.distance = distance
 	}
 	
 }

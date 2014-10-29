@@ -1,7 +1,7 @@
 package eu.ascens.unimore.robots.mason
 
+import de.oehme.xtend.contrib.Buildable
 import de.oehme.xtend.contrib.Cached
-import de.oehme.xtend.contrib.ValueObject
 import eu.ascens.unimore.robots.Behaviour
 import eu.ascens.unimore.robots.SimulationConstants
 import eu.ascens.unimore.robots.UIConstants
@@ -10,6 +10,8 @@ import eu.ascens.unimore.robots.mason.datatypes.Stats
 import java.awt.Color
 import java.util.List
 import javax.swing.JFrame
+import org.eclipse.xtend.lib.annotations.Accessors
+import org.eclipse.xtend.lib.annotations.Data
 import sim.display.Controller
 import sim.display.Display2D
 import sim.display.GUIState
@@ -31,21 +33,23 @@ import sim.util.gui.SimpleColorMap
 import static eu.ascens.unimore.robots.common.GeometryExtensions.*
 import static fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
 
-@ValueObject class InitialisationParameters {
+@Data
+@Buildable
+class InitialisationParameters {
 	
-	double wallRange
-	double victimRange
-	double proximityBotRange
-	double speed
-	double rbRange
-	int nbProximityWallSensors
-	String map
-	long seed
-	int nbBots
-	int nbVictims
-	int minBotsPerVictim
-	int maxBotsPerVictim
-	() => Behaviour newBehaviour
+	val double wallRange
+	val double victimRange
+	val double proximityBotRange
+	val double speed
+	val double rbRange
+	val int nbProximityWallSensors
+	val String map
+	val long seed
+	val int nbBots
+	val int nbVictims
+	val int minBotsPerVictim
+	val int maxBotsPerVictim
+	val () => Behaviour newBehaviour
 	
 	@Cached
 	def fj.data.List<Pair<Double2D, Pair<Double2D, Double2D>>> sensorDirectionCones() {
@@ -69,10 +73,9 @@ import static fr.irit.smac.lib.contrib.mason.xtend.MasonExtensions.*
 
 class Maze extends IntGrid2D {
 	
-	@Property val int nbAreasToExplore
-	
-	@Property val List<Int2D> availStartingAreas = newArrayList
-	@Property val List<Int2D> availVictimAreas = newArrayList
+	@Accessors val int nbAreasToExplore
+	@Accessors val List<Int2D> availStartingAreas = newArrayList
+	@Accessors val List<Int2D> availVictimAreas = newArrayList
 	
 	new(String filename) {
 		super(0,0)
@@ -95,7 +98,7 @@ class Maze extends IntGrid2D {
 			}
 		}
 		
-		_nbAreasToExplore = nbAtE
+		nbAreasToExplore = nbAtE
 	}
 	
 }
@@ -109,7 +112,7 @@ abstract class AscensSimState extends SimState {
 	var Continuous2D agents
 	def getAgents() { agents }
 	
-	@Property var InitialisationParameters parameters
+	@Accessors var InitialisationParameters parameters
 		
 	val List<Victim> victims = newArrayList
 	val List<Steppable> bots = newArrayList
@@ -261,25 +264,25 @@ class NoStartingAreaAvailable extends RuntimeException {}
 class NoVictimAreaAvailable extends RuntimeException {}
 
 class VisualisationProperties {
-	@Property boolean showSensorReadings = false
-	@Property boolean showSensorReadingsForAll = false
-	@Property boolean showWalls = false
-	@Property boolean showWallsForAlls = false
-	@Property boolean showVisible = false
-	@Property boolean showVisibleForAlls = false
-	@Property boolean showAreasOnlyFromMe = false
-	@Property boolean showAreasOnlyFromMeForAll = false
-	@Property boolean showVictimsFromMe = false
-	@Property boolean showVictimsFromMeForAll = false
-	@Property boolean showExplorablesFromOthers = false
-	@Property boolean showExplorablesFromOthersForAll = false
-	@Property boolean showExplorables = false
-	@Property boolean showExplorablesForAll = false
-	@Property boolean showChoice = false
-	@Property boolean showChoiceForAll = false
-	@Property boolean showVisibleBotsAndVictims = false
-	@Property boolean showWhoFollowsWhoForAll = false
-	@Property boolean showWhoFollowsWho = false
+	@Accessors boolean showSensorReadings = false
+	@Accessors boolean showSensorReadingsForAll = false
+	@Accessors boolean showWalls = false
+	@Accessors boolean showWallsForAlls = false
+	@Accessors boolean showVisible = false
+	@Accessors boolean showVisibleForAlls = false
+	@Accessors boolean showAreasOnlyFromMe = false
+	@Accessors boolean showAreasOnlyFromMeForAll = false
+	@Accessors boolean showVictimsFromMe = false
+	@Accessors boolean showVictimsFromMeForAll = false
+	@Accessors boolean showExplorablesFromOthers = false
+	@Accessors boolean showExplorablesFromOthersForAll = false
+	@Accessors boolean showExplorables = false
+	@Accessors boolean showExplorablesForAll = false
+	@Accessors boolean showChoice = false
+	@Accessors boolean showChoiceForAll = false
+	@Accessors boolean showVisibleBotsAndVictims = false
+	@Accessors boolean showWhoFollowsWhoForAll = false
+	@Accessors boolean showWhoFollowsWho = false
 }
 
 class ModelProperties {
@@ -287,54 +290,56 @@ class ModelProperties {
 	var InitialisationParameters currentParameters
 	
 	def buildParameters() {
-		val b = new InitialisationParametersBuilder() => [
-			map(SimulationConstants.MAZES.get(_map))
-			newBehaviour(SimulationConstants.BEHAVIOURS.get(_behaviour))
-			wallRange(_wallRange)
-			victimRange(_victimRange)
-			proximityBotRange(_proximityBotRange)
-			speed(_speed)
-			rbRange(_rbRange)
-			nbProximityWallSensors(_nbProximityWallSensors)
-			nbBots(_nbBots)
-			nbVictims(_nbVictims)
-			minBotsPerVictim(_minBotsPerVictim)
-			maxBotsPerVictim(_maxBotsPerVictim)
+		val b = InitialisationParameters.builder() => [
+			map(SimulationConstants.MAZES.get(map))
+			newBehaviour(SimulationConstants.BEHAVIOURS.get(behaviour))
+			wallRange(wallRange)
+			victimRange(victimRange)
+			proximityBotRange(proximityBotRange)
+			speed(speed)
+			rbRange(rbRange)
+			nbProximityWallSensors(nbProximityWallSensors)
+			nbBots(nbBots)
+			nbVictims(nbVictims)
+			minBotsPerVictim(minBotsPerVictim)
+			maxBotsPerVictim(maxBotsPerVictim)
 		]
 		b.build
 	}
 	
 	new(InitialisationParameters parameters) {
 		this.currentParameters = parameters
-		_wallRange = parameters.wallRange
-		_victimRange = parameters.victimRange
-		_proximityBotRange = parameters.proximityBotRange
-		_speed = parameters.speed
-		_rbRange = parameters.rbRange
-		_nbProximityWallSensors = parameters.nbProximityWallSensors
-		_nbBots = parameters.nbBots
-		_nbVictims = parameters.nbVictims
-		_minBotsPerVictim = parameters.minBotsPerVictim
-		_maxBotsPerVictim = parameters.maxBotsPerVictim
-		_behaviour = SimulationConstants.BEHAVIOURS.indexOf(parameters.newBehaviour)
-		_map = SimulationConstants.MAZES.indexOf(parameters.map)
+		wallRange = parameters.wallRange
+		victimRange = parameters.victimRange
+		proximityBotRange = parameters.proximityBotRange
+		speed = parameters.speed
+		rbRange = parameters.rbRange
+		nbProximityWallSensors = parameters.nbProximityWallSensors
+		nbBots = parameters.nbBots
+		nbVictims = parameters.nbVictims
+		minBotsPerVictim = parameters.minBotsPerVictim
+		maxBotsPerVictim = parameters.maxBotsPerVictim
+		behaviour = SimulationConstants.BEHAVIOURS.indexOf(parameters.newBehaviour)
+		map = SimulationConstants.MAZES.indexOf(parameters.map)
 	}
 	
-	@Property double wallRange
-	@Property double victimRange
-	@Property double proximityBotRange
-	@Property double speed
-	@Property double rbRange
-	@Property int nbProximityWallSensors
-	@Property int nbBots
-	@Property int nbVictims
-	@Property int minBotsPerVictim
-	@Property int maxBotsPerVictim
-	@Property int behaviour
+	@Accessors double wallRange
+	@Accessors double victimRange
+	@Accessors double proximityBotRange
+	@Accessors double speed
+	@Accessors double rbRange
+	@Accessors int nbProximityWallSensors
+	@Accessors int nbBots
+	@Accessors int nbVictims
+	@Accessors int minBotsPerVictim
+	@Accessors int maxBotsPerVictim
+	
+	@Accessors int behaviour
 	def Object domBehaviour() {
 		UIConstants.BEHAVIOURS
 	}
-	@Property int map
+	
+	@Accessors int map
 	def Object domMap() {
 		UIConstants.MAZES
 	}
@@ -401,7 +406,7 @@ class AscensGUIState extends GUIState {
 	override start() {
 		val state = (state as AscensSimState)
 		
-		state.setParameters(modelProperties.buildParameters)
+		state.parameters = modelProperties.buildParameters
 		
 		super.start()
 		

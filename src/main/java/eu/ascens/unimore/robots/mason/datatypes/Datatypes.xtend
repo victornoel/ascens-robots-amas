@@ -1,9 +1,10 @@
 package eu.ascens.unimore.robots.mason.datatypes
 
+import de.oehme.xtend.contrib.Cached
 import ec.util.MersenneTwisterFast
 import fj.data.Option
+import org.eclipse.xtend.lib.annotations.Data
 import sim.util.Double2D
-import de.oehme.xtend.contrib.Cached
 
 @Data class Message {
 	

@@ -36,7 +36,6 @@ namespace eu.ascens.unimore.robots.beh {
 			bind rbPublish to rbPublish
 			bind id to id
 		}
-		
 	}
 	
 	component Representations {

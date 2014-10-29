@@ -6,6 +6,7 @@ import eu.ascens.unimore.robots.mason.datatypes.Choice
 import eu.ascens.unimore.robots.mason.interfaces.RobotVisu
 import fj.data.List
 import fr.irit.smac.lib.contrib.xtend.macros.StepCached
+import org.eclipse.xtend.lib.annotations.Data
 import sim.util.Double2D
 
 import static eu.ascens.unimore.robots.landmark.State.*
