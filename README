@@ -1,3 +1,6 @@
 See http://www.irit.fr/~Victor.Noel/Projects/ASCENS
 
 It should be imported as a project in Eclipse Luna with the plugins MAY 3.4.1 and Xtend 2.7.2.
+
+- The output directory for SpeADL (in project properties, under SpeADL/Compiler) should be changed for src/main/speadl-gen (MAY can't infer this information from maven).
+and the compilation for maven does not really work until the project has been completely compiled by Eclipse (xtend and MAY interact badly in the Maven command line).
