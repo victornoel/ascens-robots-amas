@@ -1,0 +1,4 @@
+/target/
+*._trace
+/src/main/speadl-gen/
+/src/main/xtend-gen/
