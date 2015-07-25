@@ -3,10 +3,10 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>eu.ascens.unimore</groupId>
 	<artifactId>ascens-robots-amas</artifactId>
-	<version>0.0.4</version>
+	<version>0.0.5-SNAPSHOT</version>
 
 	<properties>
-		<xtext-version>2.7.2</xtext-version>
+		<xtext-version>2.7.3</xtext-version>
 		<xtend-version>${xtext-version}</xtend-version>
 		<may-version>3.4.1</may-version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -28,17 +28,17 @@
 		<dependency>
 			<groupId>fr.irit.smac.lib.contrib</groupId>
 			<artifactId>xtend-contrib</artifactId>
-			<version>1.1.1</version>
+			<version>1.1.2-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>fr.irit.smac.lib.contrib</groupId>
 			<artifactId>functionaljava-xtend-contrib</artifactId>
-			<version>1.1.1</version>
+			<version>1.1.2-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>fr.irit.smac.lib.contrib</groupId>
 			<artifactId>mason-xtend-contrib</artifactId>
-			<version>1.1.1</version>
+			<version>1.1.2-SNAPSHOT</version>
 		</dependency>
 		<!-- For manipulating angles -->
 		<dependency>
