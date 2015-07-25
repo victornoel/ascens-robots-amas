@@ -2,3 +2,6 @@
 *._trace
 /src/main/speadl-gen/
 /src/main/xtend-gen/
+/.classpath
+/.project
+/.settings
